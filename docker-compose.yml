@@ -1,0 +1,27 @@
+services:
+  teamstorm-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: madebyearth/teamstorm-mcp-server:latest
+    container_name: teamstorm-mcp-server
+    ports:
+      - "3001:3001"
+    environment:
+      # TeamStorm API configuration
+      - TEAMSTORM_API_URL=${TEAMSTORM_API_URL}
+      #- TEAMSTORM_API_TOKEN=${TEAMSTORM_API_TOKEN}
+
+      # Server configuration
+      - PORT=3001
+      - NODE_ENV=production
+      
+      # Optional: trust X-Forwarded-For header (enable only behind a reverse proxy)
+      # TRUST_PROXY=false
+    restart: unless-stopped
+    networks:
+      - teamstorm-network
+
+networks:
+  teamstorm-network:
+    driver: bridge
