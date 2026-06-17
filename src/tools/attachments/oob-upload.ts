@@ -40,7 +40,7 @@ export function registerAttachUploadedFileTool(server: McpServer, client: TeamSt
 
 ШАГ 1 — Загрузить файл на сервер через HTTP POST:
   curl -X POST http://<mcp-server-host>:<port>/upload \\
-    -H "Authorization: Bearer <TEAMSTORM_API_TOKEN>" \\
+    -H "Authorization: PrivateToken <TEAMSTORM_API_TOKEN>" \\
     -F "file=@/путь/к/файлу.ext"
 
 Или через любой HTTP-клиент с multipart/form-data (поле "file").

@@ -742,7 +742,7 @@ export class TeamStormClient {
 
       const response = await this.client.request({
         method: 'POST',
-        url: `${this.internalApiUrl}/tasks/api/v1/workitems/${encodeURIComponent(params.taskId)}/time-tracking-entries`,
+        url: `${this.internalApiUrl}/tasks/api/v1/workitems/${encodeURIComponent(workitemUuid)}/time-tracking-entries`,
         data: body,
       });
       return response.data;
@@ -773,9 +773,11 @@ export class TeamStormClient {
       );
     }
     try {
-      this.resolveWorkspace(params.workspace);
+      const ws = this.resolveWorkspace(params.workspace);
+      const task = await this.getTask(params.taskId, ws);
+      const workitemUuid = task.id;
       const response = await this.client.get(
-        `${this.internalApiUrl}/tasks/api/v1/workitems/${params.taskId}/time-tracking-entries`
+        `${this.internalApiUrl}/tasks/api/v1/workitems/${workitemUuid}/time-tracking-entries`
       );
       return response.data;
     } catch (error) {

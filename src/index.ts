@@ -319,7 +319,7 @@ async function runHttp() {
 Чтобы прикрепить файл к задаче, выполните два шага:
 
 1. HTTP POST на http://<mcp-server-host>:<port>/upload с multipart/form-data (поле "file"),
-   заголовок Authorization: Bearer <TEAMSTORM_API_TOKEN>. Получите uploadId из ответа (JSON {uploadId, fileName, size}).
+   заголовок Authorization: PrivateToken <TEAMSTORM_API_TOKEN>. Получите uploadId из ответа (JSON {uploadId, fileName, size}).
 2. Вызовите инструмент teamstorm_attach_uploaded с полученным uploadId.
 
 Ограничения: max 50 MB, файл живёт на сервере 1 час, rate limit 10 загрузок в минуту.
@@ -365,7 +365,7 @@ async function runHttp() {
   };
 
   // --- Build Express app using SDK helper ---
-  const app = createMcpExpressApp({ host: '127.0.0.1' });
+  const app = createMcpExpressApp({ host: '0.0.0.0' });
   app.use(express.json({ limit: '50mb' }));
 
   // Inject Accept header for MCP clients that don't send it (Claude Code, Cursor)
