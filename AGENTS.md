@@ -26,16 +26,24 @@ npm run typecheck        # tsc --noEmit
 
 ### Точка входа (`src/index.ts`)
 
-- Создаёт HTTP-сервер на `PORT` (3001) + health-check на `PORT+1` (3002)
-- Каждый MCP-запрос создаёт новый stateless экземпляр `McpServer` (функция `registerAllTools`)
-- Дополнительные endpoints: `POST /upload` (загрузка файлов, auth + rate limit) и `GET /uploads` (отладка, auth required)
+- HTTP-сервер слушает на `0.0.0.0:PORT` (3001), health-check на `0.0.0.0:PORT+1` (3002)
+- Сессионная модель: первый запрос без `mcp-session-id` создаёт новый `McpServer` + `TeamStormClient`; повторные запросы с тем же `mcp-session-id` переиспользуют transport и обновляют токен через `setToken()`. Состояние хранится в `transports` и `sessionClients` (Map по sessionId).
+- `resolveToken(req)` — извлекает токен из заголовка `Authorization: Bearer <token>` или `Authorization: PrivateToken <token>`, fallback на `TEAMSTORM_API_TOKEN` из `.env`. Обеспечивает multi-user HTTP режим.
+- Endpoints:
+  - `POST /mcp`, `GET /mcp` — основной MCP endpoint
+  - `POST /sse`, `GET /sse` — SSE-совместимый MCP endpoint (тот же handler)
+  - `POST /upload` — загрузка файлов (auth + rate limit)
+  - `GET /uploads` — отладочный список загруженных файлов (auth required)
+- Middleware инжектирует `Accept: application/json, text/event-stream` для MCP-клиентов (Claude Code, Cursor), которые не передают его
 - Конфигурация загружается через Zod-валидацию из `.env` (ленивая, без `process.exit()` на импорте)
 
 ### Клиент (`src/client/teamstorm.ts`)
 
 - `TeamStormClient` — единый класс для всех вызовов TeamStorm REST API через axios
 - Конструктор: `(token, baseUrl?, workspace?)`
-- `setBaseUrl()` — переключение URL/токена в рантайме (используется когда LLM передаёт `apiUrl` в инструменте)
+- `setBaseUrl(url)` — переключение URL в рантайме с нормализацией (используется когда LLM передаёт `apiUrl` в инструменте)
+- `setBaseUrlRaw(url)` — то же без нормализации URL
+- `setToken(token)` — обновление токена в рантайме (используется при session refresh для multi-user HTTP режима)
 - `requireBaseUrl()` — guard: бросает ошибку если URL не задан ни в `.env` ни через `apiUrl`
 - `internalApiUrl` — для методов списания времени, которые ходят на отдельный endpoint `/tasks/api/v1/...`
 - Interceptors: rate-limit мониторинг (предупреждения при <25% и <10% лимита), санитизация заголовков в логах
@@ -64,7 +72,7 @@ npm run typecheck        # tsc --noEmit
 Переменные окружения (Zod-валидация в `src/config.ts`, ленивая — `getConfig()` вызывается только при первом обращении):
 
 - `TEAMSTORM_API_URL` — базовый URL API (опционально, можно передать через `apiUrl` в каждом инструменте)
-- `TEAMSTORM_API_TOKEN` — PrivateToken (обязателен)
+- `TEAMSTORM_API_TOKEN` — PrivateToken (опциональный: в HTTP режиме токен берётся из заголовка `Authorization` каждого запроса; переменная нужна только для single-user деплоя или как fallback)
 - `TEAMSTORM_WORKSPACE` — необязательный, workspace по умолчанию
 - `PORT` — порт MCP-сервера (3001)
 - `NODE_ENV` — `development` | `production` | `test` (по умолчанию `production`)
@@ -82,6 +90,7 @@ Accessors: `getApiToken()`, `getApiUrl()`, `getWorkspace()`, `getPort()`, `getNo
 - Rate limit: 10 запросов/мин на IP (с учётом `TRUST_PROXY`)
 - Ограничение размера: 50 МБ
 - Права файлов: `0o600` (только владелец)
+- Очистка устаревших файлов: каждые 30 минут (удаляются файлы старше 1 часа)
 
 ## Docker
 
