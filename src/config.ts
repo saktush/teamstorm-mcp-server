@@ -22,6 +22,7 @@ const ConfigSchema = z.object({
 
   // Server configuration
   PORT: z.coerce.number().int().positive().default(3001),
+  LISTEN_HOST: z.string().optional(),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('production'),
   TRUST_PROXY: z.coerce.boolean().default(false).describe('Trust X-Forwarded-For header for rate limiting'),
 });
@@ -78,3 +79,8 @@ export const getWorkspace = (): string | undefined => getConfig().TEAMSTORM_WORK
 export const getPort = (): number => getConfig().PORT;
 export const getNodeEnv = (): string => getConfig().NODE_ENV;
 export const getTrustProxy = (): boolean => getConfig().TRUST_PROXY;
+
+// When TEAMSTORM_API_TOKEN is set, the server acts as a single-user proxy —
+// restrict to loopback by default to prevent unauthenticated remote session creation.
+// Set LISTEN_HOST explicitly to override (e.g. LISTEN_HOST=0.0.0.0 in containers).
+export const getListenHost = (): string => getConfig().LISTEN_HOST ?? (getApiToken() ? '127.0.0.1' : '0.0.0.0');

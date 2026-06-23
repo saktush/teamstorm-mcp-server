@@ -26,7 +26,7 @@ npm run typecheck        # tsc --noEmit
 
 ### Точка входа (`src/index.ts`)
 
-- HTTP-сервер слушает на `0.0.0.0:PORT` (3001), health-check на `0.0.0.0:PORT+1` (3002)
+- HTTP-сервер слушает на `LISTEN_HOST:PORT` (default: `127.0.0.1:3001` если задан `TEAMSTORM_API_TOKEN`, иначе `0.0.0.0:3001`), health-check на том же хосте, `PORT+1` (3002)
 - Сессионная модель: первый запрос без `mcp-session-id` создаёт новый `McpServer` + `TeamStormClient`; повторные запросы с тем же `mcp-session-id` переиспользуют transport и обновляют токен через `setToken()`. Состояние хранится в `transports` и `sessionClients` (Map по sessionId).
 - `resolveToken(req)` — извлекает токен из заголовка `Authorization: Bearer <token>` или `Authorization: PrivateToken <token>`, fallback на `TEAMSTORM_API_TOKEN` из `.env`. Обеспечивает multi-user HTTP режим.
 - Endpoints:
@@ -74,10 +74,11 @@ npm run typecheck        # tsc --noEmit
 - `TEAMSTORM_API_TOKEN` — PrivateToken (опциональный: в HTTP режиме токен берётся из заголовка `Authorization` каждого запроса; переменная нужна только для single-user деплоя или как fallback)
 - `TEAMSTORM_WORKSPACE` — необязательный, workspace по умолчанию
 - `PORT` — порт MCP-сервера (3001)
+- `LISTEN_HOST` — адрес привязки сервера. Если не задан: `127.0.0.1` когда установлен `TEAMSTORM_API_TOKEN` (защита от анонимных сессий по сети), иначе `0.0.0.0`. Задайте `0.0.0.0` явно для сетевого доступа при заданном токене (контейнеры, reverse-proxy).
 - `NODE_ENV` — `development` | `production` | `test` (по умолчанию `production`)
 - `TRUST_PROXY` — доверять `X-Forwarded-For` для rate limiter (только за reverse-proxy, по умолчанию `false`)
 
-Accessors: `getApiToken()`, `getApiUrl()`, `getWorkspace()`, `getPort()`, `getNodeEnv()`, `getTrustProxy()`
+Accessors: `getApiToken()`, `getApiUrl()`, `getWorkspace()`, `getPort()`, `getListenHost()`, `getNodeEnv()`, `getTrustProxy()`
 
 ## Загрузка файлов (Out-of-Band)
 

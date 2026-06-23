@@ -4,7 +4,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 import express from 'express';
 import { promises as fsPromises } from 'fs';
-import { getApiUrl, getWorkspace, getPort, getNodeEnv, getTrustProxy, getApiToken, maskToken } from './config.js';
+import { getApiUrl, getWorkspace, getPort, getListenHost, getNodeEnv, getTrustProxy, getApiToken, maskToken } from './config.js';
 import { hashToken, validateSessionToken } from './utils/session-auth.js';
 import { validateUploadAuth } from './utils/upload-auth.js';
 import { logger } from './utils/logger.js';
@@ -159,7 +159,7 @@ async function runHttp() {
   healthApp.get('/health', (_req, res) => {
     res.json({ status: 'healthy', timestamp: new Date().toISOString(), service: 'teamstorm-mcp-server', version: '1.0.0' });
   });
-  const healthServer = healthApp.listen(healthPort, '0.0.0.0', () => {
+  const healthServer = healthApp.listen(healthPort, getListenHost(), () => {
     logger.info(`💚 Health check: http://localhost:${healthPort}/health`);
   });
   healthServer.on('error', (error) => { logger.fatal({ error }, 'Health check server error'); process.exit(1); });
@@ -212,6 +212,11 @@ async function runHttp() {
     let transport = sessionId ? transports.get(sessionId) : undefined;
 
     if (!transport) {
+      if (!token) {
+        res.status(401).json({ jsonrpc: '2.0', error: { code: -32001, message: 'Unauthorized: token required' }, id: null });
+        return;
+      }
+
       delete (req.headers as Record<string, unknown>)['mcp-session-id'];
 
       const requestClient = new TeamStormClient(token, getApiUrl(), getWorkspace());
@@ -275,7 +280,7 @@ async function runHttp() {
   };
 
   // --- Build Express app using SDK helper ---
-  const app = createMcpExpressApp({ host: '0.0.0.0' });
+  const app = createMcpExpressApp({ host: getListenHost() });
   app.use(express.json({ limit: '50mb' }));
 
   // Inject Accept header for MCP clients that don't send it (Claude Code, Cursor)
@@ -306,8 +311,13 @@ async function runHttp() {
   app.get('/sse', mcpHandler);
   app.get('/mcp', mcpHandler);
 
-  const httpServer = app.listen(getPort(), '0.0.0.0', () => {
-    logger.info('✅ TeamStorm MCP Server started (HTTP mode)');
+  const listenHost = getListenHost();
+  if (getApiToken() && listenHost !== '127.0.0.1') {
+    logger.warn({ listenHost }, 'TEAMSTORM_API_TOKEN is set but server is binding to all interfaces — remote callers can create sessions using the server token');
+  }
+
+  const httpServer = app.listen(getPort(), listenHost, () => {
+    logger.info({ host: listenHost }, '✅ TeamStorm MCP Server started (HTTP mode)');
     logger.info(`📍 MCP endpoint: http://localhost:${getPort()}/mcp`);
     logger.info(`💚 Health check: http://localhost:${healthPort}/health`);
   });
