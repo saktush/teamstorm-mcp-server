@@ -247,6 +247,18 @@ async function runHttp() {
           sessionClients.set(sid, requestClient);
           sessionTokenHashes.set(sid, hashToken(token));
           logger.info({ sessionId: sid, hadStaleSession: !!sessionId }, 'MCP session initialized');
+          transport!.onclose = () => {
+            transports.delete(sid);
+            sessionClients.delete(sid);
+            sessionTokenHashes.delete(sid);
+            logger.info({ sessionId: sid }, 'MCP session closed, maps cleaned up');
+          };
+        },
+        onsessionclosed: (sid: string) => {
+          transports.delete(sid);
+          sessionClients.delete(sid);
+          sessionTokenHashes.delete(sid);
+          logger.info({ sessionId: sid }, 'MCP session deleted by client, maps cleaned up');
         },
       });
 
