@@ -41,13 +41,13 @@ function redact(obj: unknown): unknown {
 
 const redactedLogger = {
   debug: (obj: unknown, msg?: string, ...args: unknown[]) =>
-    logger.debug(redact(obj), msg, ...args),
-  info: (obj: unknown, msg?: string, ...args: unknown[]) => logger.info(redact(obj), msg, ...args),
-  warn: (obj: unknown, msg?: string, ...args: unknown[]) => logger.warn(redact(obj), msg, ...args),
+    _logger.debug(redact(obj), msg, ...args),
+  info: (obj: unknown, msg?: string, ...args: unknown[]) => _logger.info(redact(obj), msg, ...args),
+  warn: (obj: unknown, msg?: string, ...args: unknown[]) => _logger.warn(redact(obj), msg, ...args),
   error: (obj: unknown, msg?: string, ...args: unknown[]) =>
-    logger.error(redact(obj), msg, ...args),
+    _logger.error(redact(obj), msg, ...args),
   fatal: (obj: unknown, msg?: string, ...args: unknown[]) =>
-    logger.fatal(redact(obj), msg, ...args),
+    _logger.fatal(redact(obj), msg, ...args),
 };
 
 // Logger configuration based on environment
@@ -71,7 +71,9 @@ if (resolveNodeEnv() === 'development') {
   };
 }
 
-export const logger = pino(loggerConfig);
+const _logger = pino(loggerConfig);
+
+export const logger = redactedLogger;
 
 // Convenience methods for common log patterns (auto-redact sensitive fields)
 export const logRequest = (method: string, params: Record<string, unknown>) => {
