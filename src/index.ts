@@ -275,17 +275,6 @@ async function runHttp() {
     });
   };
 
-  // --- Debug: list uploads ---
-  const listUploadsHandler = (_req: express.Request, res: express.Response) => {
-    const authResult = validateUploadAuth(_req);
-    if (!authResult.ok) { res.status(401).json({ error: authResult.reason }); return; }
-    try {
-      const entries = fs.readdirSync(UPLOAD_DIR);
-      const details = entries.map((f) => { const fp = path.join(UPLOAD_DIR, f); const stat = fs.statSync(fp); return { name: f, size: stat.size, isFile: stat.isFile() }; });
-      res.json({ entries: details });
-    } catch { res.status(500).json({ error: 'Failed to list uploads' }); }
-  };
-
   // --- MCP endpoint (stateful with session persistence) ---
   const transports = new Map<string, StreamableHTTPServerTransport>();
   const sessionClients = new Map<string, TeamStormClient>();
@@ -382,7 +371,6 @@ async function runHttp() {
     next();
   });
   app.post('/upload', uploadHandler);
-  app.get('/uploads', listUploadsHandler);
   app.post('/mcp', mcpHandler);
   app.post('/sse', mcpHandler);
   app.get('/sse', mcpHandler);

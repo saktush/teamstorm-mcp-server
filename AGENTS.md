@@ -33,7 +33,6 @@ npm run typecheck        # tsc --noEmit
   - `POST /mcp`, `GET /mcp` — основной MCP endpoint
   - `POST /sse`, `GET /sse` — SSE-совместимый MCP endpoint (тот же handler)
   - `POST /upload` — загрузка файлов (auth + rate limit)
-  - `GET /uploads` — отладочный список загруженных файлов (auth required)
 - Middleware инжектирует `Accept: application/json, text/event-stream` для MCP-клиентов (Claude Code, Cursor), которые не передают его
 - Конфигурация загружается через Zod-валидацию из `.env` (ленивая, без `process.exit()` на импорте)
 
