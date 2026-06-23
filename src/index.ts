@@ -5,6 +5,7 @@ import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js
 import express from 'express';
 import { promises as fsPromises } from 'fs';
 import { getApiUrl, getWorkspace, getPort, getNodeEnv, getTrustProxy, getApiToken } from './config.js';
+import { validateUploadAuth } from './utils/upload-auth.js';
 import { logger } from './utils/logger.js';
 import { TeamStormClient } from './client/teamstorm.js';
 import { TextDecoder } from 'util';
@@ -170,16 +171,6 @@ async function runHttp() {
       if (match) token = match[1];
     }
     return token;
-  }
-
-  function validateUploadAuth(req: express.Request): { ok: boolean; reason?: string } {
-    const authHeader = req.headers.authorization || req.headers.Authorization;
-    const expected = getApiToken();
-    if (!authHeader || typeof authHeader !== 'string') return { ok: false, reason: 'Unauthorized: valid token required for uploads' };
-    const match = authHeader.match(/^(?:Bearer|PrivateToken)\s+(.+)$/i);
-    if (!match) return { ok: false, reason: 'Unauthorized: valid token required for uploads' };
-    if (expected !== undefined && match[1] !== expected) return { ok: false, reason: 'Unauthorized: valid token required for uploads' };
-    return { ok: true };
   }
 
   // --- OOB Upload endpoint ---
