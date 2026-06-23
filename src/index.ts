@@ -9,7 +9,7 @@ import { hashToken, validateSessionToken } from './utils/session-auth.js';
 import { validateUploadAuth } from './utils/upload-auth.js';
 import { logger } from './utils/logger.js';
 import { TeamStormClient } from './client/teamstorm.js';
-import { TextDecoder } from 'util';
+import { parseUpload, UploadError } from './utils/upload-handler.js';
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -189,91 +189,15 @@ async function runHttp() {
       return;
     }
 
-    const contentType = req.headers['content-type'] || '';
-    const boundaryMatch = contentType.match(/boundary=(?:"([^"]+)"|([^;\s]+))/);
-    if (!boundaryMatch) { res.status(400).json({ error: 'No multipart boundary found' }); return; }
-
-    const boundary = Buffer.from('--' + (boundaryMatch[1] || boundaryMatch[2]));
-    let fileBuffer: Buffer | null = null;
-    let filenameRaw: Buffer | null = null;
-    let contentTypeFile = 'application/octet-stream';
-    let headerBuffer = '';
-    let totalBytes = 0;
-    let sizeExceeded = false;
-
-    const decodeHeaderValue = (raw: string | Buffer): string => {
-      const bytes = Buffer.isBuffer(raw) ? raw : Buffer.from(raw, 'latin1');
-      const utf8 = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
-      if (!utf8.includes('�')) return utf8;
-      const cp1251 = new TextDecoder('cp1251', { fatal: false }).decode(bytes);
-      if (!cp1251.includes('�') && /[А-Яа-яЁё]/.test(cp1251)) return cp1251;
-      return utf8;
-    };
-
-    const parseHeaders = (headerStr: string): Record<string, string> => {
-      const headers: Record<string, string> = {};
-      for (const line of headerStr.split('\r\n')) {
-        const idx = line.indexOf(':');
-        if (idx > 0) headers[line.slice(0, idx).trim().toLowerCase()] = line.slice(idx + 1).trim();
-      }
-      return headers;
-    };
-
-    const extractFilename = (cd: string): string | null => {
-      const fnMatch = cd.match(/filename\*=UTF-8''([^;\r\n]+)/i);
-      if (fnMatch) return decodeURIComponent(fnMatch[1]);
-      const fnMatch2 = cd.match(/filename="?([^";\r\n]+)"?/i);
-      if (fnMatch2) return fnMatch2[1];
-      return null;
-    };
-
-    const chunks: Buffer[] = [];
-    let prevTail = Buffer.alloc(0);
-
-    req.on('data', (chunk: Buffer) => {
-      if (sizeExceeded) return;
-      totalBytes += chunk.length;
-      if (totalBytes > MAX_UPLOAD_SIZE) { sizeExceeded = true; req.destroy(); return; }
-      if (fileBuffer !== null) { chunks.push(chunk); return; }
-      const searchChunk = Buffer.concat([prevTail, chunk]);
-      headerBuffer += searchChunk.toString('binary');
-      const headerEnd = headerBuffer.indexOf('\r\n\r\n');
-      if (headerEnd >= 0) {
-        const rawHeaders = headerBuffer.slice(0, headerEnd);
-        headerBuffer = '';
-        const headers = parseHeaders(rawHeaders);
-        const cd = headers['content-disposition'] || '';
-        contentTypeFile = headers['content-type'] || 'application/octet-stream';
-        const fname = extractFilename(cd);
-        if (fname) filenameRaw = Buffer.from(fname, 'binary');
-        const dataStart = headerEnd + 4;
-        const remaining = searchChunk.slice(dataStart);
-        if (remaining.length > 0) {
-          const boundaryIdx = remaining.indexOf(boundary);
-          fileBuffer = boundaryIdx >= 0 ? remaining.slice(0, boundaryIdx) : remaining;
-        }
-      }
-      prevTail = searchChunk.slice(-boundary.length - 4);
-    });
-
-    req.on('end', () => {
-      if (sizeExceeded) { res.status(413).json({ error: `File too large. Maximum size is ${MAX_UPLOAD_SIZE / 1024 / 1024} MB.` }); return; }
-      if (!fileBuffer || !filenameRaw) { res.status(400).json({ error: 'No file provided. Send as multipart field "file".' }); return; }
-      const originalName = decodeHeaderValue(filenameRaw);
-      const uploadId = crypto.randomUUID();
-      const destPath = path.join(UPLOAD_DIR, uploadId);
-      const fileData = Buffer.concat([fileBuffer, ...chunks]);
-      fs.writeFileSync(destPath, fileData, { mode: 0o600 });
-      fs.writeFileSync(path.join(UPLOAD_DIR, uploadId + '.meta.json'), JSON.stringify({ fileName: originalName, contentType: contentTypeFile }), { mode: 0o600 });
-      const stats = fs.statSync(destPath);
-      logger.info({ fileName: originalName, size: stats.size, uploadId, ip: clientIp }, 'File uploaded');
-      res.json({ uploadId, fileName: originalName, size: stats.size, contentType: contentTypeFile });
-    });
-
-    req.on('error', (err: Error) => {
-      logger.error({ error: err.message, ip: clientIp }, 'Upload stream error');
+    try {
+      const result = await parseUpload(req, UPLOAD_DIR, MAX_UPLOAD_SIZE);
+      logger.info({ fileName: result.originalFilename, size: result.size, uploadId: result.uploadId, ip: clientIp }, 'File uploaded');
+      res.json({ uploadId: result.uploadId, fileName: result.originalFilename, size: result.size, contentType: result.contentType });
+    } catch (err) {
+      if (err instanceof UploadError) { res.status(err.statusCode).json({ error: err.message }); return; }
+      logger.error({ error: err instanceof Error ? err.message : String(err), ip: clientIp }, 'Upload stream error');
       if (!res.headersSent) res.status(400).json({ error: 'Upload failed. Please try again.' });
-    });
+    }
   };
 
   // --- MCP endpoint (stateful with session persistence) ---
