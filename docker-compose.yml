@@ -17,6 +17,9 @@ services:
       - PORT=3001
       - NODE_ENV=production
 
+      # Defaults to 0.0.0.0 so Docker port mappings work; override via .env or shell env.
+      - LISTEN_HOST=${LISTEN_HOST:-0.0.0.0}
+
       # Optional: trust X-Forwarded-For header (enable only behind a reverse proxy)
       # TRUST_PROXY=false
     healthcheck:
