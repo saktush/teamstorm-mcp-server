@@ -4,7 +4,8 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 import express from 'express';
 import { promises as fsPromises } from 'fs';
-import { getApiUrl, getWorkspace, getPort, getNodeEnv, getTrustProxy, getApiToken } from './config.js';
+import { getApiUrl, getWorkspace, getPort, getNodeEnv, getTrustProxy, getApiToken, maskToken } from './config.js';
+import { hashToken, validateSessionToken } from './utils/session-auth.js';
 import { validateUploadAuth } from './utils/upload-auth.js';
 import { logger } from './utils/logger.js';
 import { TeamStormClient } from './client/teamstorm.js';
@@ -278,6 +279,7 @@ async function runHttp() {
   // --- MCP endpoint (stateful with session persistence) ---
   const transports = new Map<string, StreamableHTTPServerTransport>();
   const sessionClients = new Map<string, TeamStormClient>();
+  const sessionTokenHashes = new Map<string, string>();
 
   const mcpHandler = async (req: express.Request, res: express.Response) => {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
@@ -314,6 +316,7 @@ async function runHttp() {
         onsessioninitialized: (sid: string) => {
           transports.set(sid, transport!);
           sessionClients.set(sid, requestClient);
+          sessionTokenHashes.set(sid, hashToken(token));
           logger.info({ sessionId: sid, hadStaleSession: !!sessionId }, 'MCP session initialized');
         },
       });
@@ -328,9 +331,12 @@ async function runHttp() {
         return;
       }
     } else {
-      const sessionClient = sessionClients.get(sessionId!);
-      if (sessionClient && token) {
-        sessionClient.setToken(token);
+      const expectedHash = sessionTokenHashes.get(sessionId!);
+      const authResult = validateSessionToken(token, expectedHash);
+      if (!authResult.ok) {
+        logger.warn({ sessionId, tokenMasked: maskToken(token) }, 'Session token mismatch — rejecting request');
+        res.status(401).json({ jsonrpc: '2.0', error: { code: -32001, message: authResult.reason }, id: null });
+        return;
       }
     }
 
