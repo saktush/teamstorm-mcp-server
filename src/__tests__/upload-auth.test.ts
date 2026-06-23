@@ -24,13 +24,13 @@ describe('validateUploadAuth', () => {
     it('rejects any Bearer token — core security fix', () => {
       const result = validateUploadAuth(makeReq('Bearer anything'));
       expect(result.ok).toBe(false);
-      expect(result.reason).toMatch(/not configured/);
+      expect(result.reason).toMatch(/valid token required/);
     });
 
     it('rejects PrivateToken header', () => {
       const result = validateUploadAuth(makeReq('PrivateToken anything'));
       expect(result.ok).toBe(false);
-      expect(result.reason).toMatch(/not configured/);
+      expect(result.reason).toMatch(/valid token required/);
     });
 
     it('rejects missing header', () => {
@@ -58,7 +58,7 @@ describe('validateUploadAuth', () => {
     it('rejects wrong token', () => {
       const result = validateUploadAuth(makeReq('Bearer wrong'));
       expect(result.ok).toBe(false);
-      expect(result.reason).toMatch(/invalid token/);
+      expect(result.reason).toMatch(/valid token required/);
     });
 
     it('rejects missing header', () => {

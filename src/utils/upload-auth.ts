@@ -8,9 +8,9 @@ export function validateUploadAuth(req: Request): { ok: boolean; reason?: string
   if (!authHeader || typeof authHeader !== 'string') return { ok: false, reason: 'Unauthorized: valid token required for uploads' };
   const match = authHeader.match(/^(?:Bearer|PrivateToken)\s+(.+)$/i);
   if (!match) return { ok: false, reason: 'Unauthorized: valid token required for uploads' };
-  if (expected === undefined) return { ok: false, reason: 'Unauthorized: server TEAMSTORM_API_TOKEN is not configured' };
+  if (expected === undefined) return { ok: false, reason: 'Unauthorized: valid token required for uploads' };
   const incoming = createHash('sha256').update(match[1]).digest();
   const secret   = createHash('sha256').update(expected).digest();
-  if (!timingSafeEqual(incoming, secret)) return { ok: false, reason: 'Unauthorized: invalid token' };
+  if (!timingSafeEqual(incoming, secret)) return { ok: false, reason: 'Unauthorized: valid token required for uploads' };
   return { ok: true };
 }
