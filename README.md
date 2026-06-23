@@ -7,16 +7,18 @@ MCP-сервер для интеграции AI-агентов (Claude Code, Cur
 ### 1. Запустите контейнер
 
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 Для полной чистой сборки (без кеша):
 
 ```bash
-docker-compose build --no-cache && docker-compose up -d
+docker compose build --no-cache && docker compose up -d
 ```
 
 Сервер будет доступен на `http://localhost:3001/mcp`, health-check — на `http://localhost:3002/health`.
+
+> **Доступ по сети (Linux-сервер):** При запуске на Linux-сервере в локальной сети сервер автоматически доступен по IP-адресу сервера: `http://192.168.x.x:3001/mcp`. Используйте этот адрес вместо `localhost` при настройке Claude Code или Cursor на другой машине. Порт открывается на всех сетевых интерфейсах (`0.0.0.0`) автоматически — дополнительная настройка не требуется.
 
 > **Примечание:** Переменная `TEAMSTORM_API_TOKEN` в `.env` не обязательна — в HTTP-режиме каждый клиент передаёт свой токен через заголовок `Authorization`. `TEAMSTORM_API_URL` можно передать через `apiUrl` в инструменте (автоматически дополняется до `http://<host>/cwm/public/api/v1`), но обычно URL предконфигурирован на сервере и параметр не требуется.
 
@@ -26,10 +28,10 @@ docker-compose build --no-cache && docker-compose up -d
 
 ```bash
 claude mcp add --scope user --transport http teamstorm http://localhost:3001/mcp \
-  -H "Authorization: Bearer ваш_токен"
+  -H "Authorization: PrivateToken ваш_токен"
 ```
 
-> **Примечание:** `Bearer` токен — это ваш персональный токен TeamStorm. Он передаётся с каждым запросом и используется для аутентификации на стороне API.
+> **Примечание:** `PrivateToken` — это ваш персональный токен TeamStorm. Он передаётся с каждым запросом и используется для аутентификации на стороне API.
 
 ### 3. Интеграция с Cursor
 
@@ -39,23 +41,16 @@ claude mcp add --scope user --transport http teamstorm http://localhost:3001/mcp
 {
   "mcpServers": {
     "teamstorm": {
-      "command": "curl",
-      "args": [
-        "-s",
-        "-X",
-        "POST",
-        "-H",
-        "Authorization: Bearer ваш_токен",
-        "-H",
-        "Content-Type: application/json",
-        "http://localhost:3001/mcp"
-      ]
+      "url": "http://localhost:3001/mcp",
+      "headers": {
+        "Authorization": "PrivateToken ваш_токен"
+      }
     }
   }
 }
 ```
 
-> **Примечание:** Замени `ваш_токен` на реальный `Bearer` токен TeamStorm. После добавления перезапустите Cursor — инструменты появятся в боковой панели MCP.
+> **Примечание:** Замени `ваш_токен` на реальный PrivateToken TeamStorm. После добавления перезапустите Cursor — инструменты появятся в боковой панели MCP.
 
 ### 4. Проверка
 
