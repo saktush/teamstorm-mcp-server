@@ -6,7 +6,7 @@ dotenv.config();
 
 // Mask sensitive token for safe logging / display
 export const maskToken = (token: string): string => {
-  if (!token || token.length <= 8) return '***';
+  if (!token || token.length <= 16) return '***';
   return `${token.slice(0, 4)}...${token.slice(-4)}`;
 };
 
