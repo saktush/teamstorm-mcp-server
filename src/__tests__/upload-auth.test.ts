@@ -4,11 +4,12 @@ vi.mock('../config.js', () => ({
   getApiToken: vi.fn(),
 }));
 
+import type { Request } from 'express';
 import { validateUploadAuth } from '../utils/upload-auth.js';
 import { getApiToken } from '../config.js';
 
-function makeReq(authorization?: string): any {
-  return { headers: authorization ? { authorization } : {} };
+function makeReq(authorization?: string): Request {
+  return { headers: authorization ? { authorization } : {} } as unknown as Request;
 }
 
 describe('validateUploadAuth', () => {

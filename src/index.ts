@@ -4,7 +4,16 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 import express from 'express';
 import { promises as fsPromises } from 'fs';
-import { getApiUrl, getWorkspace, getPort, getListenHost, getNodeEnv, getTrustProxy, getApiToken, maskToken } from './config.js';
+import {
+  getApiUrl,
+  getWorkspace,
+  getPort,
+  getListenHost,
+  getNodeEnv,
+  getTrustProxy,
+  getApiToken,
+  maskToken,
+} from './config.js';
 import { hashToken, validateSessionToken } from './utils/session-auth.js';
 import { validateUploadAuth } from './utils/upload-auth.js';
 import { logger } from './utils/logger.js';
@@ -47,7 +56,10 @@ const UPLOAD_DIR = path.join(os.tmpdir(), 'teamstorm-uploads');
 try {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 } catch (err) {
-  logger.error({ error: err instanceof Error ? err.message : String(err), dir: UPLOAD_DIR }, 'Failed to create upload directory');
+  logger.error(
+    { error: err instanceof Error ? err.message : String(err), dir: UPLOAD_DIR },
+    'Failed to create upload directory'
+  );
 }
 
 // Upload security limits
@@ -82,11 +94,16 @@ async function cleanupOrphanedUploads(): Promise<void> {
           await fsPromises.unlink(fp);
           cleaned++;
         }
-      } catch { /* concurrent removal */ }
+      } catch {
+        /* concurrent removal */
+      }
     }
     if (cleaned > 0) logger.info({ cleaned }, 'Cleaned up orphaned upload files');
   } catch (err) {
-    logger.error({ error: err instanceof Error ? err.message : String(err) }, 'Upload cleanup failed');
+    logger.error(
+      { error: err instanceof Error ? err.message : String(err) },
+      'Upload cleanup failed'
+    );
   }
 }
 
@@ -94,17 +111,26 @@ function cleanupRateLimiter(): void {
   const now = Date.now();
   let cleaned = 0;
   for (const [ip, entry] of rateLimiter) {
-    if (now > entry.resetTime) { rateLimiter.delete(ip); cleaned++; }
+    if (now > entry.resetTime) {
+      rateLimiter.delete(ip);
+      cleaned++;
+    }
   }
   if (cleaned > 0) logger.debug({ cleaned }, 'Cleaned up stale rate limiter entries');
 }
 
-setInterval(() => {
-  cleanupRateLimiter();
-  cleanupOrphanedUploads().catch((err) =>
-    logger.error({ error: err instanceof Error ? err.message : String(err) }, 'Scheduled upload cleanup failed')
-  );
-}, 30 * 60 * 1000);
+setInterval(
+  () => {
+    cleanupRateLimiter();
+    cleanupOrphanedUploads().catch((err) =>
+      logger.error(
+        { error: err instanceof Error ? err.message : String(err) },
+        'Scheduled upload cleanup failed'
+      )
+    );
+  },
+  30 * 60 * 1000
+);
 
 function registerAllTools(server: McpServer, client: TeamStormClient) {
   registerListWorkspacesTool(server, client);
@@ -145,8 +171,8 @@ async function runHttp() {
   if (!apiUrl) {
     console.error(
       '❌ TeamStorm MCP Server: TEAMSTORM_API_URL не задан.\n' +
-      '💡 Укажите URL через переменную окружения TEAMSTORM_API_URL.\n' +
-      '   Формат: http://<teamstorm-host>/cwm/public/api/v1'
+        '💡 Укажите URL через переменную окружения TEAMSTORM_API_URL.\n' +
+        '   Формат: http://<teamstorm-host>/cwm/public/api/v1'
     );
     process.exit(1);
   }
@@ -157,12 +183,20 @@ async function runHttp() {
   const healthPort = getPort() + 1;
   const healthApp = express();
   healthApp.get('/health', (_req, res) => {
-    res.json({ status: 'healthy', timestamp: new Date().toISOString(), service: 'teamstorm-mcp-server', version: '1.0.0' });
+    res.json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      service: 'teamstorm-mcp-server',
+      version: '1.0.0',
+    });
   });
   const healthServer = healthApp.listen(healthPort, getListenHost(), () => {
     logger.info(`💚 Health check: http://localhost:${healthPort}/health`);
   });
-  healthServer.on('error', (error) => { logger.fatal({ error }, 'Health check server error'); process.exit(1); });
+  healthServer.on('error', (error) => {
+    logger.fatal({ error }, 'Health check server error');
+    process.exit(1);
+  });
 
   function resolveToken(req: express.Request): string {
     const authHeader = req.headers.authorization || req.headers.Authorization;
@@ -177,10 +211,16 @@ async function runHttp() {
   // --- OOB Upload endpoint ---
   const uploadHandler = async (req: express.Request, res: express.Response) => {
     const authResult = validateUploadAuth(req);
-    if (!authResult.ok) { res.status(401).json({ error: authResult.reason }); return; }
+    if (!authResult.ok) {
+      res.status(401).json({ error: authResult.reason });
+      return;
+    }
 
     const clientIp = getTrustProxy()
-      ? ((req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0].trim() || req.headers['x-real-ip'] as string | undefined || req.ip || 'unknown')
+      ? (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0].trim() ||
+        (req.headers['x-real-ip'] as string | undefined) ||
+        req.ip ||
+        'unknown'
       : req.ip || 'unknown';
 
     if (!checkRateLimit(clientIp)) {
@@ -191,11 +231,30 @@ async function runHttp() {
 
     try {
       const result = await parseUpload(req, UPLOAD_DIR, MAX_UPLOAD_SIZE);
-      logger.info({ fileName: result.originalFilename, size: result.size, uploadId: result.uploadId, ip: clientIp }, 'File uploaded');
-      res.json({ uploadId: result.uploadId, fileName: result.originalFilename, size: result.size, contentType: result.contentType });
+      logger.info(
+        {
+          fileName: result.originalFilename,
+          size: result.size,
+          uploadId: result.uploadId,
+          ip: clientIp,
+        },
+        'File uploaded'
+      );
+      res.json({
+        uploadId: result.uploadId,
+        fileName: result.originalFilename,
+        size: result.size,
+        contentType: result.contentType,
+      });
     } catch (err) {
-      if (err instanceof UploadError) { res.status(err.statusCode).json({ error: err.message }); return; }
-      logger.error({ error: err instanceof Error ? err.message : String(err), ip: clientIp }, 'Upload stream error');
+      if (err instanceof UploadError) {
+        res.status(err.statusCode).json({ error: err.message });
+        return;
+      }
+      logger.error(
+        { error: err instanceof Error ? err.message : String(err), ip: clientIp },
+        'Upload stream error'
+      );
       if (!res.headersSent) res.status(400).json({ error: 'Upload failed. Please try again.' });
     }
   };
@@ -213,7 +272,11 @@ async function runHttp() {
 
     if (!transport) {
       if (!token) {
-        res.status(401).json({ jsonrpc: '2.0', error: { code: -32001, message: 'Unauthorized: token required' }, id: null });
+        res.status(401).json({
+          jsonrpc: '2.0',
+          error: { code: -32001, message: 'Unauthorized: token required' },
+          id: null,
+        });
         return;
       }
 
@@ -267,7 +330,11 @@ async function runHttp() {
       } catch (error) {
         logger.error({ error }, 'Failed to connect MCP transport');
         if (!res.headersSent) {
-          res.status(500).json({ jsonrpc: '2.0', error: { code: -32603, message: 'Internal server error' }, id: null });
+          res.status(500).json({
+            jsonrpc: '2.0',
+            error: { code: -32603, message: 'Internal server error' },
+            id: null,
+          });
         }
         return;
       }
@@ -275,8 +342,13 @@ async function runHttp() {
       const expectedHash = sessionTokenHashes.get(sessionId!);
       const authResult = validateSessionToken(token, expectedHash);
       if (!authResult.ok) {
-        logger.warn({ sessionId, tokenMasked: maskToken(token) }, 'Session token mismatch — rejecting request');
-        res.status(401).json({ jsonrpc: '2.0', error: { code: -32001, message: authResult.reason }, id: null });
+        logger.warn(
+          { sessionId, tokenMasked: maskToken(token) },
+          'Session token mismatch — rejecting request'
+        );
+        res
+          .status(401)
+          .json({ jsonrpc: '2.0', error: { code: -32001, message: authResult.reason }, id: null });
         return;
       }
     }
@@ -284,9 +356,16 @@ async function runHttp() {
     try {
       await transport.handleRequest(req, res, req.body);
     } catch (error) {
-      logger.error({ error, sessionId, accept: req.headers.accept, method: req.method }, 'MCP request error');
+      logger.error(
+        { error, sessionId, accept: req.headers.accept, method: req.method },
+        'MCP request error'
+      );
       if (!res.headersSent) {
-        res.status(500).json({ jsonrpc: '2.0', error: { code: -32603, message: 'Internal server error' }, id: null });
+        res.status(500).json({
+          jsonrpc: '2.0',
+          error: { code: -32603, message: 'Internal server error' },
+          id: null,
+        });
       }
     }
   };
@@ -300,7 +379,10 @@ async function runHttp() {
   app.use((req, _res, next) => {
     if (req.path === '/mcp' || req.path === '/sse') {
       const accept = req.headers.accept;
-      if (!accept || (!accept.includes('application/json') && !accept.includes('text/event-stream'))) {
+      if (
+        !accept ||
+        (!accept.includes('application/json') && !accept.includes('text/event-stream'))
+      ) {
         const newValue = 'application/json, text/event-stream';
         const raw = req.rawHeaders;
         const idx = raw.findIndex((h: string) => h.toLowerCase() === 'accept');
@@ -325,7 +407,10 @@ async function runHttp() {
 
   const listenHost = getListenHost();
   if (getApiToken() && listenHost !== '127.0.0.1') {
-    logger.warn({ listenHost }, 'TEAMSTORM_API_TOKEN is set but server is binding to all interfaces — remote callers can create sessions using the server token');
+    logger.warn(
+      { listenHost },
+      'TEAMSTORM_API_TOKEN is set but server is binding to all interfaces — remote callers can create sessions using the server token'
+    );
   }
 
   const httpServer = app.listen(getPort(), listenHost, () => {
@@ -334,7 +419,10 @@ async function runHttp() {
     logger.info(`💚 Health check: http://localhost:${healthPort}/health`);
   });
 
-  httpServer.on('error', (error) => { logger.fatal({ error }, 'Server error'); process.exit(1); });
+  httpServer.on('error', (error) => {
+    logger.fatal({ error }, 'Server error');
+    process.exit(1);
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -344,6 +432,9 @@ async function main() {
   await runHttp();
 }
 
-main().catch((error) => { logger.fatal({ error }, 'Failed to start server'); process.exit(1); });
+main().catch((error) => {
+  logger.fatal({ error }, 'Failed to start server');
+  process.exit(1);
+});
 process.on('SIGTERM', () => process.exit(0));
 process.on('SIGINT', () => process.exit(0));

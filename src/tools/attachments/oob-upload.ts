@@ -16,7 +16,9 @@ export const attachUploadedFileSchema = z
       .string()
       .url()
       .optional()
-      .describe('URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'),
+      .describe(
+        'URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'
+      ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     taskId: z.string().describe('Ключ или ID задачи (например, "TS-1007")'),
     uploadId: z.string().describe('ID загруженного файла (получен от endpoint /upload)'),
@@ -54,7 +56,12 @@ export function registerAttachUploadedFileTool(server: McpServer, client: TeamSt
 После успешного выполнения файл удаляется с диска сервера.
 Ограничения: максимальный размер файла 50 MB, файл живёт на сервере 1 час.`,
       inputSchema: attachUploadedFileSchema,
-      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
     },
     async (params: z.infer<typeof attachUploadedFileSchema>) => attachUploadedFile(client, params)
   );
@@ -114,12 +121,7 @@ export async function attachUploadedFile(
       fileSize: buffer.length,
     });
 
-    const result = await client.uploadTaskAttachmentBuffer(
-      taskId,
-      workspace,
-      buffer,
-      name
-    );
+    const result = await client.uploadTaskAttachmentBuffer(taskId, workspace, buffer, name);
     const duration = Date.now() - startTime;
 
     logResponse('teamstorm_attach_uploaded', true, duration);
@@ -162,9 +164,17 @@ export async function attachUploadedFile(
       .readdirSync(UPLOAD_DIR)
       .filter((f) => f.startsWith(uploadId) && !f.endsWith('.meta.json'));
     for (const entry of fileEntries) {
-      try { fs.unlinkSync(path.join(UPLOAD_DIR, entry)); } catch { /* ignore */ }
+      try {
+        fs.unlinkSync(path.join(UPLOAD_DIR, entry));
+      } catch {
+        /* ignore */
+      }
     }
-    try { fs.unlinkSync(metaPath2); } catch { /* ignore */ }
+    try {
+      fs.unlinkSync(metaPath2);
+    } catch {
+      /* ignore */
+    }
 
     return {
       content: [
@@ -177,4 +187,3 @@ export async function attachUploadedFile(
     };
   }
 }
-

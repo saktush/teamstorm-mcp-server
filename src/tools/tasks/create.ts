@@ -119,7 +119,9 @@ const CreateTaskSchema = z
       .string()
       .url()
       .optional()
-      .describe('URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'),
+      .describe(
+        'URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'
+      ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     name: z.string().min(1).max(255).describe('Название задачи (обязательно, до 255 символов)'),
     description: z.string().optional().describe('Описание задачи в формате HTML'),
@@ -239,7 +241,10 @@ export async function createTask(
       structuredContent: result as unknown as Record<string, unknown>,
     };
   } catch (error) {
-    logError(error as Error, { workspace, taskName: (params as z.infer<typeof CreateTaskSchema>).name });
+    logError(error as Error, {
+      workspace,
+      taskName: (params as z.infer<typeof CreateTaskSchema>).name,
+    });
     return {
       content: [
         {
@@ -262,7 +267,12 @@ export function registerCreateTaskTool(server: McpServer, client: TeamStormClien
       description:
         'Создать новую задачу в TeamStorm. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
       inputSchema: CreateTaskSchema,
-      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
     },
     async (params: z.infer<typeof CreateTaskSchema>) => createTask(client, params)
   );

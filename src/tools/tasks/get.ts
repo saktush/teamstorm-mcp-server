@@ -10,7 +10,9 @@ const GetTaskSchema = z
       .string()
       .url()
       .optional()
-      .describe('URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'),
+      .describe(
+        'URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'
+      ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     taskId: z.string().describe('Ключ или ID задачи (например, TS-13 или UUID)'),
   })
@@ -37,7 +39,8 @@ export async function getTask(
       content: [
         {
           type: 'text',
-          text: '❌ TeamStorm API URL не задан.\n' +
+          text:
+            '❌ TeamStorm API URL не задан.\n' +
             '💡 Установите TEAMSTORM_API_URL в переменной окружения.\n' +
             '   Формат: http://<teamstorm-host>/cwm/public/api/v1',
         },

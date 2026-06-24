@@ -7,7 +7,7 @@ import type { IncomingMessage } from 'http';
 export class UploadError extends Error {
   constructor(
     message: string,
-    public readonly statusCode: 400 | 413,
+    public readonly statusCode: 400 | 413
   ) {
     super(message);
     this.name = 'UploadError';
@@ -27,9 +27,10 @@ export async function parseUpload(
   req: IncomingMessage,
   uploadDir: string,
   maxFileSize: number,
-  _fns?: { writeFileSync?: WriteFileFn },
+  _fns?: { writeFileSync?: WriteFileFn }
 ): Promise<ParsedUpload> {
-  const writeMeta: WriteFileFn = _fns?.writeFileSync ?? ((p, d, opts) => fs.writeFileSync(p, d, opts));
+  const writeMeta: WriteFileFn =
+    _fns?.writeFileSync ?? ((p, d, opts) => fs.writeFileSync(p, d, opts));
   const form = formidable({
     uploadDir,
     maxFileSize,
@@ -51,7 +52,7 @@ export async function parseUpload(
     ) {
       throw new UploadError(
         `File too large. Maximum size is ${Math.round(maxFileSize / 1024 / 1024)} MB.`,
-        413,
+        413
       );
     }
     throw err;
@@ -78,7 +79,7 @@ export async function parseUpload(
         fileName: file.originalFilename ?? 'upload',
         contentType: file.mimetype ?? 'application/octet-stream',
       }),
-      { mode: 0o600 },
+      { mode: 0o600 }
     );
     fs.renameSync(metaTmpPath, metaPath);
   } catch (err) {

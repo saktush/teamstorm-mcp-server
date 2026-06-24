@@ -38,7 +38,7 @@ function callParseUpload(
   body: Buffer,
   uploadDir: string,
   maxSize: number,
-  opts: CallOptions = {},
+  opts: CallOptions = {}
 ): Promise<ParsedUpload> {
   return new Promise((resolve, reject) => {
     const server = http.createServer(async (req, res) => {
@@ -65,7 +65,7 @@ function callParseUpload(
           headers: { 'content-type': contentType },
         });
         let offset = 0;
-        function sendNext() {
+        const sendNext = () => {
           if (offset >= body.length) {
             client.end();
             return;
@@ -73,7 +73,7 @@ function callParseUpload(
           client.write(body.subarray(offset, Math.min(offset + opts.chunkSize!, body.length)));
           offset += opts.chunkSize!;
           setImmediate(sendNext);
-        }
+        };
         sendNext();
       } else {
         const client = http.request({
@@ -115,7 +115,7 @@ describe('parseUpload', () => {
     expect(stored).toEqual(content);
 
     const meta = JSON.parse(
-      fs.readFileSync(path.join(tmpDir, result.uploadId + '.meta.json'), 'utf8'),
+      fs.readFileSync(path.join(tmpDir, result.uploadId + '.meta.json'), 'utf8')
     );
     expect(meta.fileName).toBe('hello.txt');
     expect(meta.contentType).toBe('application/octet-stream');
@@ -146,19 +146,22 @@ describe('parseUpload', () => {
     const body = buildMultipartBody({ boundary, filename: 'big.bin', content });
 
     await expect(callParseUpload(boundary, body, tmpDir, 100)).rejects.toSatisfy(
-      (err: unknown) => err instanceof UploadError && err.statusCode === 413,
+      (err: unknown) => err instanceof UploadError && err.statusCode === 413
     );
   });
 
   it('TC4: wrong field name rejects with UploadError(400)', async () => {
     const content = Buffer.from('data');
     const boundary = 'bound456';
-    const body = buildMultipartBody({ boundary, filename: 'file.txt', content, fieldName: 'attachment' });
+    const body = buildMultipartBody({
+      boundary,
+      filename: 'file.txt',
+      content,
+      fieldName: 'attachment',
+    });
 
-    await expect(
-      callParseUpload(boundary, body, tmpDir, 50 * 1024 * 1024),
-    ).rejects.toSatisfy(
-      (err: unknown) => err instanceof UploadError && err.statusCode === 400,
+    await expect(callParseUpload(boundary, body, tmpDir, 50 * 1024 * 1024)).rejects.toSatisfy(
+      (err: unknown) => err instanceof UploadError && err.statusCode === 400
     );
   });
 
@@ -174,7 +177,7 @@ describe('parseUpload', () => {
             throw new Error('disk full');
           },
         },
-      }),
+      })
     ).rejects.toThrow('disk full');
 
     // No orphaned data file should remain after cleanup

@@ -8,12 +8,14 @@ export type SessionAuthResult = { ok: true } | { ok: false; status: 401; reason:
 
 export function validateSessionToken(
   incomingToken: string,
-  expectedHash: string | undefined,
+  expectedHash: string | undefined
 ): SessionAuthResult {
   if (!expectedHash) {
     return { ok: false, status: 401, reason: 'Session identity not found' };
   }
-  if (!timingSafeEqual(Buffer.from(hashToken(incomingToken), 'hex'), Buffer.from(expectedHash, 'hex'))) {
+  if (
+    !timingSafeEqual(Buffer.from(hashToken(incomingToken), 'hex'), Buffer.from(expectedHash, 'hex'))
+  ) {
     return { ok: false, status: 401, reason: 'Unauthorized: token does not match session' };
   }
   return { ok: true };

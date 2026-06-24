@@ -10,7 +10,9 @@ export const createTimeEntrySchema = z
       .string()
       .url()
       .optional()
-      .describe('URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'),
+      .describe(
+        'URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'
+      ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     taskId: z.string().describe('Ключ или ID задачи (например, "TS-1007")'),
     duration: z
@@ -37,7 +39,12 @@ export function registerCreateTimeEntryTool(server: McpServer, client: TeamStorm
       description:
         'Добавить списание времени (трудозатраты) к задаче. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
       inputSchema: createTimeEntrySchema,
-      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
     },
     async (params: z.infer<typeof createTimeEntrySchema>) => createTimeEntry(client, params)
   );
