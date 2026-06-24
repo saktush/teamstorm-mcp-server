@@ -203,11 +203,24 @@ export class TeamStormClient {
   }
 
   private extractErrorMessage(data: unknown): string {
-    if (typeof data === 'object' && data !== null && 'message' in data) {
-      return String((data as { message: unknown }).message);
+    if (typeof data === 'string' && data.length > 0) {
+      return data.slice(0, 500);
     }
-    if (typeof data === 'object' && data !== null && 'error' in data) {
-      return String((data as { error: unknown }).error);
+    if (typeof data === 'object' && data !== null) {
+      if ('message' in data && (data as { message: unknown }).message) {
+        return String((data as { message: unknown }).message);
+      }
+      if ('error' in data && (data as { error: unknown }).error) {
+        return String((data as { error: unknown }).error);
+      }
+      if ('title' in data && (data as { title: unknown }).title) {
+        return String((data as { title: unknown }).title);
+      }
+      if ('errors' in data) {
+        return JSON.stringify((data as { errors: unknown }).errors).slice(0, 500);
+      }
+      const raw = JSON.stringify(data).slice(0, 500);
+      if (raw !== '{}') return raw;
     }
     return 'Unknown error';
   }

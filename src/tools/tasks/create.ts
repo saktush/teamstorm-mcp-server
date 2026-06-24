@@ -167,7 +167,7 @@ export async function createTask(
     client.setBaseUrl(apiUrl);
   }
 
-  const { workspace, parentId: parentIdInput, sprintId: sprintIdInput, ...taskData } = params;
+  const { workspace, parentId: parentIdInput, sprintId: sprintIdInput, apiUrl: _apiUrl, ...taskData } = params;
 
   try {
     const workspaceId = await resolveWorkspaceId(client, workspace);
