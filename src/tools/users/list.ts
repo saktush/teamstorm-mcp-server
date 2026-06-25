@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import type { TeamStormUserListResponse } from '../../client/types.js';
-import { logRequest, logResponse, logError } from '../../utils/logger.js';
+import { logRequest, logResponse, logError, logger } from '../../utils/logger.js';
 
 const ListUsersSchema = z
   .object({
@@ -82,7 +82,7 @@ export async function listUsers(
     // Apply maxItemsCount limit
     const limitedUsers = filteredUsers.slice(0, params.maxItemsCount);
 
-    console.error(`✅ Retrieved ${limitedUsers.length} users in ${duration}ms`);
+    logger.info({ count: limitedUsers.length, durationMs: duration }, 'Users retrieved');
 
     const markdown = formatUsersMarkdown({
       ...result,

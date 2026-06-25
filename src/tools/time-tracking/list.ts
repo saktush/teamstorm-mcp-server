@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import { formatDuration } from '../../utils/formatters.js';
-import { logRequest, logResponse, logError } from '../../utils/logger.js';
+import { logRequest, logResponse, logError, logger } from '../../utils/logger.js';
 
 export const listTimeEntriesSchema = z
   .object({
@@ -57,7 +57,7 @@ export async function listTimeEntries(
 
     logResponse('teamstorm_list_time_entries', true, duration);
 
-    console.error(`✅ Retrieved ${result.length} time entries for ${args.taskId} in ${duration}ms`);
+    logger.info({ taskId: args.taskId, count: result.length, durationMs: duration }, 'Time entries retrieved');
 
     if (result.length === 0) {
       return {

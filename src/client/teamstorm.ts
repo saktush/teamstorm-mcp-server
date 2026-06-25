@@ -1,4 +1,6 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
+import http from 'node:http';
+import https from 'node:https';
 import * as path from 'path';
 import { maskToken } from '../config.js';
 import { logger } from '../utils/logger.js';
@@ -100,6 +102,9 @@ export class TeamStormClient {
     this.internalApiUrl = baseUrl?.replace(/\/cwm\/public\/api\/v1$/, '');
     this.client = axios.create({
       baseURL: baseUrl,
+      timeout: 30_000,
+      httpAgent: new http.Agent({ keepAlive: true }),
+      httpsAgent: new https.Agent({ keepAlive: true }),
       headers: {
         Authorization: `PrivateToken ${token}`,
         'Content-Type': 'application/json',
@@ -733,13 +738,10 @@ export class TeamStormClient {
     try {
       const ws = this.resolveWorkspace(params.workspace);
 
-      // Resolve task key (e.g. "TS-1007") to UUID via the CWM API
-      const task = await this.getTask(params.taskId, ws);
-      const workitemUuid = task.id;
-
-      if (!workitemUuid) {
-        throw new Error(`Не удалось получить UUID задачи ${params.taskId}`);
-      }
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const workitemUuid = uuidRegex.test(params.taskId)
+        ? params.taskId
+        : (await this.getTask(params.taskId, ws)).id;
 
       const body: Record<string, unknown> = {
         workitemId: workitemUuid,
@@ -787,8 +789,10 @@ export class TeamStormClient {
     }
     try {
       const ws = this.resolveWorkspace(params.workspace);
-      const task = await this.getTask(params.taskId, ws);
-      const workitemUuid = task.id;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const workitemUuid = uuidRegex.test(params.taskId)
+        ? params.taskId
+        : (await this.getTask(params.taskId, ws)).id;
       const response = await this.client.get(
         `${this.internalApiUrl}/tasks/api/v1/workitems/${workitemUuid}/time-tracking-entries`
       );

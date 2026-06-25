@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import { formatTaskMarkdown } from '../../utils/formatters.js';
-import { logRequest, logResponse, logError } from '../../utils/logger.js';
+import { logRequest, logResponse, logError, logger } from '../../utils/logger.js';
 
 const UpdateTaskSchema = z
   .object({
@@ -52,7 +52,7 @@ export async function updateTask(
     const duration = Date.now() - startTime;
 
     logResponse('teamstorm_update_task', true, duration);
-    console.error(`✅ Updated task ${taskId} in ${duration}ms`);
+    logger.info({ taskId, durationMs: duration }, 'Task updated');
 
     const markdown = formatTaskMarkdown(result);
 

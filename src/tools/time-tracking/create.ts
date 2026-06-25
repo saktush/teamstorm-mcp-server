@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import { formatDuration } from '../../utils/formatters.js';
-import { logRequest, logResponse, logError } from '../../utils/logger.js';
+import { logRequest, logResponse, logError, logger } from '../../utils/logger.js';
 
 export const createTimeEntrySchema = z
   .object({
@@ -79,7 +79,7 @@ export async function createTimeEntry(
 
     logResponse('teamstorm_create_time_entry', true, duration);
 
-    console.error(`✅ Time entry created for ${taskId} in ${duration}ms`);
+    logger.info({ taskId, durationMs: duration }, 'Time entry created');
 
     const timeStr = formatDuration(args.duration);
 

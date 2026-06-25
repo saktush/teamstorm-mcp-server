@@ -85,19 +85,22 @@ async function cleanupOrphanedUploads(): Promise<void> {
   try {
     const entries = await fsPromises.readdir(UPLOAD_DIR);
     const now = Date.now();
-    let cleaned = 0;
-    for (const f of entries) {
-      const fp = path.join(UPLOAD_DIR, f);
-      try {
-        const stat = await fsPromises.stat(fp);
-        if (now - stat.mtimeMs > UPLOAD_TTL_MS) {
-          await fsPromises.unlink(fp);
-          cleaned++;
+    const counts = await Promise.all(
+      entries.map(async (f) => {
+        const fp = path.join(UPLOAD_DIR, f);
+        try {
+          const stat = await fsPromises.stat(fp);
+          if (now - stat.mtimeMs > UPLOAD_TTL_MS) {
+            await fsPromises.unlink(fp);
+            return 1;
+          }
+        } catch {
+          /* concurrent removal */
         }
-      } catch {
-        /* concurrent removal */
-      }
-    }
+        return 0;
+      })
+    );
+    const cleaned = counts.reduce<number>((a, b) => a + b, 0);
     if (cleaned > 0) logger.info({ cleaned }, 'Cleaned up orphaned upload files');
   } catch (err) {
     logger.error(
@@ -395,6 +398,7 @@ async function runHttp() {
   });
 
   app.use((_req, res, next) => {
+    // No Access-Control-Allow-Origin: browser clients are not a supported use case
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, DELETE');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     next();

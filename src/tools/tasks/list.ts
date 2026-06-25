@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import { formatTaskListMarkdown } from '../../utils/formatters.js';
-import { logRequest, logResponse, logError } from '../../utils/logger.js';
+import { logRequest, logResponse, logError, logger } from '../../utils/logger.js';
 
 const ListTasksSchema = z
   .object({
@@ -52,7 +52,7 @@ export async function listTasks(
     const duration = Date.now() - startTime;
 
     logResponse('teamstorm_list_tasks', true, duration);
-    console.error(`✅ Retrieved ${result.items.length} tasks in ${duration}ms`);
+    logger.info({ count: result.items.length, durationMs: duration }, 'Tasks retrieved');
 
     const markdown = formatTaskListMarkdown(result);
 

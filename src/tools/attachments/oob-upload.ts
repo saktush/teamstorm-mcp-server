@@ -5,6 +5,7 @@ import type { TeamStormAttachment } from '../../client/types.js';
 import { logRequest, logResponse, logError, logger } from '../../utils/logger.js';
 import { formatBytes } from '../../utils/formatters.js';
 import * as fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
@@ -78,6 +79,11 @@ export async function attachUploadedFile(
   const startTime = Date.now();
   const { workspace, taskId, uploadId, apiUrl } = params;
 
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(uploadId)) {
+    return { content: [{ type: 'text', text: '❌ Invalid uploadId format' }], isError: true };
+  }
+
   if (apiUrl) {
     client.setBaseUrl(apiUrl);
   }
@@ -110,7 +116,7 @@ export async function attachUploadedFile(
     }
 
     const filePath = path.join(UPLOAD_DIR, entries[0]);
-    const buffer = fs.readFileSync(filePath);
+    const buffer = await fsPromises.readFile(filePath);
     const name = params.fileName ?? meta.fileName;
 
     logRequest('teamstorm_attach_uploaded', {

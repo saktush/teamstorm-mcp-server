@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import type { TeamStormWorkflowListResponse } from '../../client/types.js';
-import { logRequest, logResponse, logError } from '../../utils/logger.js';
+import { logRequest, logResponse, logError, logger } from '../../utils/logger.js';
 
 const ListWorkflowsSchema = z
   .object({
@@ -64,7 +64,7 @@ export async function listWorkflows(
     const duration = Date.now() - startTime;
 
     logResponse('teamstorm_list_workflows', true, duration);
-    console.error(`✅ Retrieved ${result.items.length} workflows in ${duration}ms`);
+    logger.info({ count: result.items.length, durationMs: duration }, 'Workflows retrieved');
 
     const markdown = formatWorkflowsMarkdown(result);
 

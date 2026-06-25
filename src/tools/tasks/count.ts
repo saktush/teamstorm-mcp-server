@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
-import { logRequest, logResponse, logError } from '../../utils/logger.js';
+import { logRequest, logResponse, logError, logger } from '../../utils/logger.js';
 
 const GetTaskCountSchema = z
   .object({
@@ -35,7 +35,7 @@ export async function getTaskCount(
     const count = await client.getTaskCount(workspace);
 
     logResponse('teamstorm_get_task_count', true);
-    console.error(`✅ Task count retrieved: ${count}`);
+    logger.info({ count }, 'Task count retrieved');
 
     return {
       content: [

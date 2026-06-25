@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import type { TeamStormSprintListResponse } from '../../client/types.js';
-import { logRequest, logResponse, logError } from '../../utils/logger.js';
+import { logRequest, logResponse, logError, logger } from '../../utils/logger.js';
 
 const ListSprintsSchema = z
   .object({
@@ -99,7 +99,7 @@ export async function listSprints(
       });
     }
 
-    console.error(`✅ Retrieved ${filteredSprints.length} sprints in ${duration}ms`);
+    logger.info({ count: filteredSprints.length, durationMs: duration }, 'Sprints retrieved');
 
     const markdown = formatSprintsMarkdown({
       ...result,
