@@ -23,6 +23,10 @@ import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
 import {
+  registerListFoldersTool,
+  registerGetFolderTool,
+  registerGetFolderTreeTool,
+  registerFindFolderTool,
   registerListWorkspacesTool,
   registerCreateTimeEntryTool,
   registerListTimeEntriesTool,
@@ -136,6 +140,10 @@ setInterval(
 );
 
 function registerAllTools(server: McpServer, client: TeamStormClient) {
+  registerListFoldersTool(server, client);
+  registerGetFolderTool(server, client);
+  registerGetFolderTreeTool(server, client);
+  registerFindFolderTool(server, client);
   registerListWorkspacesTool(server, client);
   registerCreateTimeEntryTool(server, client);
   registerListTimeEntriesTool(server, client);

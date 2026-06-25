@@ -24,6 +24,8 @@ import type {
   TeamStormPermissionListResponse,
   TeamStormLinkListResponse,
   TeamStormUpdatedTaskListResponse,
+  TeamStormFolderModel,
+  TeamStormFolderListResponse,
 } from './types.js';
 
 export class TeamStormClient {
@@ -795,6 +797,39 @@ export class TeamStormClient {
         : (await this.getTask(params.taskId, ws)).id;
       const response = await this.client.get(
         `${this.internalApiUrl}/tasks/api/v1/workitems/${workitemUuid}/time-tracking-entries`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async listFolders(params: {
+    workspace?: string;
+    name?: string;
+    parentId?: string;
+    fromToken?: string;
+    maxItemsCount?: number;
+  }): Promise<TeamStormFolderListResponse> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(params.workspace);
+      const response = await this.client.get<TeamStormFolderListResponse>(
+        `/workspaces/${ws}/folders`,
+        { params: { ...params, workspace: undefined } }
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async getFolder(folderId: string, workspace?: string): Promise<TeamStormFolderModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get<TeamStormFolderModel>(
+        `/workspaces/${ws}/folders/${folderId}`
       );
       return response.data;
     } catch (error) {

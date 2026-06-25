@@ -2,7 +2,7 @@
 
 ## Project
 
-TeamStorm MCP Server — MCP-сервер для интеграции Claude Code с TeamStorm API. Предоставляет 26 инструментов для работы с задачами, комментариями, атрибутами, вложениями, правами доступа, связями, пользователями, спринтами, workflow и списанием времени.
+TeamStorm MCP Server — MCP-сервер для интеграции Claude Code с TeamStorm API. Предоставляет 30 инструментов для работы с задачами, папками, комментариями, атрибутами, вложениями, правами доступа, связями, пользователями, спринтами, workflow и списанием времени.
 
 ## Commands
 
@@ -49,7 +49,9 @@ npm run typecheck        # tsc --noEmit
 
 ### Инструменты (`src/tools/`)
 
-Каждая папка = доменная область. Паттерн:
+Доменные области: `folders/`, `tasks/`, `comments/`, `attributes/`, `attachments/`, `permissions/`, `links/`, `users/`, `sprints/`, `workflows/`, `types/`, `workspaces/`, `time-tracking/`.
+
+Паттерн каждой папки:
 
 - `index.ts` — barrel-реэкспорт инструментов + Zod-схем
 - `<имя>.ts` — один инструмент: регистрация через `server.registerTool()` + функция `execute`
@@ -91,6 +93,24 @@ Accessors: `getApiToken()`, `getApiUrl()`, `getWorkspace()`, `getPort()`, `getLi
 - Ограничение размера: 50 МБ
 - Права файлов: `0o600` (только владелец)
 - Очистка устаревших файлов: каждые 30 минут (удаляются файлы старше 1 часа)
+
+## Папки
+
+Инструменты `src/tools/folders/`:
+
+| Инструмент                  | Файл           | Тип      | Описание                                                               |
+| --------------------------- | -------------- | -------- | ---------------------------------------------------------------------- |
+| `teamstorm_list_folders`    | `list.ts`      | прямой   | `GET /folders` с фильтром `name`/`parentId`, пагинация                 |
+| `teamstorm_get_folder`      | `get.ts`       | прямой   | `GET /folders/{id}`                                                    |
+| `teamstorm_get_folder_tree` | `get-tree.ts`  | составной | Обходит все страницы `listFolders`, строит дерево на клиенте           |
+| `teamstorm_find_folder`     | `find.ts`      | составной | По `name` → `listFolders?name=…`; по `id` → `getFolder(id)`; резолвит цепочку родителей для breadcrumb-пути |
+
+Клиентские методы в `src/client/teamstorm.ts`: `listFolders()`, `getFolder()`.
+Типы в `src/client/types.ts`: `TeamStormFolderModel`, `TeamStormFolderListResponse`.
+
+**Как найти задачи в папке:**
+1. `teamstorm_find_folder` name="…" → получить `folderId`
+2. `teamstorm_list_tasks` parent=`folderId` → все задачи в папке
 
 ## Особенности TeamStorm API
 

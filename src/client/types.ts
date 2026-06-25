@@ -275,6 +275,21 @@ export interface TeamStormUpdatedTaskListResponse {
   items: TeamStormUpdatedTask[];
 }
 
+// Folders
+export interface TeamStormFolderModel {
+  id: string;
+  name: string;
+  description?: string | null;
+  parentId?: string | null;
+}
+
+export interface TeamStormFolderListResponse {
+  fromToken?: string | null;
+  maxItemsCount?: number | null;
+  nextToken?: string | null;
+  items: TeamStormFolderModel[];
+}
+
 // New types for Phase B
 export interface TeamStormUserListResponse {
   items: TeamStormUser[];
