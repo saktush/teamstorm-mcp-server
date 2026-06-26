@@ -2,7 +2,7 @@
 
 ## Project
 
-TeamStorm MCP Server — MCP-сервер для интеграции Claude Code с TeamStorm API. Предоставляет 26 инструментов для работы с задачами, комментариями, атрибутами, вложениями, правами доступа, связями, пользователями, спринтами, workflow и списанием времени.
+TeamStorm MCP Server — MCP-сервер для интеграции Claude Code с TeamStorm API. Предоставляет 30 инструментов для работы с задачами, папками, комментариями, атрибутами, вложениями, правами доступа, связями, пользователями, спринтами, workflow и списанием времени.
 
 ## Commands
 
@@ -26,14 +26,13 @@ npm run typecheck        # tsc --noEmit
 
 ### Точка входа (`src/index.ts`)
 
-- HTTP-сервер слушает на `0.0.0.0:PORT` (3001), health-check на `0.0.0.0:PORT+1` (3002)
+- HTTP-сервер слушает на `LISTEN_HOST:PORT` (default: `127.0.0.1:3001` если задан `TEAMSTORM_API_TOKEN`, иначе `0.0.0.0:3001`), health-check на том же хосте, `PORT+1` (3002)
 - Сессионная модель: первый запрос без `mcp-session-id` создаёт новый `McpServer` + `TeamStormClient`; повторные запросы с тем же `mcp-session-id` переиспользуют transport и обновляют токен через `setToken()`. Состояние хранится в `transports` и `sessionClients` (Map по sessionId).
 - `resolveToken(req)` — извлекает токен из заголовка `Authorization: Bearer <token>` или `Authorization: PrivateToken <token>`, fallback на `TEAMSTORM_API_TOKEN` из `.env`. Обеспечивает multi-user HTTP режим.
 - Endpoints:
   - `POST /mcp`, `GET /mcp` — основной MCP endpoint
   - `POST /sse`, `GET /sse` — SSE-совместимый MCP endpoint (тот же handler)
   - `POST /upload` — загрузка файлов (auth + rate limit)
-  - `GET /uploads` — отладочный список загруженных файлов (auth required)
 - Middleware инжектирует `Accept: application/json, text/event-stream` для MCP-клиентов (Claude Code, Cursor), которые не передают его
 - Конфигурация загружается через Zod-валидацию из `.env` (ленивая, без `process.exit()` на импорте)
 
@@ -50,7 +49,9 @@ npm run typecheck        # tsc --noEmit
 
 ### Инструменты (`src/tools/`)
 
-Каждая папка = доменная область. Паттерн:
+Доменные области: `folders/`, `tasks/`, `comments/`, `attributes/`, `attachments/`, `permissions/`, `links/`, `users/`, `sprints/`, `workflows/`, `types/`, `workspaces/`, `time-tracking/`.
+
+Паттерн каждой папки:
 
 - `index.ts` — barrel-реэкспорт инструментов + Zod-схем
 - `<имя>.ts` — один инструмент: регистрация через `server.registerTool()` + функция `execute`
@@ -75,10 +76,11 @@ npm run typecheck        # tsc --noEmit
 - `TEAMSTORM_API_TOKEN` — PrivateToken (опциональный: в HTTP режиме токен берётся из заголовка `Authorization` каждого запроса; переменная нужна только для single-user деплоя или как fallback)
 - `TEAMSTORM_WORKSPACE` — необязательный, workspace по умолчанию
 - `PORT` — порт MCP-сервера (3001)
+- `LISTEN_HOST` — адрес привязки сервера. Если не задан: `127.0.0.1` когда установлен `TEAMSTORM_API_TOKEN` (защита от анонимных сессий по сети), иначе `0.0.0.0`. Задайте `0.0.0.0` явно для сетевого доступа при заданном токене (контейнеры, reverse-proxy).
 - `NODE_ENV` — `development` | `production` | `test` (по умолчанию `production`)
 - `TRUST_PROXY` — доверять `X-Forwarded-For` для rate limiter (только за reverse-proxy, по умолчанию `false`)
 
-Accessors: `getApiToken()`, `getApiUrl()`, `getWorkspace()`, `getPort()`, `getNodeEnv()`, `getTrustProxy()`
+Accessors: `getApiToken()`, `getApiUrl()`, `getWorkspace()`, `getPort()`, `getListenHost()`, `getNodeEnv()`, `getTrustProxy()`
 
 ## Загрузка файлов (Out-of-Band)
 
@@ -91,6 +93,34 @@ Accessors: `getApiToken()`, `getApiUrl()`, `getWorkspace()`, `getPort()`, `getNo
 - Ограничение размера: 50 МБ
 - Права файлов: `0o600` (только владелец)
 - Очистка устаревших файлов: каждые 30 минут (удаляются файлы старше 1 часа)
+
+## Папки
+
+Инструменты `src/tools/folders/`:
+
+| Инструмент                  | Файл           | Тип      | Описание                                                               |
+| --------------------------- | -------------- | -------- | ---------------------------------------------------------------------- |
+| `teamstorm_list_folders`    | `list.ts`      | прямой   | `GET /folders` с фильтром `name`/`parentId`, пагинация                 |
+| `teamstorm_get_folder`      | `get.ts`       | прямой   | `GET /folders/{id}`                                                    |
+| `teamstorm_get_folder_tree` | `get-tree.ts`  | составной | Обходит все страницы `listFolders`, строит дерево на клиенте           |
+| `teamstorm_find_folder`     | `find.ts`      | составной | По `name` → `listFolders?name=…`; по `id` → `getFolder(id)`; резолвит цепочку родителей для breadcrumb-пути |
+
+Клиентские методы в `src/client/teamstorm.ts`: `listFolders()`, `getFolder()`.
+Типы в `src/client/types.ts`: `TeamStormFolderModel`, `TeamStormFolderListResponse`.
+
+**Как найти задачи в папке:**
+1. `teamstorm_find_folder` name="…" → получить `folderId`
+2. `teamstorm_list_tasks` parent=`folderId` → все задачи в папке
+
+## Особенности TeamStorm API
+
+### Создание задач и атрибуты
+
+- **URL должен быть `https://`** — сервер возвращает 301 redirect с `http://` на `https://`. Axios при redirect с POST теряет Authorization-заголовок, что приводит к 500. Убедись, что `TEAMSTORM_API_URL` в `.env` использует `https://`.
+- **`apiUrl` не должен попадать в тело запроса** — схема `CreateWorkitemRequestBody` имеет `additionalProperties: false`, лишние поля дают 500. В `create.ts` `apiUrl` нужно явно вырезать из деструктуризации: `const { ..., apiUrl: _apiUrl, ...taskData } = params`.
+- **Атрибуты при создании не сохраняются** (UniSelect, Tag) — поле `attributes` в create-запросе принимается без ошибки, но значения не применяются. Исключение: тип `Date` сохраняется. Устанавливать атрибуты нужно отдельными PUT-запросами на `/workitems/{id}/attributes/{attributeId}` после создания задачи.
+- **Значения атрибутов — имена, не UUID** — PUT `/attributes/{attributeId}` принимает `value` как строку-**имя** опции (например `"🟥 Высокий"`), а не UUID опции. Формат: UniSelect → `{"type":"UniSelect","value":"Имя опции"}`, Tag → `{"type":"Tag","value":["Имя опции"]}`.
+- **После изменений в `.env` или коде** — требуется перезапуск MCP-сервера (`npm start` или рестарт Claude Code), так как `.env` читается при старте процесса.
 
 ## Docker
 

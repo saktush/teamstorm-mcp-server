@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import type { TeamStormSprint, TeamStormCreateTaskRequest } from '../../client/types.js';
 import { formatTaskMarkdown } from '../../utils/formatters.js';
-import { logRequest, logResponse, logError } from '../../utils/logger.js';
+import { logRequest, logResponse, logError, logger } from '../../utils/logger.js';
 
 async function resolveWorkspaceId(client: TeamStormClient, workspace: string): Promise<string> {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -33,6 +33,7 @@ async function resolveFolderId(
   folderName: string
 ): Promise<string | undefined> {
   const seen = new Map<string, string>();
+  const lower = folderName.toLowerCase();
   let fromToken: string | undefined;
 
   for (let i = 0; i < 20; i++) {
@@ -45,6 +46,9 @@ async function resolveFolderId(
     for (const task of page.items) {
       if (task.folder && !seen.has(task.folder.id)) {
         seen.set(task.folder.id, task.folder.name);
+        if (task.folder.name.toLowerCase().includes(lower)) {
+          return task.folder.id;
+        }
       }
     }
 
@@ -52,20 +56,13 @@ async function resolveFolderId(
     fromToken = page.nextToken;
   }
 
-  const lower = folderName.toLowerCase();
-  for (const [id, name] of seen) {
-    if (name.toLowerCase().includes(lower)) {
-      return id;
-    }
-  }
-
   if (seen.size > 0) {
-    const list = [...seen.entries()]
-      .map(([id, name], i) => `${i + 1}. **${name}** (ID: \`${id}\`)`)
-      .join('\n');
-    console.error(`⚠️ Папка "${folderName}" не найдена. Доступные папки:\n${list}`);
+    logger.warn(
+      { folderName, available: [...seen.entries()].map(([id, name]) => ({ id, name })) },
+      'Folder not found'
+    );
   } else {
-    console.error('⚠️ Папки на верхнем уровне не найдены (workspace пустой)');
+    logger.warn({ workspaceId }, 'No folders found in workspace');
   }
 
   return undefined;
@@ -99,7 +96,7 @@ async function resolveSprintId(
     if (active.length > 0) {
       return active[active.length - 1].id;
     }
-    console.error('⚠️ No active sprint found');
+    logger.warn({ workspaceId }, 'No active sprint found');
     return undefined;
   }
 
@@ -119,7 +116,9 @@ const CreateTaskSchema = z
       .string()
       .url()
       .optional()
-      .describe('URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'),
+      .describe(
+        'URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'
+      ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     name: z.string().min(1).max(255).describe('Название задачи (обязательно, до 255 символов)'),
     description: z.string().optional().describe('Описание задачи в формате HTML'),
@@ -165,7 +164,7 @@ export async function createTask(
     client.setBaseUrl(apiUrl);
   }
 
-  const { workspace, parentId: parentIdInput, sprintId: sprintIdInput, ...taskData } = params;
+  const { workspace, parentId: parentIdInput, sprintId: sprintIdInput, apiUrl: _apiUrl, ...taskData } = params;
 
   try {
     const workspaceId = await resolveWorkspaceId(client, workspace);
@@ -225,7 +224,7 @@ export async function createTask(
     const duration = Date.now() - startTime;
 
     logResponse('teamstorm_create_task', true, duration);
-    console.error(`✅ Created task ${result.key} in ${duration}ms`);
+    logger.info({ taskKey: result.key, durationMs: duration }, 'Task created');
 
     const markdown = formatTaskMarkdown(result);
 
@@ -239,7 +238,10 @@ export async function createTask(
       structuredContent: result as unknown as Record<string, unknown>,
     };
   } catch (error) {
-    logError(error as Error, { workspace, taskName: (params as z.infer<typeof CreateTaskSchema>).name });
+    logError(error as Error, {
+      workspace,
+      taskName: (params as z.infer<typeof CreateTaskSchema>).name,
+    });
     return {
       content: [
         {
@@ -262,7 +264,12 @@ export function registerCreateTaskTool(server: McpServer, client: TeamStormClien
       description:
         'Создать новую задачу в TeamStorm. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
       inputSchema: CreateTaskSchema,
-      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
     },
     async (params: z.infer<typeof CreateTaskSchema>) => createTask(client, params)
   );

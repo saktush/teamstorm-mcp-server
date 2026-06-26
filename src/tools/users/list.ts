@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import type { TeamStormUserListResponse } from '../../client/types.js';
-import { logRequest, logResponse, logError } from '../../utils/logger.js';
+import { logRequest, logResponse, logError, logger } from '../../utils/logger.js';
 
 const ListUsersSchema = z
   .object({
@@ -10,7 +10,9 @@ const ListUsersSchema = z
       .string()
       .url()
       .optional()
-      .describe('URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'),
+      .describe(
+        'URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'
+      ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     search: z.string().optional().describe('Поиск по имени или email (вхождение подстроки)'),
     maxItemsCount: z
@@ -80,7 +82,7 @@ export async function listUsers(
     // Apply maxItemsCount limit
     const limitedUsers = filteredUsers.slice(0, params.maxItemsCount);
 
-    console.error(`✅ Retrieved ${limitedUsers.length} users in ${duration}ms`);
+    logger.info({ count: limitedUsers.length, durationMs: duration }, 'Users retrieved');
 
     const markdown = formatUsersMarkdown({
       ...result,

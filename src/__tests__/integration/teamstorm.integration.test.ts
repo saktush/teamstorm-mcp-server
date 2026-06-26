@@ -237,6 +237,75 @@ describe('TeamStormClient Integration Tests', () => {
     });
   });
 
+  describe('listFolders', () => {
+    it('should fetch folders list successfully', async () => {
+      const mockResponse = {
+        fromToken: '',
+        maxItemsCount: 50,
+        nextToken: null,
+        items: [
+          { id: 'folder-uuid-1', name: 'Development', description: 'Dev folder', parentId: null },
+          { id: 'folder-uuid-2', name: 'Backend', description: null, parentId: 'folder-uuid-1' },
+        ],
+      };
+
+      nock(baseUrl).get(`/workspaces/${workspace}/folders`).reply(200, mockResponse);
+
+      const result = await client.listFolders({ workspace });
+
+      expect(result.items).toHaveLength(2);
+      expect(result.items[0].name).toBe('Development');
+      expect(result.items[1].parentId).toBe('folder-uuid-1');
+    });
+
+    it('should pass query parameters', async () => {
+      nock(baseUrl)
+        .get(`/workspaces/${workspace}/folders`)
+        .query({ name: 'dev', maxItemsCount: '10' })
+        .reply(200, { fromToken: '', maxItemsCount: 10, nextToken: null, items: [] });
+
+      await client.listFolders({ workspace, name: 'dev', maxItemsCount: 10 });
+
+      expect(nock.isDone()).toBe(true);
+    });
+
+    it('should handle 404 workspace not found', async () => {
+      nock(baseUrl)
+        .get(`/workspaces/${workspace}/folders`)
+        .reply(404, { message: 'Workspace not found' });
+
+      await expect(client.listFolders({ workspace })).rejects.toThrow('404');
+    });
+  });
+
+  describe('getFolder', () => {
+    it('should fetch single folder by ID', async () => {
+      const mockFolder = {
+        id: 'folder-uuid-1',
+        name: 'Development',
+        description: 'Dev folder',
+        parentId: null,
+      };
+
+      nock(baseUrl)
+        .get(`/workspaces/${workspace}/folders/folder-uuid-1`)
+        .reply(200, mockFolder);
+
+      const result = await client.getFolder('folder-uuid-1', workspace);
+
+      expect(result.id).toBe('folder-uuid-1');
+      expect(result.name).toBe('Development');
+    });
+
+    it('should handle 404 for non-existent folder', async () => {
+      nock(baseUrl)
+        .get(`/workspaces/${workspace}/folders/nonexistent-uuid`)
+        .reply(404, { message: 'Folder not found' });
+
+      await expect(client.getFolder('nonexistent-uuid', workspace)).rejects.toThrow('404');
+    });
+  });
+
   describe('setBaseUrl normalization', () => {
     it('should accept URL without /cwm/public/api/v1 suffix and normalize it', () => {
       const normalizedClient = new TeamStormClient(token, baseUrl, workspace);

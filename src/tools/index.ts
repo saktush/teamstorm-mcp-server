@@ -1,3 +1,21 @@
+// Folders
+export {
+  listFolders,
+  getFolder,
+  getFolderTree,
+  findFolder,
+  registerListFoldersTool,
+  registerGetFolderTool,
+  registerGetFolderTreeTool,
+  registerFindFolderTool,
+} from './folders/index.js';
+export {
+  listFoldersSchema,
+  getFolderSchema,
+  getFolderTreeSchema,
+  findFolderSchema,
+} from './folders/index.js';
+
 // Workspaces
 export { listWorkspaces, registerListWorkspacesTool } from './workspaces/index.js';
 

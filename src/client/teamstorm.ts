@@ -1,4 +1,6 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
+import http from 'node:http';
+import https from 'node:https';
 import * as path from 'path';
 import { maskToken } from '../config.js';
 import { logger } from '../utils/logger.js';
@@ -22,6 +24,8 @@ import type {
   TeamStormPermissionListResponse,
   TeamStormLinkListResponse,
   TeamStormUpdatedTaskListResponse,
+  TeamStormFolderModel,
+  TeamStormFolderListResponse,
 } from './types.js';
 
 export class TeamStormClient {
@@ -100,6 +104,9 @@ export class TeamStormClient {
     this.internalApiUrl = baseUrl?.replace(/\/cwm\/public\/api\/v1$/, '');
     this.client = axios.create({
       baseURL: baseUrl,
+      timeout: 30_000,
+      httpAgent: new http.Agent({ keepAlive: true }),
+      httpsAgent: new https.Agent({ keepAlive: true }),
       headers: {
         Authorization: `PrivateToken ${token}`,
         'Content-Type': 'application/json',
@@ -203,11 +210,24 @@ export class TeamStormClient {
   }
 
   private extractErrorMessage(data: unknown): string {
-    if (typeof data === 'object' && data !== null && 'message' in data) {
-      return String((data as { message: unknown }).message);
+    if (typeof data === 'string' && data.length > 0) {
+      return data.slice(0, 500);
     }
-    if (typeof data === 'object' && data !== null && 'error' in data) {
-      return String((data as { error: unknown }).error);
+    if (typeof data === 'object' && data !== null) {
+      if ('message' in data && (data as { message: unknown }).message) {
+        return String((data as { message: unknown }).message);
+      }
+      if ('error' in data && (data as { error: unknown }).error) {
+        return String((data as { error: unknown }).error);
+      }
+      if ('title' in data && (data as { title: unknown }).title) {
+        return String((data as { title: unknown }).title);
+      }
+      if ('errors' in data) {
+        return JSON.stringify((data as { errors: unknown }).errors).slice(0, 500);
+      }
+      const raw = JSON.stringify(data).slice(0, 500);
+      if (raw !== '{}') return raw;
     }
     return 'Unknown error';
   }
@@ -720,13 +740,10 @@ export class TeamStormClient {
     try {
       const ws = this.resolveWorkspace(params.workspace);
 
-      // Resolve task key (e.g. "TS-1007") to UUID via the CWM API
-      const task = await this.getTask(params.taskId, ws);
-      const workitemUuid = task.id;
-
-      if (!workitemUuid) {
-        throw new Error(`Не удалось получить UUID задачи ${params.taskId}`);
-      }
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const workitemUuid = uuidRegex.test(params.taskId)
+        ? params.taskId
+        : (await this.getTask(params.taskId, ws)).id;
 
       const body: Record<string, unknown> = {
         workitemId: workitemUuid,
@@ -774,10 +791,45 @@ export class TeamStormClient {
     }
     try {
       const ws = this.resolveWorkspace(params.workspace);
-      const task = await this.getTask(params.taskId, ws);
-      const workitemUuid = task.id;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const workitemUuid = uuidRegex.test(params.taskId)
+        ? params.taskId
+        : (await this.getTask(params.taskId, ws)).id;
       const response = await this.client.get(
         `${this.internalApiUrl}/tasks/api/v1/workitems/${workitemUuid}/time-tracking-entries`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async listFolders(params: {
+    workspace?: string;
+    name?: string;
+    parentId?: string;
+    fromToken?: string;
+    maxItemsCount?: number;
+  }): Promise<TeamStormFolderListResponse> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(params.workspace);
+      const response = await this.client.get<TeamStormFolderListResponse>(
+        `/workspaces/${ws}/folders`,
+        { params: { ...params, workspace: undefined } }
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async getFolder(folderId: string, workspace?: string): Promise<TeamStormFolderModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get<TeamStormFolderModel>(
+        `/workspaces/${ws}/folders/${folderId}`
       );
       return response.data;
     } catch (error) {
