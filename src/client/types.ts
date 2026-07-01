@@ -67,6 +67,13 @@ export interface TeamStormWorkspace {
   author: TeamStormUser;
 }
 
+export interface TeamStormWorkspaceListResponse {
+  fromToken?: string | null;
+  maxItemsCount?: number | null;
+  nextToken?: string | null;
+  items: Array<{ id: string; key: string; name: string }>;
+}
+
 export interface TeamStormTask {
   id: string;
   key: string;

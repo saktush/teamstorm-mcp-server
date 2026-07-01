@@ -306,6 +306,71 @@ describe('TeamStormClient Integration Tests', () => {
     });
   });
 
+  describe('listWorkspaces', () => {
+    it('should fetch all workspaces on a single page', async () => {
+      const mockResponse = {
+        fromToken: null,
+        maxItemsCount: 1000,
+        nextToken: null,
+        items: [
+          { id: 'ws-uuid-1', key: 'TS', name: 'TeamStorm' },
+          { id: 'ws-uuid-2', key: 'DEV', name: 'Development' },
+        ],
+      };
+
+      nock(baseUrl).get('/workspaces').query({ maxItemsCount: '1000' }).reply(200, mockResponse);
+
+      const result = await client.listWorkspaces({ maxItemsCount: 1000 });
+
+      expect(result.items).toHaveLength(2);
+      expect(result.items[0].key).toBe('TS');
+      expect(result.nextToken).toBeNull();
+    });
+
+    it('should follow nextToken across multiple pages', async () => {
+      nock(baseUrl)
+        .get('/workspaces')
+        .query({ maxItemsCount: '1000' })
+        .reply(200, {
+          fromToken: null,
+          maxItemsCount: 1000,
+          nextToken: 'page2-token',
+          items: [{ id: 'ws-uuid-1', key: 'TS', name: 'TeamStorm' }],
+        });
+
+      nock(baseUrl)
+        .get('/workspaces')
+        .query({ maxItemsCount: '1000', fromToken: 'page2-token' })
+        .reply(200, {
+          fromToken: 'page2-token',
+          maxItemsCount: 1000,
+          nextToken: null,
+          items: [{ id: 'ws-uuid-2', key: 'DEV', name: 'Development' }],
+        });
+
+      const page1 = await client.listWorkspaces({ maxItemsCount: 1000 });
+      expect(page1.nextToken).toBe('page2-token');
+
+      const page2 = await client.listWorkspaces({ maxItemsCount: 1000, fromToken: 'page2-token' });
+      expect(page2.items).toHaveLength(1);
+      expect(page2.items[0].key).toBe('DEV');
+      expect(page2.nextToken).toBeNull();
+
+      expect(nock.isDone()).toBe(true);
+    });
+
+    it('should pass query params correctly', async () => {
+      nock(baseUrl)
+        .get('/workspaces')
+        .query({ maxItemsCount: '1000' })
+        .reply(200, { fromToken: null, maxItemsCount: 1000, nextToken: null, items: [] });
+
+      await client.listWorkspaces({ maxItemsCount: 1000 });
+
+      expect(nock.isDone()).toBe(true);
+    });
+  });
+
   describe('setBaseUrl normalization', () => {
     it('should accept URL without /cwm/public/api/v1 suffix and normalize it', () => {
       const normalizedClient = new TeamStormClient(token, baseUrl, workspace);

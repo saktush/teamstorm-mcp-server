@@ -26,6 +26,7 @@ import type {
   TeamStormUpdatedTaskListResponse,
   TeamStormFolderModel,
   TeamStormFolderListResponse,
+  TeamStormWorkspaceListResponse,
 } from './types.js';
 
 export class TeamStormClient {
@@ -366,12 +367,15 @@ export class TeamStormClient {
     }
   }
 
-  async listWorkspaces(): Promise<{ items: Array<{ id: string; key: string; name: string }> }> {
+  async listWorkspaces(params?: {
+    fromToken?: string;
+    maxItemsCount?: number;
+  }): Promise<TeamStormWorkspaceListResponse> {
     this.requireBaseUrl();
     try {
-      const response = await this.client.get<{
-        items: Array<{ id: string; key: string; name: string }>;
-      }>('/workspaces');
+      const response = await this.client.get<TeamStormWorkspaceListResponse>('/workspaces', {
+        params,
+      });
       return response.data;
     } catch (error) {
       this.handleError(error as AxiosError);

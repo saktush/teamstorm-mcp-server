@@ -303,7 +303,7 @@ teamstorm-mcp-server/
 | `teamstorm_list_sprints`    | Спринты с фильтром по статусу (active/completed/future) |
 | `teamstorm_list_workflows`  | Доступные процессы (workflows)                          |
 | `teamstorm_list_task_types` | Типы задач                                              |
-| `teamstorm_list_workspaces` | Доступные пространства (workspaces)                     |
+| `teamstorm_list_workspaces` | Все доступные пространства (workspaces), все страницы   |
 
 ### Время
 
