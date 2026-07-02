@@ -2,7 +2,7 @@
 
 ## Project
 
-TeamStorm MCP Server — MCP-сервер для интеграции Claude Code с TeamStorm API. Предоставляет 46 инструментов для работы с задачами, папками, документами, комментариями, атрибутами, вложениями, правами доступа, связями, пользователями, спринтами, workflow и списанием времени.
+TeamStorm MCP Server — MCP-сервер для интеграции Claude Code с TeamStorm API. Предоставляет 48 инструментов для работы с задачами, папками, документами, комментариями, атрибутами, вложениями, правами доступа, связями, пользователями, спринтами, workflow и списанием времени.
 
 ## Commands
 
@@ -104,9 +104,13 @@ Accessors: `getApiToken()`, `getApiUrl()`, `getWorkspace()`, `getPort()`, `getLi
 | `teamstorm_get_folder`      | `get.ts`       | прямой   | `GET /folders/{id}`                                                    |
 | `teamstorm_get_folder_tree` | `get-tree.ts`  | составной | Обходит все страницы `listFolders`, строит дерево на клиенте           |
 | `teamstorm_find_folder`     | `find.ts`      | составной | По `name` → `listFolders?name=…`; по `id` → `getFolder(id)`; резолвит цепочку родителей для breadcrumb-пути |
+| `teamstorm_create_folder`   | `create.ts`    | прямой   | `POST /folders` — `name` (обязательно), `description`, `parentId`      |
+| `teamstorm_update_folder`   | `update.ts`    | прямой   | `PATCH /folders/{id}` — переименование, описание, перемещение (`parentId`) |
 
-Клиентские методы в `src/client/teamstorm.ts`: `listFolders()`, `getFolder()`.
-Типы в `src/client/types.ts`: `TeamStormFolderModel`, `TeamStormFolderListResponse`.
+DELETE-эндпоинт папок намеренно не реализован.
+
+Клиентские методы в `src/client/teamstorm.ts`: `listFolders()`, `getFolder()`, `createFolder()`, `patchFolder()`.
+Типы в `src/client/types.ts`: `TeamStormFolderModel`, `TeamStormFolderListResponse`, `TeamStormCreateFolderRequest`, `TeamStormPatchFolderRequest`.
 
 **Как найти задачи в папке:**
 1. `teamstorm_find_folder` name="…" → получить `folderId`

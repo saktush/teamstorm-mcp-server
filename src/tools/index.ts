@@ -4,16 +4,22 @@ export {
   getFolder,
   getFolderTree,
   findFolder,
+  createFolder,
+  updateFolder,
   registerListFoldersTool,
   registerGetFolderTool,
   registerGetFolderTreeTool,
   registerFindFolderTool,
+  registerCreateFolderTool,
+  registerUpdateFolderTool,
 } from './folders/index.js';
 export {
   listFoldersSchema,
   getFolderSchema,
   getFolderTreeSchema,
   findFolderSchema,
+  createFolderSchema,
+  updateFolderSchema,
 } from './folders/index.js';
 
 // Workspaces

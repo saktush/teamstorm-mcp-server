@@ -27,6 +27,8 @@ import {
   registerGetFolderTool,
   registerGetFolderTreeTool,
   registerFindFolderTool,
+  registerCreateFolderTool,
+  registerUpdateFolderTool,
   registerListWorkspacesTool,
   registerCreateTimeEntryTool,
   registerListTimeEntriesTool,
@@ -160,6 +162,8 @@ function registerAllTools(server: McpServer, client: TeamStormClient) {
   registerGetFolderTool(server, client);
   registerGetFolderTreeTool(server, client);
   registerFindFolderTool(server, client);
+  registerCreateFolderTool(server, client);
+  registerUpdateFolderTool(server, client);
   registerListWorkspacesTool(server, client);
   registerCreateTimeEntryTool(server, client);
   registerListTimeEntriesTool(server, client);

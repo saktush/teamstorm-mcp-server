@@ -1,15 +1,15 @@
 # TeamStorm OpenAPI → MCP Coverage Report
 
-Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing, DocumentsStatuses, DocumentLinks, DocumentComments tools)
+Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing, DocumentsStatuses, DocumentLinks, DocumentComments tools; added Folders create/update tools)
 
 ## Summary
 
 - Total endpoints: 159
-- Implemented: 43 (27%)
-- Not implemented: 116 (73%)
+- Implemented: 45 (28%)
+- Not implemented: 114 (72%)
 - Total schemas: 179
-- Schemas used: 30
-- Schemas not used: 149
+- Schemas used: 32
+- Schemas not used: 147
 
 ---
 
@@ -88,11 +88,11 @@ Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing
 
 ### Folders
 
-- [ ] `POST /cwm/public/api/v1/workspaces/{workspace}/folders` — operationId: CreateFolder — NOT IMPLEMENTED
+- [x] `POST /cwm/public/api/v1/workspaces/{workspace}/folders` — operationId: CreateFolder — MCP tool: `teamstorm_create_folder`
 - [x] `GET /cwm/public/api/v1/workspaces/{workspace}/folders` — operationId: ListFolders — MCP tool: `teamstorm_list_folders`, `teamstorm_get_folder_tree`, `teamstorm_find_folder`
 - [x] `GET /cwm/public/api/v1/workspaces/{workspace}/folders/{folderId}` — operationId: GetFolder — MCP tool: `teamstorm_get_folder`, `teamstorm_find_folder`
-- [ ] `PATCH /cwm/public/api/v1/workspaces/{workspace}/folders/{folderId}` — operationId: PatchFolder — NOT IMPLEMENTED
-- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/folders/{folderId}` — operationId: DeleteFolder — NOT IMPLEMENTED
+- [x] `PATCH /cwm/public/api/v1/workspaces/{workspace}/folders/{folderId}` — operationId: PatchFolder — MCP tool: `teamstorm_update_folder`
+- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/folders/{folderId}` — operationId: DeleteFolder — NOT IMPLEMENTED (intentionally: no delete tools)
 
 ### GitIntegrationTokens
 
@@ -312,7 +312,7 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [ ] `CreateDateFieldRequestBody` — NOT USED in any MCP tool
 - [ ] `CreateDocumentRequestBody` — NOT USED in any MCP tool
 - [ ] `CreateDocumentWorkitemLinkRequestBody` — NOT USED in any MCP tool
-- [x] `CreateFolderRequestBody` — NOT USED in any MCP tool (CreateFolder endpoint not implemented)
+- [x] `CreateFolderRequestBody` — used in MCP tool: `teamstorm_create_folder`
 - [ ] `CreateNumberFieldRequestBody` — NOT USED in any MCP tool
 - [ ] `CreateOpenIdConnectionModel` — NOT USED in any MCP tool
 - [ ] `CreateOpenIdUserModel` — NOT USED in any MCP tool
@@ -366,7 +366,7 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [ ] `PatchAttributeOptionRequestBody` — NOT USED in any MCP tool
 - [ ] `PatchAttributeRequestBody` — NOT USED in any MCP tool
 - [ ] `PatchDocumentRequestBody` — NOT USED in any MCP tool
-- [ ] `PatchFolderRequestBody` — NOT USED in any MCP tool
+- [x] `PatchFolderRequestBody` — used in MCP tool: `teamstorm_update_folder`
 - [ ] `PatchPortfolioElementRequestBody` — NOT USED in any MCP tool
 - [ ] `PatchPortfolioRequestBody` — NOT USED in any MCP tool
 - [ ] `PatchRoleRequestBody` — NOT USED in any MCP tool
@@ -494,10 +494,8 @@ Implemented as of 2026-07-02: all Documents, DocumentsSharing, DocumentsStatuses
 - All DocumentAttachments endpoints (9)
 - All DocumentVersions endpoints (3)
 
-### Folders (3 endpoints)
-- `POST /cwm/public/api/v1/workspaces/{workspace}/folders` — CreateFolder
-- `PATCH /cwm/public/api/v1/workspaces/{workspace}/folders/{folderId}` — PatchFolder
-- `DELETE /cwm/public/api/v1/workspaces/{workspace}/folders/{folderId}` — DeleteFolder
+### Folders (1 endpoint)
+- `DELETE /cwm/public/api/v1/workspaces/{workspace}/folders/{folderId}` — DeleteFolder (intentionally excluded: no delete tools)
 
 ### GitIntegrationTokens (6 endpoints — entire tag)
 - All 6 token management endpoints
@@ -606,7 +604,7 @@ Implemented as of 2026-07-02: all Documents, DocumentsSharing, DocumentsStatuses
 
 1. **Core task operations are well covered**: The MCP server covers the essential CRUD for workitems — list, get, create, update, count, list by parent, list updated. Task delete is the one notable gap.
 
-2. **Read-heavy implementation**: Almost all implemented endpoints are GET operations. The only write operations covered are: CreateWorkitem, PatchWorkitem, CreateWorkitemComment, UploadWorkitemAttachments, and the two internal time-tracking endpoints.
+2. **Read-heavy implementation**: Most implemented endpoints are GET operations. Write operations covered: CreateWorkitem, PatchWorkitem, CreateWorkitemComment, UploadWorkitemAttachments, the Documents write endpoints (create, patch, block/unblock, sharing, workitem links, comments — added 2026-07-02), CreateFolder/PatchFolder (added 2026-07-02), and the two internal time-tracking endpoints.
 
 3. **Entire feature areas have zero coverage**:
    - Agile boards (all 4 endpoints)
@@ -623,7 +621,7 @@ Implemented as of 2026-07-02: all Documents, DocumentsSharing, DocumentsStatuses
 
 4. **Time Tracking uses internal API**: The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` call `/tasks/api/v1/workitems/{id}/time-tracking-entries` — an internal non-public API path that is not in the public swagger spec. The public swagger has `GetTimeTrackingEntries` and `GetTimeTrackingEntriesUpdates` at `/cwm/public/api/v1/workspaces/time-tracking-entries` which are not implemented.
 
-5. **No delete/mutate operations for non-task resources**: Folders, sprints, workflows, attributes, and types can only be read through MCP — no creation, modification, or deletion is supported for any of these resources (except tasks/workitems).
+5. **No delete/mutate operations for most non-task resources**: Sprints, workflows, attributes, and types can only be read through MCP — no creation, modification, or deletion is supported for these resources. Folders support create and update (since 2026-07-02) but not delete; tasks/workitems and documents support full non-delete CRUD.
 
 6. **Attachment upload is partially covered**: Upload works via the two-step OOB process (HTTP POST to `/upload` on MCP server, then `teamstorm_attach_uploaded`). Download is not supported — there is no `DownloadWorkitemAttachments` implementation.
 

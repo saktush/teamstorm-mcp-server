@@ -26,6 +26,8 @@ import type {
   TeamStormUpdatedTaskListResponse,
   TeamStormFolderModel,
   TeamStormFolderListResponse,
+  TeamStormCreateFolderRequest,
+  TeamStormPatchFolderRequest,
   TeamStormWorkspaceListResponse,
   TeamStormDocument,
   TeamStormDocumentListResponse,
@@ -840,6 +842,41 @@ export class TeamStormClient {
       const ws = this.resolveWorkspace(workspace);
       const response = await this.client.get<TeamStormFolderModel>(
         `/workspaces/${ws}/folders/${folderId}`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async createFolder(
+    data: TeamStormCreateFolderRequest,
+    workspace?: string
+  ): Promise<TeamStormFolderModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.post<TeamStormFolderModel>(
+        `/workspaces/${ws}/folders`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async patchFolder(
+    folderId: string,
+    data: TeamStormPatchFolderRequest,
+    workspace?: string
+  ): Promise<TeamStormFolderModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.patch<TeamStormFolderModel>(
+        `/workspaces/${ws}/folders/${folderId}`,
+        data
       );
       return response.data;
     } catch (error) {

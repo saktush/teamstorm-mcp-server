@@ -297,6 +297,18 @@ export interface TeamStormFolderListResponse {
   items: TeamStormFolderModel[];
 }
 
+export interface TeamStormCreateFolderRequest {
+  name: string;
+  description?: string;
+  parentId?: string;
+}
+
+export interface TeamStormPatchFolderRequest {
+  name?: string;
+  description?: string;
+  parentId?: string;
+}
+
 // New types for Phase B
 export interface TeamStormUserListResponse {
   items: TeamStormUser[];
