@@ -302,6 +302,64 @@ export interface TeamStormUserListResponse {
   items: TeamStormUser[];
 }
 
+// Documents
+export interface TeamStormDocumentStatus {
+  id: string;
+  name: string;
+}
+
+export interface TeamStormDocumentStatusListResponse {
+  fromToken?: string | null;
+  maxItemsCount?: number | null;
+  nextToken?: string | null;
+  items: TeamStormDocumentStatus[];
+}
+
+export interface TeamStormDocument {
+  workspaceId: string;
+  id: string;
+  key: string;
+  name: string;
+  documentUrl: string;
+  content?: string | null;
+  createdAt: string;
+  author: TeamStormUser;
+  updatedAt: string;
+  updatedBy?: TeamStormUser | null;
+  parent?: { id: string; name: string; nodeType?: string } | null;
+  version: number;
+  versionUrl: string;
+  labels: string[];
+  isBlocked: boolean;
+  status?: TeamStormDocumentStatus | null;
+}
+
+export interface TeamStormDocumentListResponse {
+  fromToken?: string | null;
+  maxItemsCount?: number | null;
+  nextToken?: string | null;
+  items: TeamStormDocument[];
+}
+
+export interface TeamStormCreateDocumentRequest {
+  name: string;
+  content?: string;
+  parentId?: string;
+  labels?: string[];
+}
+
+export interface TeamStormDocumentPermission {
+  type: 'User' | 'Group';
+  permissionId: string;
+  workspaceId: string;
+  documentId: string;
+  accessLevel: 'Read' | 'Edit' | 'Comment';
+  userId?: string;
+  user?: TeamStormUser;
+  groupId?: string;
+  group?: { id: string; name: string };
+}
+
 export interface TeamStormSprintListResponse {
   items: TeamStormSprint[];
 }

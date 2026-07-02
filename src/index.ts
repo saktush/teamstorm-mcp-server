@@ -53,6 +53,22 @@ import {
   registerAttachUploadedFileTool,
   registerGetTaskPermissionsTool,
   registerGetTaskLinksTool,
+  registerListDocumentsTool,
+  registerGetDocumentTool,
+  registerCreateDocumentTool,
+  registerUpdateDocumentTool,
+  registerBlockDocumentTool,
+  registerUnblockDocumentTool,
+  registerListDocumentPermissionsTool,
+  registerShareDocumentTool,
+  registerUpdateDocumentPermissionTool,
+  registerListDocumentStatusesTool,
+  registerGetDocumentStatusTool,
+  registerGetDocumentTaskLinksTool,
+  registerLinkDocumentToTaskTool,
+  registerGetTaskDocumentLinksTool,
+  registerListDocumentCommentsTool,
+  registerCreateDocumentCommentTool,
 } from './tools/index.js';
 
 // OOB Upload temp directory
@@ -170,6 +186,22 @@ function registerAllTools(server: McpServer, client: TeamStormClient) {
   registerAttachUploadedFileTool(server, client);
   registerGetTaskPermissionsTool(server, client);
   registerGetTaskLinksTool(server, client);
+  registerListDocumentsTool(server, client);
+  registerGetDocumentTool(server, client);
+  registerCreateDocumentTool(server, client);
+  registerUpdateDocumentTool(server, client);
+  registerBlockDocumentTool(server, client);
+  registerUnblockDocumentTool(server, client);
+  registerListDocumentPermissionsTool(server, client);
+  registerShareDocumentTool(server, client);
+  registerUpdateDocumentPermissionTool(server, client);
+  registerListDocumentStatusesTool(server, client);
+  registerGetDocumentStatusTool(server, client);
+  registerGetDocumentTaskLinksTool(server, client);
+  registerLinkDocumentToTaskTool(server, client);
+  registerGetTaskDocumentLinksTool(server, client);
+  registerListDocumentCommentsTool(server, client);
+  registerCreateDocumentCommentTool(server, client);
 }
 
 // ---------------------------------------------------------------------------

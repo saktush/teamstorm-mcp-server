@@ -122,3 +122,78 @@ export { getTaskPermissionsSchema } from './permissions/index.js';
 // Links
 export { getTaskLinks, registerGetTaskLinksTool } from './links/index.js';
 export { getTaskLinksSchema } from './links/index.js';
+
+// Documents
+export {
+  listDocuments,
+  getDocument,
+  createDocument,
+  updateDocument,
+  blockDocument,
+  unblockDocument,
+  registerListDocumentsTool,
+  registerGetDocumentTool,
+  registerCreateDocumentTool,
+  registerUpdateDocumentTool,
+  registerBlockDocumentTool,
+  registerUnblockDocumentTool,
+} from './documents/index.js';
+export {
+  listDocumentsSchema,
+  getDocumentSchema,
+  createDocumentSchema,
+  updateDocumentSchema,
+  blockDocumentSchema,
+  unblockDocumentSchema,
+} from './documents/index.js';
+
+// Document Sharing
+export {
+  listDocumentPermissions,
+  shareDocument,
+  updateDocumentPermission,
+  registerListDocumentPermissionsTool,
+  registerShareDocumentTool,
+  registerUpdateDocumentPermissionTool,
+} from './document-sharing/index.js';
+export {
+  listDocumentPermissionsSchema,
+  shareDocumentSchema,
+  updateDocumentPermissionSchema,
+} from './document-sharing/index.js';
+
+// Document Statuses
+export {
+  listDocumentStatuses,
+  getDocumentStatus,
+  registerListDocumentStatusesTool,
+  registerGetDocumentStatusTool,
+} from './document-statuses/index.js';
+export { listDocumentStatusesSchema, getDocumentStatusSchema } from './document-statuses/index.js';
+
+// Document Links
+export {
+  getDocumentTaskLinks,
+  linkDocumentToTask,
+  getTaskDocumentLinks,
+  registerGetDocumentTaskLinksTool,
+  registerLinkDocumentToTaskTool,
+  registerGetTaskDocumentLinksTool,
+} from './document-links/index.js';
+export {
+  getDocumentTaskLinksSchema,
+  linkDocumentToTaskSchema,
+  getTaskDocumentLinksSchema,
+} from './document-links/index.js';
+
+// Document Comments
+export {
+  listDocumentComments,
+  createDocumentComment,
+  registerListDocumentCommentsTool,
+  registerCreateDocumentCommentTool,
+} from './document-comments/index.js';
+export {
+  listDocumentCommentsSchema,
+  createDocumentCommentSchema,
+} from './document-comments/index.js';

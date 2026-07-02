@@ -1,12 +1,12 @@
 # TeamStorm OpenAPI → MCP Coverage Report
 
-Generated: 2026-07-01
+Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing, DocumentsStatuses, DocumentLinks, DocumentComments tools)
 
 ## Summary
 
 - Total endpoints: 159
-- Implemented: 27 (17%)
-- Not implemented: 132 (83%)
+- Implemented: 43 (27%)
+- Not implemented: 116 (73%)
 - Total schemas: 179
 - Schemas used: 30
 - Schemas not used: 149
@@ -47,38 +47,38 @@ Generated: 2026-07-01
 
 ### DocumentComments
 
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/comments` — operationId: ListDocumentComments — NOT IMPLEMENTED
-- [ ] `POST /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/comments` — operationId: CreateDocumentComment — NOT IMPLEMENTED
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/comments` — operationId: ListDocumentComments — MCP tool: `teamstorm_list_document_comments`
+- [x] `POST /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/comments` — operationId: CreateDocumentComment — MCP tool: `teamstorm_create_document_comment`
 - [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/comments/{commentId}` — operationId: DeleteDocumentComment — NOT IMPLEMENTED
 
 ### DocumentLinks
 
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/workitem-links` — operationId: GetDocumentWorkitemLinks — NOT IMPLEMENTED
-- [ ] `POST /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/workitem-links` — operationId: CreateDocumentWorkitemLink — NOT IMPLEMENTED
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/workitem-links` — operationId: GetDocumentWorkitemLinks — MCP tool: `teamstorm_get_document_task_links`
+- [x] `POST /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/workitem-links` — operationId: CreateDocumentWorkitemLink — MCP tool: `teamstorm_link_document_to_task`
 - [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/workitem-links` — operationId: DeleteDocumentWorkitemLink — NOT IMPLEMENTED
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/workitems/{workitem}/document-links` — operationId: GetWorkitemDocumentLinks — NOT IMPLEMENTED
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/workitems/{workitem}/document-links` — operationId: GetWorkitemDocumentLinks — MCP tool: `teamstorm_get_task_document_links`
 
 ### Documents
 
-- [ ] `POST /cwm/public/api/v1/workspaces/{workspace}/documents` — operationId: CreateDocument — NOT IMPLEMENTED
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/documents` — operationId: ListDocuments — NOT IMPLEMENTED
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/documents/{document}` — operationId: GetDocument — NOT IMPLEMENTED
-- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/documents/{document}` — operationId: DeleteDocument — NOT IMPLEMENTED
-- [ ] `PATCH /cwm/public/api/v1/workspaces/{workspace}/documents/{document}` — operationId: PatchDocument — NOT IMPLEMENTED
-- [ ] `POST /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/block` — operationId: BlockDocument — NOT IMPLEMENTED
-- [ ] `POST /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/unblock` — operationId: UnblockDocument — NOT IMPLEMENTED
+- [x] `POST /cwm/public/api/v1/workspaces/{workspace}/documents` — operationId: CreateDocument — MCP tool: `teamstorm_create_document`
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/documents` — operationId: ListDocuments — MCP tool: `teamstorm_list_documents`
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/documents/{document}` — operationId: GetDocument — MCP tool: `teamstorm_get_document`
+- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/documents/{document}` — operationId: DeleteDocument — NOT IMPLEMENTED (intentionally: no delete tools)
+- [x] `PATCH /cwm/public/api/v1/workspaces/{workspace}/documents/{document}` — operationId: PatchDocument — MCP tool: `teamstorm_update_document`
+- [x] `POST /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/block` — operationId: BlockDocument — MCP tool: `teamstorm_block_document`
+- [x] `POST /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/unblock` — operationId: UnblockDocument — MCP tool: `teamstorm_unblock_document`
 
 ### DocumentsSharing
 
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/sharing` — operationId: ListSharedDocumentPermissions — NOT IMPLEMENTED
-- [ ] `POST /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/sharing` — operationId: CreateSharedDocumentPermission — NOT IMPLEMENTED
-- [ ] `PATCH /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/sharing/{permissionId}` — operationId: PatchSharedDocumentPermission — NOT IMPLEMENTED
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/sharing` — operationId: ListSharedDocumentPermissions — MCP tool: `teamstorm_list_document_permissions`
+- [x] `POST /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/sharing` — operationId: CreateSharedDocumentPermission — MCP tool: `teamstorm_share_document`
+- [x] `PATCH /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/sharing/{permissionId}` — operationId: PatchSharedDocumentPermission — MCP tool: `teamstorm_update_document_permission`
 - [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/sharing/{permissionId}` — operationId: DeleteSharedDocumentPermission — NOT IMPLEMENTED
 
 ### DocumentsStatuses
 
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/documents-statuses` — operationId: ListDocumentStatuses — NOT IMPLEMENTED
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/documents-statuses/{status}` — operationId: GetDocumentsStatus — NOT IMPLEMENTED
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/documents-statuses` — operationId: ListDocumentStatuses — MCP tool: `teamstorm_list_document_statuses`
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/documents-statuses/{status}` — operationId: GetDocumentsStatus — MCP tool: `teamstorm_get_document_status`
 
 ### DocumentVersions
 
@@ -488,15 +488,11 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - `DELETE /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}/options/{optionId}` — DeleteAttributeOption — Attributes
 - `GET /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}` — GetAttribute — Attributes
 
-### Documents (entire tag — 19 endpoints)
-- `POST /cwm/public/api/v1/workspaces/{workspace}/documents` — CreateDocument
-- `GET /cwm/public/api/v1/workspaces/{workspace}/documents` — ListDocuments
-- `GET /cwm/public/api/v1/workspaces/{workspace}/documents/{document}` — GetDocument
-- `DELETE /cwm/public/api/v1/workspaces/{workspace}/documents/{document}` — DeleteDocument
-- `PATCH /cwm/public/api/v1/workspaces/{workspace}/documents/{document}` — PatchDocument
-- `POST /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/block` — BlockDocument
-- `POST /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/unblock` — UnblockDocument
-- All DocumentAttachments, DocumentComments, DocumentLinks, DocumentsSharing, DocumentsStatuses, DocumentVersions sub-endpoints (19 total)
+### Documents (remaining gaps)
+Implemented as of 2026-07-02: all Documents, DocumentsSharing, DocumentsStatuses, DocumentLinks, DocumentComments endpoints except DELETE (intentionally excluded). Still not implemented:
+- All DELETE endpoints: DeleteDocument, DeleteSharedDocumentPermission, DeleteDocumentWorkitemLink, DeleteDocumentComment
+- All DocumentAttachments endpoints (9)
+- All DocumentVersions endpoints (3)
 
 ### Folders (3 endpoints)
 - `POST /cwm/public/api/v1/workspaces/{workspace}/folders` — CreateFolder
@@ -614,7 +610,7 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 
 3. **Entire feature areas have zero coverage**:
    - Agile boards (all 4 endpoints)
-   - Documents and all sub-resources (DocumentAttachments, DocumentComments, DocumentLinks, DocumentVersions, DocumentsSharing, DocumentsStatuses) — 22 endpoints
+   - Document attachments and versions (DocumentAttachments — 9, DocumentVersions — 3); core Documents, DocumentComments, DocumentLinks, DocumentsSharing, DocumentsStatuses covered since 2026-07-02 (except DELETE)
    - Portfolio management (PortfolioElements + Portfolios) — 12 endpoints
    - Git Integration Tokens — 6 endpoints
    - OpenID management — 4 endpoints

@@ -1,4 +1,8 @@
-import type { TeamStormTask, TeamStormTaskListResponse } from '../client/types.js';
+import type {
+  TeamStormTask,
+  TeamStormTaskListResponse,
+  TeamStormDocument,
+} from '../client/types.js';
 
 export function formatTaskListMarkdown(data: TeamStormTaskListResponse): string {
   const lines: string[] = [];
@@ -142,6 +146,46 @@ export function formatTaskMarkdown(task: TeamStormTask): string {
       }
       lines.push(`- **${attr.name}**: ${value}`);
     }
+  }
+
+  return lines.join('\n');
+}
+
+export function formatDocumentMarkdown(doc: TeamStormDocument, includeContent = false): string {
+  const lines: string[] = [];
+
+  lines.push(`# ${doc.key}: ${doc.name}`);
+  lines.push('');
+  lines.push(`- ID: \`${doc.id}\``);
+  lines.push(`- Версия: ${doc.version}`);
+  lines.push(`- Статус: ${doc.status ? doc.status.name : 'Без статуса'}`);
+  lines.push(`- Заблокирован: ${doc.isBlocked ? 'да 🔒' : 'нет'}`);
+  lines.push(`- Автор: ${doc.author.displayName}`);
+  lines.push(`- Создан: ${new Date(doc.createdAt).toLocaleString('ru-RU')}`);
+
+  if (doc.updatedBy) {
+    lines.push(
+      `- Обновлён: ${new Date(doc.updatedAt).toLocaleString('ru-RU')} (${doc.updatedBy.displayName})`
+    );
+  }
+
+  if (doc.parent) {
+    lines.push(`- Родитель: ${doc.parent.name} (\`${doc.parent.id}\`)`);
+  }
+
+  if (doc.labels && doc.labels.length > 0) {
+    lines.push(`- Метки: ${doc.labels.join(', ')}`);
+  }
+
+  if (doc.documentUrl) {
+    lines.push(`- URL: ${doc.documentUrl}`);
+  }
+
+  if (includeContent && doc.content) {
+    lines.push('');
+    lines.push('## Содержимое');
+    lines.push('');
+    lines.push(doc.content);
   }
 
   return lines.join('\n');
