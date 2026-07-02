@@ -33,7 +33,38 @@ claude mcp add --scope user --transport http teamstorm http://localhost:3001/mcp
 
 > **Примечание:** `PrivateToken` — это ваш персональный токен TeamStorm. Он передаётся с каждым запросом и используется для аутентификации на стороне API.
 
-### 3. Интеграция с Cursor
+### 3. Интеграция с Codex / Codex Desktop
+
+Добавьте секцию в `~/.codex/config.toml`. Возможны два варианта в зависимости от того, как запущен MCP-сервер.
+
+**Вариант А — токен задан на сервере** (рекомендуется для локального запуска)
+
+Если `TEAMSTORM_API_TOKEN` уже прописан в `.env`, сервер сам подставляет токен в запросы к TeamStorm. Codex не должен передавать никаких заголовков:
+
+```toml
+[mcp_servers.teamstorm]
+url = "http://localhost:3001/mcp"
+```
+
+**Вариант Б — токен передаётся клиентом** (multi-user деплой)
+
+Если токен на сервере не задан, каждый клиент передаёт свой токен. Сохраните его в переменную окружения (в `~/.zshrc` или `~/.bashrc`):
+
+```bash
+export TEAMSTORM_TOKEN="ваш_токен"
+```
+
+Затем укажите имя этой переменной в конфиге:
+
+```toml
+[mcp_servers.teamstorm]
+url = "http://localhost:3001/mcp"
+bearer_token_env_var = "TEAMSTORM_TOKEN"
+```
+
+> **Примечание:** Codex передаёт токен как `Authorization: Bearer <токен>`, что принимается сервером. Перезапустите Codex после изменения конфига.
+
+### 4. Интеграция с Cursor
 
 Создайте файл `.cursor/mcp.json` в корне проекта (или глобально в `~/.cursor/mcp.json`):
 
@@ -52,7 +83,7 @@ claude mcp add --scope user --transport http teamstorm http://localhost:3001/mcp
 
 > **Примечание:** Замени `ваш_токен` на реальный PrivateToken TeamStorm. После добавления перезапустите Cursor — инструменты появятся в боковой панели MCP.
 
-### 4. Проверка
+### 5. Проверка
 
 После добавления перезапустите IDE и проверьте:
 
