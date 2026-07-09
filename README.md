@@ -83,7 +83,39 @@ bearer_token_env_var = "TEAMSTORM_TOKEN"
 
 > **Примечание:** Замени `ваш_токен` на реальный PrivateToken TeamStorm. После добавления перезапустите Cursor — инструменты появятся в боковой панели MCP.
 
-### 5. Проверка
+### 5. Интеграция с Claude Desktop
+
+Custom Connectors (Settings → Connectors в приложении) для этого **не подходят** — они подключаются к серверу из облака Anthropic, а не с локальной машины, и не видят `http://localhost`. Для локального HTTP-сервера нужен stdio↔HTTP прокси [`mcp-remote`](https://www.npmjs.com/package/mcp-remote), который Claude Desktop запускает как обычный локальный MCP-сервер.
+
+Откройте конфиг через Claude → Settings… → Developer → Edit Config (или отредактируйте файл напрямую):
+
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "teamstorm": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote@latest",
+        "http://localhost:3001/mcp",
+        "--allow-http",
+        "--header",
+        "Authorization:${TEAMSTORM_AUTH_HEADER}"
+      ],
+      "env": {
+        "TEAMSTORM_AUTH_HEADER": "PrivateToken ваш_токен"
+      }
+    }
+  }
+}
+```
+
+> **Примечание:** `--allow-http` обязателен — `mcp-remote` по умолчанию требует HTTPS. Токен передан через `env`, чтобы пробел в значении `PrivateToken <токен>` не ломал парсинг аргумента `--header`. Требуется Node.js (для `npx`). После сохранения полностью перезапустите Claude Desktop (Quit, не просто закрыть окно) — в поле ввода чата появится иконка MCP-инструментов.
+
+### 6. Проверка
 
 После добавления перезапустите IDE и проверьте:
 
