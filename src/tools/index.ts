@@ -95,10 +95,25 @@ export {
 export {
   getTaskAttributes,
   listAttributes,
+  createAttribute,
+  updateAttribute,
+  addAttributeOption,
+  updateAttributeOption,
   registerGetTaskAttributesTool,
   registerListAttributesTool,
+  registerCreateAttributeTool,
+  registerUpdateAttributeTool,
+  registerAddAttributeOptionTool,
+  registerUpdateAttributeOptionTool,
 } from './attributes/index.js';
-export { getTaskAttributesSchema, listAttributesSchema } from './attributes/index.js';
+export {
+  getTaskAttributesSchema,
+  listAttributesSchema,
+  createAttributeSchema,
+  updateAttributeSchema,
+  addAttributeOptionSchema,
+  updateAttributeOptionSchema,
+} from './attributes/index.js';
 
 // Attachments
 export {

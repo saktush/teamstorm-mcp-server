@@ -190,6 +190,52 @@ export interface TeamStormAttributeListResponse {
   items: TeamStormAttributeValue[];
 }
 
+export type TeamStormAttributeType =
+  | 'UniString'
+  | 'Number'
+  | 'Date'
+  | 'UniSelect'
+  | 'Tag'
+  | 'User'
+  | 'TimeDuration';
+
+export interface TeamStormAttributeOption {
+  id: string;
+  name: string;
+}
+
+export interface TeamStormAttributeModel {
+  id: string;
+  name: string;
+  description?: string | null;
+  type: TeamStormAttributeType;
+  options?: TeamStormAttributeOption[] | null;
+  workitemTypes: Array<{ id: string; name: string }>;
+}
+
+export interface TeamStormCreateAttributeRequest {
+  name: string;
+  type: TeamStormAttributeType;
+  description?: string;
+  options?: Array<{ name: string }>;
+}
+
+export interface TeamStormPatchAttributeRequest {
+  name?: string;
+  description?: string;
+  options?: Array<{ id?: string; name: string }>;
+}
+
+export interface TeamStormCreateAttributeOptionRequest {
+  id?: string;
+  name: string;
+}
+
+export interface TeamStormPatchAttributeOptionRequest {
+  id: string;
+  name: string;
+}
+
 // Attachments
 export interface TeamStormAttachment {
   attachmentId: string;

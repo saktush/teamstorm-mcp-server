@@ -1,15 +1,15 @@
 # TeamStorm OpenAPI → MCP Coverage Report
 
-Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing, DocumentsStatuses, DocumentLinks, DocumentComments tools; added Folders create/update tools)
+Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing, DocumentsStatuses, DocumentLinks, DocumentComments tools; added Folders create/update tools; updated: 2026-07-13 — added Attributes create/patch tools: CreateAttribute, PatchAttribute, AddAttributeOption, PatchAttributeOption)
 
 ## Summary
 
 - Total endpoints: 159
-- Implemented: 45 (28%)
-- Not implemented: 114 (72%)
+- Implemented: 49 (31%)
+- Not implemented: 110 (69%)
 - Total schemas: 179
-- Schemas used: 32
-- Schemas not used: 147
+- Schemas used: 40
+- Schemas not used: 139
 
 ---
 
@@ -24,14 +24,14 @@ Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing
 
 ### Attributes
 
-- [ ] `POST /cwm/public/api/v1/workspaces/{workspace}/attributes` — operationId: CreateAttribute — NOT IMPLEMENTED
+- [x] `POST /cwm/public/api/v1/workspaces/{workspace}/attributes` — operationId: CreateAttribute — MCP tool: `teamstorm_create_attribute`
 - [x] `GET /cwm/public/api/v1/workspaces/{workspace}/attributes` — operationId: ListAttributes — MCP tool: `teamstorm_list_attributes`
 - [x] `GET /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}` — operationId: GetAttribute — MCP tool: `teamstorm_get_task_attributes` (via task attributes endpoint; note: this specific attribute-by-id endpoint is not directly called, but the task attributes GET is covered under WorkitemAttributes)
-- [ ] `PATCH /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}` — operationId: PatchAttribute — NOT IMPLEMENTED
-- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}` — operationId: DeleteAttribute — NOT IMPLEMENTED
-- [ ] `POST /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}/options` — operationId: AddAttributeOption — NOT IMPLEMENTED
-- [ ] `PATCH /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}/options` — operationId: PatchAttributeOption — NOT IMPLEMENTED
-- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}/options/{optionId}` — operationId: DeleteAttributeOption — NOT IMPLEMENTED
+- [x] `PATCH /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}` — operationId: PatchAttribute — MCP tool: `teamstorm_update_attribute`
+- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}` — operationId: DeleteAttribute — NOT IMPLEMENTED (intentionally: no delete tools)
+- [x] `POST /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}/options` — operationId: AddAttributeOption — MCP tool: `teamstorm_add_attribute_option`
+- [x] `PATCH /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}/options` — operationId: PatchAttributeOption — MCP tool: `teamstorm_update_attribute_option`
+- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}/options/{optionId}` — operationId: DeleteAttributeOption — NOT IMPLEMENTED (intentionally: no delete tools)
 
 ### DocumentAttachments
 
@@ -293,9 +293,9 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [ ] `AntivirusScanVerdict` — NOT USED in any MCP tool
 - [x] `AttachmentModel` — used in MCP tools: `teamstorm_get_task_attachment`, `teamstorm_attach_uploaded`
 - [x] `AttachmentModelList` — used in MCP tools: `teamstorm_list_task_attachments`, `teamstorm_attach_uploaded`
-- [x] `AttributeModel` — referenced in Attributes endpoints (not directly used)
-- [ ] `AttributeOptionModel` — NOT USED in any MCP tool
-- [ ] `AttributeType` — NOT USED in any MCP tool
+- [x] `AttributeModel` — used in MCP tools: `teamstorm_create_attribute`, `teamstorm_update_attribute`, `teamstorm_add_attribute_option`, `teamstorm_update_attribute_option`
+- [x] `AttributeOptionModel` — used in MCP tools: `teamstorm_create_attribute`, `teamstorm_update_attribute`, `teamstorm_add_attribute_option`, `teamstorm_update_attribute_option` (options in AttributeModel response)
+- [x] `AttributeType` — used in MCP tool: `teamstorm_create_attribute`
 - [x] `AttributeValueModel` — used in MCP tool: `teamstorm_get_task_attributes`, `teamstorm_list_attributes`
 - [x] `AttributeValueModelList` — used in MCP tool: `teamstorm_get_task_attributes`, `teamstorm_list_attributes`
 - [x] `AttributesModelList` — used in MCP tool: `teamstorm_list_attributes`
@@ -304,9 +304,9 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [x] `CommentVisibilitySettingsModel` — used in MCP tool: `teamstorm_get_comment_visibility`
 - [ ] `CommentVisibilityType` — NOT USED in any MCP tool
 - [ ] `CreateAgileRequestBody` — NOT USED in any MCP tool
-- [ ] `CreateAttributeOptionModel` — NOT USED in any MCP tool
-- [ ] `CreateAttributeOptionRequestBody` — NOT USED in any MCP tool
-- [ ] `CreateAttributeRequestBody` — NOT USED in any MCP tool
+- [x] `CreateAttributeOptionModel` — used in MCP tool: `teamstorm_create_attribute` (options array)
+- [x] `CreateAttributeOptionRequestBody` — used in MCP tool: `teamstorm_add_attribute_option`
+- [x] `CreateAttributeRequestBody` — used in MCP tool: `teamstorm_create_attribute`
 - [ ] `CreateAttributeValueRequestBody` — NOT USED in any MCP tool
 - [x] `CreateCommentRequestBody` — used in MCP tool: `teamstorm_create_task_comment`
 - [ ] `CreateDateFieldRequestBody` — NOT USED in any MCP tool
@@ -362,9 +362,9 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [ ] `NumberFieldValueModel` — NOT USED in any MCP tool
 - [ ] `OpenIdConnectionModel` — NOT USED in any MCP tool
 - [ ] `OptionModel` — NOT USED in any MCP tool
-- [ ] `PatchAttributeOptionModel` — NOT USED in any MCP tool
-- [ ] `PatchAttributeOptionRequestBody` — NOT USED in any MCP tool
-- [ ] `PatchAttributeRequestBody` — NOT USED in any MCP tool
+- [x] `PatchAttributeOptionModel` — used in MCP tool: `teamstorm_update_attribute` (options array)
+- [x] `PatchAttributeOptionRequestBody` — used in MCP tool: `teamstorm_update_attribute_option`
+- [x] `PatchAttributeRequestBody` — used in MCP tool: `teamstorm_update_attribute`
 - [ ] `PatchDocumentRequestBody` — NOT USED in any MCP tool
 - [x] `PatchFolderRequestBody` — used in MCP tool: `teamstorm_update_folder`
 - [ ] `PatchPortfolioElementRequestBody` — NOT USED in any MCP tool
@@ -479,14 +479,10 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - `GET /cwm/public/api/v1/workspaces/{workspace}/agile/list` — GetAgileExtensions — Agile
 - `POST /cwm/public/api/v1/workspaces/{workspace}/agile` — CreateAgile — Agile
 
-### Attributes (7 endpoints)
-- `POST /cwm/public/api/v1/workspaces/{workspace}/attributes` — CreateAttribute — Attributes
-- `PATCH /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}` — PatchAttribute — Attributes
-- `DELETE /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}` — DeleteAttribute — Attributes
-- `POST /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}/options` — AddAttributeOption — Attributes
-- `PATCH /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}/options` — PatchAttributeOption — Attributes
-- `DELETE /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}/options/{optionId}` — DeleteAttributeOption — Attributes
-- `GET /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}` — GetAttribute — Attributes
+### Attributes (2 endpoints remaining — DELETE only, intentionally excluded)
+Implemented as of 2026-07-13: CreateAttribute (`teamstorm_create_attribute`), PatchAttribute (`teamstorm_update_attribute`), AddAttributeOption (`teamstorm_add_attribute_option`), PatchAttributeOption (`teamstorm_update_attribute_option`). Still not implemented:
+- `DELETE /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}` — DeleteAttribute (intentionally excluded: no delete tools)
+- `DELETE /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}/options/{optionId}` — DeleteAttributeOption (intentionally excluded: no delete tools)
 
 ### Documents (remaining gaps)
 Implemented as of 2026-07-02: all Documents, DocumentsSharing, DocumentsStatuses, DocumentLinks, DocumentComments endpoints except DELETE (intentionally excluded). Still not implemented:
@@ -621,7 +617,7 @@ Implemented as of 2026-07-02: all Documents, DocumentsSharing, DocumentsStatuses
 
 4. **Time Tracking uses internal API**: The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` call `/tasks/api/v1/workitems/{id}/time-tracking-entries` — an internal non-public API path that is not in the public swagger spec. The public swagger has `GetTimeTrackingEntries` and `GetTimeTrackingEntriesUpdates` at `/cwm/public/api/v1/workspaces/time-tracking-entries` which are not implemented.
 
-5. **No delete/mutate operations for most non-task resources**: Sprints, workflows, attributes, and types can only be read through MCP — no creation, modification, or deletion is supported for these resources. Folders support create and update (since 2026-07-02) but not delete; tasks/workitems and documents support full non-delete CRUD.
+5. **No delete/mutate operations for most non-task resources**: Sprints, workflows, and types can only be read through MCP — no creation, modification, or deletion is supported for these resources. Folders support create and update (since 2026-07-02) but not delete; attributes support create/patch plus option add/patch (since 2026-07-13) but not delete; tasks/workitems and documents support full non-delete CRUD.
 
 6. **Attachment upload is partially covered**: Upload works via the two-step OOB process (HTTP POST to `/upload` on MCP server, then `teamstorm_attach_uploaded`). Download is not supported — there is no `DownloadWorkitemAttachments` implementation.
 

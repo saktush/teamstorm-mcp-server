@@ -48,6 +48,10 @@ import {
   registerGetCommentVisibilityTool,
   registerGetTaskAttributesTool,
   registerListAttributesTool,
+  registerCreateAttributeTool,
+  registerUpdateAttributeTool,
+  registerAddAttributeOptionTool,
+  registerUpdateAttributeOptionTool,
   registerListTaskAttachmentsTool,
   registerGetTaskAttachmentTool,
   registerListAttachmentVersionsTool,
@@ -183,6 +187,10 @@ function registerAllTools(server: McpServer, client: TeamStormClient) {
   registerGetCommentVisibilityTool(server, client);
   registerGetTaskAttributesTool(server, client);
   registerListAttributesTool(server, client);
+  registerCreateAttributeTool(server, client);
+  registerUpdateAttributeTool(server, client);
+  registerAddAttributeOptionTool(server, client);
+  registerUpdateAttributeOptionTool(server, client);
   registerListTaskAttachmentsTool(server, client);
   registerGetTaskAttachmentTool(server, client);
   registerListAttachmentVersionsTool(server, client);

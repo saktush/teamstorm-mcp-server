@@ -17,6 +17,11 @@ import type {
   TeamStormCommentListResponse,
   TeamStormCommentVisibility,
   TeamStormAttributeListResponse,
+  TeamStormAttributeModel,
+  TeamStormCreateAttributeRequest,
+  TeamStormPatchAttributeRequest,
+  TeamStormCreateAttributeOptionRequest,
+  TeamStormPatchAttributeOptionRequest,
   TeamStormAttachment,
   TeamStormAttachmentListResponse,
   TeamStormAttachmentVersion,
@@ -428,6 +433,77 @@ export class TeamStormClient {
       const response = await this.client.get<TeamStormAttributeListResponse>(
         `/workspaces/${ws}/attributes`,
         { params: { ...params, workspace: undefined } }
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async createAttribute(
+    data: TeamStormCreateAttributeRequest,
+    workspace?: string
+  ): Promise<TeamStormAttributeModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.post<TeamStormAttributeModel>(
+        `/workspaces/${ws}/attributes`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async patchAttribute(
+    attributeId: string,
+    data: TeamStormPatchAttributeRequest,
+    workspace?: string
+  ): Promise<TeamStormAttributeModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.patch<TeamStormAttributeModel>(
+        `/workspaces/${ws}/attributes/${attributeId}`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async addAttributeOption(
+    attributeId: string,
+    data: TeamStormCreateAttributeOptionRequest,
+    workspace?: string
+  ): Promise<TeamStormAttributeModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.post<TeamStormAttributeModel>(
+        `/workspaces/${ws}/attributes/${attributeId}/options`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async patchAttributeOption(
+    attributeId: string,
+    data: TeamStormPatchAttributeOptionRequest,
+    workspace?: string
+  ): Promise<TeamStormAttributeModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.patch<TeamStormAttributeModel>(
+        `/workspaces/${ws}/attributes/${attributeId}/options`,
+        data
       );
       return response.data;
     } catch (error) {
