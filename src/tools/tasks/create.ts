@@ -5,33 +5,16 @@ import type { TeamStormSprint, TeamStormCreateTaskRequest } from '../../client/t
 import { formatTaskMarkdown } from '../../utils/formatters.js';
 import { logRequest, logResponse, logError, logger } from '../../utils/logger.js';
 
-async function resolveWorkspaceId(client: TeamStormClient, workspace: string): Promise<string> {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (uuidRegex.test(workspace)) {
-    return workspace;
-  }
-
-  const workspaces = await client.listWorkspaces();
-  const match = workspaces.items.find(
-    (w) =>
-      w.key.toLowerCase() === workspace.toLowerCase() ||
-      w.name.toLowerCase() === workspace.toLowerCase()
-  );
-
-  if (match) {
-    return match.id;
-  }
-
-  throw new Error(
-    `Workspace "${workspace}" not found. Available: ${workspaces.items.map((w) => `${w.key} (${w.name})`).join(', ')}`
-  );
-}
-
 async function resolveFolderId(
   client: TeamStormClient,
   workspaceId: string,
   folderName: string
 ): Promise<string | undefined> {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (uuidRegex.test(folderName)) {
+    return folderName;
+  }
+
   const seen = new Map<string, string>();
   const lower = folderName.toLowerCase();
   let fromToken: string | undefined;
@@ -167,7 +150,7 @@ export async function createTask(
   const { workspace, parentId: parentIdInput, sprintId: sprintIdInput, apiUrl: _apiUrl, ...taskData } = params;
 
   try {
-    const workspaceId = await resolveWorkspaceId(client, workspace);
+    const workspaceId = workspace;
 
     const resolvedFolderId = await resolveFolderId(client, workspaceId, parentIdInput);
     if (!resolvedFolderId) {
