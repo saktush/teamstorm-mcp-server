@@ -67,6 +67,13 @@ export interface TeamStormWorkspace {
   author: TeamStormUser;
 }
 
+export interface TeamStormWorkspaceListResponse {
+  fromToken?: string | null;
+  maxItemsCount?: number | null;
+  nextToken?: string | null;
+  items: Array<{ id: string; key: string; name: string }>;
+}
+
 export interface TeamStormTask {
   id: string;
   key: string;
@@ -183,6 +190,52 @@ export interface TeamStormAttributeListResponse {
   items: TeamStormAttributeValue[];
 }
 
+export type TeamStormAttributeType =
+  | 'UniString'
+  | 'Number'
+  | 'Date'
+  | 'UniSelect'
+  | 'Tag'
+  | 'User'
+  | 'TimeDuration';
+
+export interface TeamStormAttributeOption {
+  id: string;
+  name: string;
+}
+
+export interface TeamStormAttributeModel {
+  id: string;
+  name: string;
+  description?: string | null;
+  type: TeamStormAttributeType;
+  options?: TeamStormAttributeOption[] | null;
+  workitemTypes: Array<{ id: string; name: string }>;
+}
+
+export interface TeamStormCreateAttributeRequest {
+  name: string;
+  type: TeamStormAttributeType;
+  description?: string;
+  options?: Array<{ name: string }>;
+}
+
+export interface TeamStormPatchAttributeRequest {
+  name?: string;
+  description?: string;
+  options?: Array<{ id?: string; name: string }>;
+}
+
+export interface TeamStormCreateAttributeOptionRequest {
+  id?: string;
+  name: string;
+}
+
+export interface TeamStormPatchAttributeOptionRequest {
+  id: string;
+  name: string;
+}
+
 // Attachments
 export interface TeamStormAttachment {
   attachmentId: string;
@@ -275,9 +328,94 @@ export interface TeamStormUpdatedTaskListResponse {
   items: TeamStormUpdatedTask[];
 }
 
+// Folders
+export interface TeamStormFolderModel {
+  id: string;
+  name: string;
+  description?: string | null;
+  parentId?: string | null;
+}
+
+export interface TeamStormFolderListResponse {
+  fromToken?: string | null;
+  maxItemsCount?: number | null;
+  nextToken?: string | null;
+  items: TeamStormFolderModel[];
+}
+
+export interface TeamStormCreateFolderRequest {
+  name: string;
+  description?: string;
+  parentId?: string;
+}
+
+export interface TeamStormPatchFolderRequest {
+  name?: string;
+  description?: string;
+  parentId?: string;
+}
+
 // New types for Phase B
 export interface TeamStormUserListResponse {
   items: TeamStormUser[];
+}
+
+// Documents
+export interface TeamStormDocumentStatus {
+  id: string;
+  name: string;
+}
+
+export interface TeamStormDocumentStatusListResponse {
+  fromToken?: string | null;
+  maxItemsCount?: number | null;
+  nextToken?: string | null;
+  items: TeamStormDocumentStatus[];
+}
+
+export interface TeamStormDocument {
+  workspaceId: string;
+  id: string;
+  key: string;
+  name: string;
+  documentUrl: string;
+  content?: string | null;
+  createdAt: string;
+  author: TeamStormUser;
+  updatedAt: string;
+  updatedBy?: TeamStormUser | null;
+  parent?: { id: string; name: string; nodeType?: string } | null;
+  version: number;
+  versionUrl: string;
+  labels: string[];
+  isBlocked: boolean;
+  status?: TeamStormDocumentStatus | null;
+}
+
+export interface TeamStormDocumentListResponse {
+  fromToken?: string | null;
+  maxItemsCount?: number | null;
+  nextToken?: string | null;
+  items: TeamStormDocument[];
+}
+
+export interface TeamStormCreateDocumentRequest {
+  name: string;
+  content?: string;
+  parentId?: string;
+  labels?: string[];
+}
+
+export interface TeamStormDocumentPermission {
+  type: 'User' | 'Group';
+  permissionId: string;
+  workspaceId: string;
+  documentId: string;
+  accessLevel: 'Read' | 'Edit' | 'Comment';
+  userId?: string;
+  user?: TeamStormUser;
+  groupId?: string;
+  group?: { id: string; name: string };
 }
 
 export interface TeamStormSprintListResponse {

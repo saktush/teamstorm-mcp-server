@@ -1,6 +1,6 @@
 # TeamStorm MCP Server
 
-MCP-сервер для интеграции AI-агентов (Claude Code, Cursor) с TeamStorm API. Предоставляет **26 инструментов** для работы с задачами, комментариями, атрибутами, вложениями, правами доступа, связями, пользователями, спринтами, workflow и списанием времени.
+MCP-сервер для интеграции AI-агентов (Claude Code, Cursor) с TeamStorm API. Предоставляет **48 инструментов** для работы с задачами, папками, документами, комментариями, атрибутами, вложениями, правами доступа, связями, пользователями, спринтами, workflow и списанием времени.
 
 ## Быстрый старт
 
@@ -18,9 +18,11 @@ docker compose build --no-cache && docker compose up -d
 
 Сервер будет доступен на `http://localhost:3001/mcp`, health-check — на `http://localhost:3002/health`.
 
-> **Доступ по сети (Linux-сервер):** При запуске на Linux-сервере в локальной сети сервер автоматически доступен по IP-адресу сервера: `http://192.168.x.x:3001/mcp`. Используйте этот адрес вместо `localhost` при настройке Claude Code или Cursor на другой машине. Порт открывается на всех сетевых интерфейсах (`0.0.0.0`) автоматически — дополнительная настройка не требуется.
+> **Доступ по сети (Linux-сервер):** Если `TEAMSTORM_API_TOKEN` **не задан** — сервер слушает на всех интерфейсах (`0.0.0.0`) и доступен по IP-адресу сервера: `http://192.168.x.x:3001/mcp`. Если `TEAMSTORM_API_TOKEN` **задан** (single-user деплой) — сервер автоматически переключается на `127.0.0.1` для защиты токена. Чтобы вернуть доступ по сети при заданном токене, установите `LISTEN_HOST=0.0.0.0` в `.env`.
 
 > **Примечание:** Переменная `TEAMSTORM_API_TOKEN` в `.env` не обязательна — в HTTP-режиме каждый клиент передаёт свой токен через заголовок `Authorization`. `TEAMSTORM_API_URL` можно передать через `apiUrl` в инструменте (автоматически дополняется до `http://<host>/cwm/public/api/v1`), но обычно URL предконфигурирован на сервере и параметр не требуется.
+
+> 📦 **Развёртывание.** Сценарии деплоя (локально single/multi-user, удалённый сервер за HTTPS, bare Node, несколько инстансов), порядок обновления и диагностика вынесены в отдельное руководство — [README-deploy.md](README-deploy.md). Важно: сессии хранятся в памяти, поэтому после каждой пересборки клиентов нужно переподключать.
 
 ### 2. Интеграция с Claude Code
 
@@ -33,7 +35,38 @@ claude mcp add --scope user --transport http teamstorm http://localhost:3001/mcp
 
 > **Примечание:** `PrivateToken` — это ваш персональный токен TeamStorm. Он передаётся с каждым запросом и используется для аутентификации на стороне API.
 
-### 3. Интеграция с Cursor
+### 3. Интеграция с Codex / Codex Desktop
+
+Добавьте секцию в `~/.codex/config.toml`. Возможны два варианта в зависимости от того, как запущен MCP-сервер.
+
+**Вариант А — токен задан на сервере** (рекомендуется для локального запуска)
+
+Если `TEAMSTORM_API_TOKEN` уже прописан в `.env`, сервер сам подставляет токен в запросы к TeamStorm. Codex не должен передавать никаких заголовков:
+
+```toml
+[mcp_servers.teamstorm]
+url = "http://localhost:3001/mcp"
+```
+
+**Вариант Б — токен передаётся клиентом** (multi-user деплой)
+
+Если токен на сервере не задан, каждый клиент передаёт свой токен. Сохраните его в переменную окружения (в `~/.zshrc` или `~/.bashrc`):
+
+```bash
+export TEAMSTORM_TOKEN="ваш_токен"
+```
+
+Затем укажите имя этой переменной в конфиге:
+
+```toml
+[mcp_servers.teamstorm]
+url = "http://localhost:3001/mcp"
+bearer_token_env_var = "TEAMSTORM_TOKEN"
+```
+
+> **Примечание:** Codex передаёт токен как `Authorization: Bearer <токен>`, что принимается сервером. Перезапустите Codex после изменения конфига.
+
+### 4. Интеграция с Cursor
 
 Создайте файл `.cursor/mcp.json` в корне проекта (или глобально в `~/.cursor/mcp.json`):
 
@@ -52,7 +85,39 @@ claude mcp add --scope user --transport http teamstorm http://localhost:3001/mcp
 
 > **Примечание:** Замени `ваш_токен` на реальный PrivateToken TeamStorm. После добавления перезапустите Cursor — инструменты появятся в боковой панели MCP.
 
-### 4. Проверка
+### 5. Интеграция с Claude Desktop
+
+Custom Connectors (Settings → Connectors в приложении) для этого **не подходят** — они подключаются к серверу из облака Anthropic, а не с локальной машины, и не видят `http://localhost`. Для локального HTTP-сервера нужен stdio↔HTTP прокси [`mcp-remote`](https://www.npmjs.com/package/mcp-remote), который Claude Desktop запускает как обычный локальный MCP-сервер.
+
+Откройте конфиг через Claude → Settings… → Developer → Edit Config (или отредактируйте файл напрямую):
+
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "teamstorm": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote@latest",
+        "http://localhost:3001/mcp",
+        "--allow-http",
+        "--header",
+        "Authorization:${TEAMSTORM_AUTH_HEADER}"
+      ],
+      "env": {
+        "TEAMSTORM_AUTH_HEADER": "PrivateToken ваш_токен"
+      }
+    }
+  }
+}
+```
+
+> **Примечание:** `--allow-http` обязателен — `mcp-remote` по умолчанию требует HTTPS. Токен передан через `env`, чтобы пробел в значении `PrivateToken <токен>` не ломал парсинг аргумента `--header`. Требуется Node.js (для `npx`). После сохранения полностью перезапустите Claude Desktop (Quit, не просто закрыть окно) — в поле ввода чата появится иконка MCP-инструментов.
+
+### 6. Проверка
 
 После добавления перезапустите IDE и проверьте:
 
@@ -68,7 +133,9 @@ claude mcp add --scope user --transport http teamstorm http://localhost:3001/mcp
 | --------------------- | -------------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------ |
 | `TEAMSTORM_API_URL`   | Базовый URL TeamStorm API                                      | Нет (URL предконфигурирован на сервере; можно переопределить через `apiUrl` в инструменте) | `http://teamstorm.local/cwm/public/api/v1` |
 | `TEAMSTORM_API_TOKEN` | PrivateToken для аутентификации                                | Нет (каждый клиент передаёт через `Authorization` заголовок) | `your_token_here`                          |
+| `TEAMSTORM_WORKSPACE` | Workspace по умолчанию, если инструмент вызван без `workspace` | Нет                                                     | `MYSPACE`                                  |
 | `PORT`                | Порт для MCP сервера                                           | Нет (по умолчанию 3001)                                  | `3001`                                     |
+| `LISTEN_HOST`         | Адрес, на котором слушает сервер. Если не задан: `127.0.0.1` когда установлен `TEAMSTORM_API_TOKEN`, иначе `0.0.0.0` | Нет | `0.0.0.0` |
 | `TRUST_PROXY`         | Доверять заголовку `X-Forwarded-For` (только за reverse-proxy) | Нет (по умолчанию `false`)                               | `false`                                    |
 
 > `TEAMSTORM_API_URL` задаётся глобально через `.env`. При необходимости можно переопределить через параметр `apiUrl` в отдельном инструменте — сервер автоматически дополняет URL до полного формата `http://<host>/cwm/public/api/v1`.
@@ -102,6 +169,14 @@ cp .env.example .env
 ```
 Создай задачу "Исправить баг" в пространстве TS
 с типом "Дефект", исполнителем "ivan.ivanov" и папкой "разработка"
+```
+
+### Работа с папками
+
+```
+Покажи дерево папок в пространстве TS
+Найди папку "разработка" в пространстве TS
+Найди все задачи в папке "Backend" и выведи аналитику по дублям
 ```
 
 ### Работа с комментариями
@@ -173,7 +248,7 @@ npm run lint      # ESLint
 
 - **`src/index.ts`** — точка входа: HTTP-сервер (порт 3001) + health-check (3002) + OOB upload. Каждый MCP-запрос создаёт новый `McpServer`.
 - **`src/client/teamstorm.ts`** — `TeamStormClient`: axios-клиент с `setBaseUrl()` для переключения URL в рантайме (автоматически дополняет неполные URL до `/cwm/public/api/v1`).
-- **`src/tools/`** — 26 инструментов по доменам. Каждый: Zod-схема с `apiUrl` + `execute` → клиент → Markdown.
+- **`src/tools/`** — 48 инструментов по доменам. Каждый: Zod-схема с `apiUrl` + `execute` → клиент → Markdown.
 - **`src/utils/`** — Pino-логгер (с redact и ленивым NODE_ENV) + форматтеры (task, bytes, duration).
 
 ## Структура проекта
@@ -186,6 +261,8 @@ teamstorm-mcp-server/
 │   │   │                      # rate-limit interceptors, санитизация заголовков в логах
 │   │   └── types.ts          # Полные TS-интерфейсы всех сущностей TeamStorm
 │   ├── tools/
+│   │   ├── folders/          # Инструменты для работы с папками
+│   │   │   ├── list.ts, get.ts, get-tree.ts, find.ts
 │   │   ├── tasks/            # Инструменты для работы с задачами
 │   │   │   ├── list.ts, get.ts, create.ts, update.ts, count.ts
 │   │   │   ├── list-by-parent.ts, list-updated.ts
@@ -199,6 +276,16 @@ teamstorm-mcp-server/
 │   │   │   └── get.ts
 │   │   ├── links/            # Инструменты для связей
 │   │   │   └── get.ts
+│   │   ├── documents/        # Инструменты для документов
+│   │   │   ├── list.ts, get.ts, create.ts, update.ts, block.ts, unblock.ts
+│   │   ├── document-sharing/ # Доступ к документам
+│   │   │   ├── list.ts, create.ts, update.ts
+│   │   ├── document-statuses/ # Статусы документов
+│   │   │   ├── list.ts, get.ts
+│   │   ├── document-links/   # Связи документов с задачами
+│   │   │   ├── list-tasks.ts, create.ts, list-documents.ts
+│   │   ├── document-comments/ # Комментарии к документам
+│   │   │   ├── list.ts, create.ts
 │   │   ├── users/            # Пользователи пространства
 │   │   │   └── list.ts
 │   │   ├── sprints/          # Спринты с фильтром по статусу
@@ -226,6 +313,17 @@ teamstorm-mcp-server/
 
 Инструменты сгруппированы по доменам:
 
+### Папки
+
+| Инструмент                       | Описание                                                                    |
+| -------------------------------- | --------------------------------------------------------------------------- |
+| `teamstorm_list_folders`         | Список папок с фильтрацией по названию и родительской папке                 |
+| `teamstorm_get_folder`           | Информация о папке по UUID                                                  |
+| `teamstorm_get_folder_tree`      | Полное дерево папок за один запрос (автоматическая пагинация)               |
+| `teamstorm_find_folder`          | Поиск папки по названию (подстрока, любой уровень) или ID с путём до корня  |
+| `teamstorm_create_folder`        | Создание папки (название, описание, родительская папка)                     |
+| `teamstorm_update_folder`        | Изменение названия/описания папки, перемещение в другую папку               |
+
 ### Задачи
 
 | Инструмент                       | Описание                                                      |
@@ -248,10 +346,14 @@ teamstorm-mcp-server/
 
 ### Атрибуты
 
-| Инструмент                      | Описание                                       |
-| ------------------------------- | ---------------------------------------------- |
-| `teamstorm_get_task_attributes` | Значения атрибутов конкретной задачи           |
-| `teamstorm_list_attributes`     | Список пользовательских атрибутов пространства |
+| Инструмент                          | Описание                                                            |
+| ----------------------------------- | ------------------------------------------------------------------ |
+| `teamstorm_get_task_attributes`     | Значения атрибутов конкретной задачи                               |
+| `teamstorm_list_attributes`         | Список пользовательских атрибутов пространства                     |
+| `teamstorm_create_attribute`        | Создание атрибута (name, type, description, опции для UniSelect/Tag) |
+| `teamstorm_update_attribute`        | Изменение названия/описания и набора опций атрибута                |
+| `teamstorm_add_attribute_option`    | Добавление опции к атрибуту UniSelect/Tag                          |
+| `teamstorm_update_attribute_option` | Переименование опции атрибута по её UUID                           |
 
 ### Вложения
 
@@ -275,6 +377,47 @@ teamstorm-mcp-server/
 | -------------------------- | ------------------------------- |
 | `teamstorm_get_task_links` | Связи задачи (связанные задачи) |
 
+### Документы
+
+| Инструмент                   | Описание                                                                     |
+| ---------------------------- | ---------------------------------------------------------------------------- |
+| `teamstorm_list_documents`   | Список документов пространства с пагинацией                                  |
+| `teamstorm_get_document`     | Документ по ID, включая содержимое                                           |
+| `teamstorm_create_document`  | Создание документа (название, содержимое, родитель, метки)                   |
+| `teamstorm_update_document`  | Изменение статуса документа (публичный API поддерживает только поле status)  |
+| `teamstorm_block_document`   | Блокировка документа от редактирования                                       |
+| `teamstorm_unblock_document` | Снятие блокировки с документа                                                |
+
+### Доступ к документам
+
+| Инструмент                             | Описание                                                       |
+| -------------------------------------- | -------------------------------------------------------------- |
+| `teamstorm_list_document_permissions`  | Список разрешений на документ (пользователи и группы)          |
+| `teamstorm_share_document`             | Выдача доступа пользователю/группе (Read, Edit, Comment)       |
+| `teamstorm_update_document_permission` | Изменение уровня доступа существующего разрешения              |
+
+### Статусы документов
+
+| Инструмент                         | Описание                                    |
+| ---------------------------------- | ------------------------------------------- |
+| `teamstorm_list_document_statuses` | Список доступных статусов документов        |
+| `teamstorm_get_document_status`    | Статус документа по ID                      |
+
+### Связи документов
+
+| Инструмент                          | Описание                                          |
+| ----------------------------------- | ------------------------------------------------- |
+| `teamstorm_get_document_task_links` | Задачи, связанные с документом                    |
+| `teamstorm_link_document_to_task`   | Связывание документа с задачей                    |
+| `teamstorm_get_task_document_links` | Документы, связанные с задачей                    |
+
+### Комментарии к документам
+
+| Инструмент                          | Описание                            |
+| ----------------------------------- | ----------------------------------- |
+| `teamstorm_list_document_comments`  | Все комментарии к документу         |
+| `teamstorm_create_document_comment` | Добавление комментария к документу  |
+
 ### Справочники
 
 | Инструмент                  | Описание                                                |
@@ -283,7 +426,7 @@ teamstorm-mcp-server/
 | `teamstorm_list_sprints`    | Спринты с фильтром по статусу (active/completed/future) |
 | `teamstorm_list_workflows`  | Доступные процессы (workflows)                          |
 | `teamstorm_list_task_types` | Типы задач                                              |
-| `teamstorm_list_workspaces` | Доступные пространства (workspaces)                     |
+| `teamstorm_list_workspaces` | Все доступные пространства (workspaces), все страницы   |
 
 ### Время
 

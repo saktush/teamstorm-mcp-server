@@ -1,4 +1,6 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
+import http from 'node:http';
+import https from 'node:https';
 import * as path from 'path';
 import { maskToken } from '../config.js';
 import { logger } from '../utils/logger.js';
@@ -15,6 +17,11 @@ import type {
   TeamStormCommentListResponse,
   TeamStormCommentVisibility,
   TeamStormAttributeListResponse,
+  TeamStormAttributeModel,
+  TeamStormCreateAttributeRequest,
+  TeamStormPatchAttributeRequest,
+  TeamStormCreateAttributeOptionRequest,
+  TeamStormPatchAttributeOptionRequest,
   TeamStormAttachment,
   TeamStormAttachmentListResponse,
   TeamStormAttachmentVersion,
@@ -22,6 +29,17 @@ import type {
   TeamStormPermissionListResponse,
   TeamStormLinkListResponse,
   TeamStormUpdatedTaskListResponse,
+  TeamStormFolderModel,
+  TeamStormFolderListResponse,
+  TeamStormCreateFolderRequest,
+  TeamStormPatchFolderRequest,
+  TeamStormWorkspaceListResponse,
+  TeamStormDocument,
+  TeamStormDocumentListResponse,
+  TeamStormCreateDocumentRequest,
+  TeamStormDocumentStatus,
+  TeamStormDocumentStatusListResponse,
+  TeamStormDocumentPermission,
 } from './types.js';
 
 export class TeamStormClient {
@@ -100,6 +118,9 @@ export class TeamStormClient {
     this.internalApiUrl = baseUrl?.replace(/\/cwm\/public\/api\/v1$/, '');
     this.client = axios.create({
       baseURL: baseUrl,
+      timeout: 30_000,
+      httpAgent: new http.Agent({ keepAlive: true }),
+      httpsAgent: new https.Agent({ keepAlive: true }),
       headers: {
         Authorization: `PrivateToken ${token}`,
         'Content-Type': 'application/json',
@@ -203,11 +224,24 @@ export class TeamStormClient {
   }
 
   private extractErrorMessage(data: unknown): string {
-    if (typeof data === 'object' && data !== null && 'message' in data) {
-      return String((data as { message: unknown }).message);
+    if (typeof data === 'string' && data.length > 0) {
+      return data.slice(0, 500);
     }
-    if (typeof data === 'object' && data !== null && 'error' in data) {
-      return String((data as { error: unknown }).error);
+    if (typeof data === 'object' && data !== null) {
+      if ('message' in data && (data as { message: unknown }).message) {
+        return String((data as { message: unknown }).message);
+      }
+      if ('error' in data && (data as { error: unknown }).error) {
+        return String((data as { error: unknown }).error);
+      }
+      if ('title' in data && (data as { title: unknown }).title) {
+        return String((data as { title: unknown }).title);
+      }
+      if ('errors' in data) {
+        return JSON.stringify((data as { errors: unknown }).errors).slice(0, 500);
+      }
+      const raw = JSON.stringify(data).slice(0, 500);
+      if (raw !== '{}') return raw;
     }
     return 'Unknown error';
   }
@@ -346,12 +380,15 @@ export class TeamStormClient {
     }
   }
 
-  async listWorkspaces(): Promise<{ items: Array<{ id: string; key: string; name: string }> }> {
+  async listWorkspaces(params?: {
+    fromToken?: string;
+    maxItemsCount?: number;
+  }): Promise<TeamStormWorkspaceListResponse> {
     this.requireBaseUrl();
     try {
-      const response = await this.client.get<{
-        items: Array<{ id: string; key: string; name: string }>;
-      }>('/workspaces');
+      const response = await this.client.get<TeamStormWorkspaceListResponse>('/workspaces', {
+        params,
+      });
       return response.data;
     } catch (error) {
       this.handleError(error as AxiosError);
@@ -396,6 +433,77 @@ export class TeamStormClient {
       const response = await this.client.get<TeamStormAttributeListResponse>(
         `/workspaces/${ws}/attributes`,
         { params: { ...params, workspace: undefined } }
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async createAttribute(
+    data: TeamStormCreateAttributeRequest,
+    workspace?: string
+  ): Promise<TeamStormAttributeModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.post<TeamStormAttributeModel>(
+        `/workspaces/${ws}/attributes`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async patchAttribute(
+    attributeId: string,
+    data: TeamStormPatchAttributeRequest,
+    workspace?: string
+  ): Promise<TeamStormAttributeModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.patch<TeamStormAttributeModel>(
+        `/workspaces/${ws}/attributes/${attributeId}`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async addAttributeOption(
+    attributeId: string,
+    data: TeamStormCreateAttributeOptionRequest,
+    workspace?: string
+  ): Promise<TeamStormAttributeModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.post<TeamStormAttributeModel>(
+        `/workspaces/${ws}/attributes/${attributeId}/options`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async patchAttributeOption(
+    attributeId: string,
+    data: TeamStormPatchAttributeOptionRequest,
+    workspace?: string
+  ): Promise<TeamStormAttributeModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.patch<TeamStormAttributeModel>(
+        `/workspaces/${ws}/attributes/${attributeId}/options`,
+        data
       );
       return response.data;
     } catch (error) {
@@ -720,13 +828,10 @@ export class TeamStormClient {
     try {
       const ws = this.resolveWorkspace(params.workspace);
 
-      // Resolve task key (e.g. "TS-1007") to UUID via the CWM API
-      const task = await this.getTask(params.taskId, ws);
-      const workitemUuid = task.id;
-
-      if (!workitemUuid) {
-        throw new Error(`Не удалось получить UUID задачи ${params.taskId}`);
-      }
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const workitemUuid = uuidRegex.test(params.taskId)
+        ? params.taskId
+        : (await this.getTask(params.taskId, ws)).id;
 
       const body: Record<string, unknown> = {
         workitemId: workitemUuid,
@@ -774,10 +879,336 @@ export class TeamStormClient {
     }
     try {
       const ws = this.resolveWorkspace(params.workspace);
-      const task = await this.getTask(params.taskId, ws);
-      const workitemUuid = task.id;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const workitemUuid = uuidRegex.test(params.taskId)
+        ? params.taskId
+        : (await this.getTask(params.taskId, ws)).id;
       const response = await this.client.get(
         `${this.internalApiUrl}/tasks/api/v1/workitems/${workitemUuid}/time-tracking-entries`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async listFolders(params: {
+    workspace?: string;
+    name?: string;
+    parentId?: string;
+    fromToken?: string;
+    maxItemsCount?: number;
+  }): Promise<TeamStormFolderListResponse> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(params.workspace);
+      const response = await this.client.get<TeamStormFolderListResponse>(
+        `/workspaces/${ws}/folders`,
+        { params: { ...params, workspace: undefined } }
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async getFolder(folderId: string, workspace?: string): Promise<TeamStormFolderModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get<TeamStormFolderModel>(
+        `/workspaces/${ws}/folders/${folderId}`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async createFolder(
+    data: TeamStormCreateFolderRequest,
+    workspace?: string
+  ): Promise<TeamStormFolderModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.post<TeamStormFolderModel>(
+        `/workspaces/${ws}/folders`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async patchFolder(
+    folderId: string,
+    data: TeamStormPatchFolderRequest,
+    workspace?: string
+  ): Promise<TeamStormFolderModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.patch<TeamStormFolderModel>(
+        `/workspaces/${ws}/folders/${folderId}`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  // Documents
+  async listDocuments(params: {
+    workspace?: string;
+    fromToken?: string;
+    maxItemsCount?: number;
+  }): Promise<TeamStormDocumentListResponse> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(params.workspace);
+      const response = await this.client.get<TeamStormDocumentListResponse>(
+        `/workspaces/${ws}/documents`,
+        { params: { ...params, workspace: undefined } }
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async getDocument(documentId: string, workspace?: string): Promise<TeamStormDocument> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get<TeamStormDocument>(
+        `/workspaces/${ws}/documents/${documentId}`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async createDocument(
+    data: TeamStormCreateDocumentRequest,
+    workspace?: string
+  ): Promise<TeamStormDocument> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.post<TeamStormDocument>(
+        `/workspaces/${ws}/documents`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async patchDocument(
+    documentId: string,
+    data: { status?: string | null },
+    workspace?: string
+  ): Promise<TeamStormDocument> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.patch<TeamStormDocument>(
+        `/workspaces/${ws}/documents/${documentId}`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async blockDocument(documentId: string, workspace?: string): Promise<TeamStormDocument> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.post<TeamStormDocument>(
+        `/workspaces/${ws}/documents/${documentId}/block`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async unblockDocument(documentId: string, workspace?: string): Promise<TeamStormDocument> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.post<TeamStormDocument>(
+        `/workspaces/${ws}/documents/${documentId}/unblock`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  // Document sharing
+  async listDocumentPermissions(
+    documentId: string,
+    workspace?: string
+  ): Promise<TeamStormDocumentPermission[]> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get<TeamStormDocumentPermission[]>(
+        `/workspaces/${ws}/documents/${documentId}/sharing`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async createDocumentPermission(
+    documentId: string,
+    data: {
+      type: 'User' | 'Group';
+      accessLevel: 'Read' | 'Edit' | 'Comment';
+      userId?: string;
+      groupId?: string;
+    },
+    workspace?: string
+  ): Promise<TeamStormDocumentPermission> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.post<TeamStormDocumentPermission>(
+        `/workspaces/${ws}/documents/${documentId}/sharing`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async patchDocumentPermission(
+    documentId: string,
+    permissionId: string,
+    data: { accessLevel: 'Read' | 'Edit' | 'Comment' },
+    workspace?: string
+  ): Promise<TeamStormDocumentPermission> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.patch<TeamStormDocumentPermission>(
+        `/workspaces/${ws}/documents/${documentId}/sharing/${permissionId}`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  // Document statuses
+  async listDocumentStatuses(workspace?: string): Promise<TeamStormDocumentStatusListResponse> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get<TeamStormDocumentStatusListResponse>(
+        `/workspaces/${ws}/documents-statuses`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async getDocumentStatus(statusId: string, workspace?: string): Promise<TeamStormDocumentStatus> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get<TeamStormDocumentStatus>(
+        `/workspaces/${ws}/documents-statuses/${statusId}`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  // Document links
+  async getDocumentWorkitemLinks(documentId: string, workspace?: string): Promise<TeamStormTask[]> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get<TeamStormTask[]>(
+        `/workspaces/${ws}/documents/${documentId}/workitem-links`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async createDocumentWorkitemLink(
+    documentId: string,
+    data: { workitemWorkspace: string; workitem: string },
+    workspace?: string
+  ): Promise<void> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      // API возвращает 204 No Content — тела ответа нет
+      await this.client.post(`/workspaces/${ws}/documents/${documentId}/workitem-links`, data);
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async getWorkitemDocumentLinks(taskId: string, workspace?: string): Promise<TeamStormDocument[]> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get<TeamStormDocument[]>(
+        `/workspaces/${ws}/workitems/${taskId}/document-links`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  // Document comments
+  async listDocumentComments(
+    documentId: string,
+    workspace?: string
+  ): Promise<TeamStormCommentListResponse> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get<TeamStormCommentListResponse>(
+        `/workspaces/${ws}/documents/${documentId}/comments`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async createDocumentComment(
+    documentId: string,
+    text: string,
+    workspace?: string
+  ): Promise<TeamStormComment> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.post<TeamStormComment>(
+        `/workspaces/${ws}/documents/${documentId}/comments`,
+        { text }
       );
       return response.data;
     } catch (error) {

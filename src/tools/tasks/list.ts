@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import { formatTaskListMarkdown } from '../../utils/formatters.js';
-import { logRequest, logResponse, logError } from '../../utils/logger.js';
+import { logRequest, logResponse, logError, logger } from '../../utils/logger.js';
 
 const ListTasksSchema = z
   .object({
@@ -10,7 +10,9 @@ const ListTasksSchema = z
       .string()
       .url()
       .optional()
-      .describe('URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'),
+      .describe(
+        'URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'
+      ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     type: z.string().optional().describe('Фильтр по типу задачи (название или ID)'),
     parent: z.string().optional().describe('Фильтр по родительскому элементу'),
@@ -50,7 +52,7 @@ export async function listTasks(
     const duration = Date.now() - startTime;
 
     logResponse('teamstorm_list_tasks', true, duration);
-    console.error(`✅ Retrieved ${result.items.length} tasks in ${duration}ms`);
+    logger.info({ count: result.items.length, durationMs: duration }, 'Tasks retrieved');
 
     const markdown = formatTaskListMarkdown(result);
 

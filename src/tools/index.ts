@@ -1,3 +1,27 @@
+// Folders
+export {
+  listFolders,
+  getFolder,
+  getFolderTree,
+  findFolder,
+  createFolder,
+  updateFolder,
+  registerListFoldersTool,
+  registerGetFolderTool,
+  registerGetFolderTreeTool,
+  registerFindFolderTool,
+  registerCreateFolderTool,
+  registerUpdateFolderTool,
+} from './folders/index.js';
+export {
+  listFoldersSchema,
+  getFolderSchema,
+  getFolderTreeSchema,
+  findFolderSchema,
+  createFolderSchema,
+  updateFolderSchema,
+} from './folders/index.js';
+
 // Workspaces
 export { listWorkspaces, registerListWorkspacesTool } from './workspaces/index.js';
 
@@ -71,10 +95,25 @@ export {
 export {
   getTaskAttributes,
   listAttributes,
+  createAttribute,
+  updateAttribute,
+  addAttributeOption,
+  updateAttributeOption,
   registerGetTaskAttributesTool,
   registerListAttributesTool,
+  registerCreateAttributeTool,
+  registerUpdateAttributeTool,
+  registerAddAttributeOptionTool,
+  registerUpdateAttributeOptionTool,
 } from './attributes/index.js';
-export { getTaskAttributesSchema, listAttributesSchema } from './attributes/index.js';
+export {
+  getTaskAttributesSchema,
+  listAttributesSchema,
+  createAttributeSchema,
+  updateAttributeSchema,
+  addAttributeOptionSchema,
+  updateAttributeOptionSchema,
+} from './attributes/index.js';
 
 // Attachments
 export {
@@ -104,3 +143,78 @@ export { getTaskPermissionsSchema } from './permissions/index.js';
 // Links
 export { getTaskLinks, registerGetTaskLinksTool } from './links/index.js';
 export { getTaskLinksSchema } from './links/index.js';
+
+// Documents
+export {
+  listDocuments,
+  getDocument,
+  createDocument,
+  updateDocument,
+  blockDocument,
+  unblockDocument,
+  registerListDocumentsTool,
+  registerGetDocumentTool,
+  registerCreateDocumentTool,
+  registerUpdateDocumentTool,
+  registerBlockDocumentTool,
+  registerUnblockDocumentTool,
+} from './documents/index.js';
+export {
+  listDocumentsSchema,
+  getDocumentSchema,
+  createDocumentSchema,
+  updateDocumentSchema,
+  blockDocumentSchema,
+  unblockDocumentSchema,
+} from './documents/index.js';
+
+// Document Sharing
+export {
+  listDocumentPermissions,
+  shareDocument,
+  updateDocumentPermission,
+  registerListDocumentPermissionsTool,
+  registerShareDocumentTool,
+  registerUpdateDocumentPermissionTool,
+} from './document-sharing/index.js';
+export {
+  listDocumentPermissionsSchema,
+  shareDocumentSchema,
+  updateDocumentPermissionSchema,
+} from './document-sharing/index.js';
+
+// Document Statuses
+export {
+  listDocumentStatuses,
+  getDocumentStatus,
+  registerListDocumentStatusesTool,
+  registerGetDocumentStatusTool,
+} from './document-statuses/index.js';
+export { listDocumentStatusesSchema, getDocumentStatusSchema } from './document-statuses/index.js';
+
+// Document Links
+export {
+  getDocumentTaskLinks,
+  linkDocumentToTask,
+  getTaskDocumentLinks,
+  registerGetDocumentTaskLinksTool,
+  registerLinkDocumentToTaskTool,
+  registerGetTaskDocumentLinksTool,
+} from './document-links/index.js';
+export {
+  getDocumentTaskLinksSchema,
+  linkDocumentToTaskSchema,
+  getTaskDocumentLinksSchema,
+} from './document-links/index.js';
+
+// Document Comments
+export {
+  listDocumentComments,
+  createDocumentComment,
+  registerListDocumentCommentsTool,
+  registerCreateDocumentCommentTool,
+} from './document-comments/index.js';
+export {
+  listDocumentCommentsSchema,
+  createDocumentCommentSchema,
+} from './document-comments/index.js';

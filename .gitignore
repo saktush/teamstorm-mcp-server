@@ -8,6 +8,7 @@ dist/
 .env
 .env.*
 !.env.example
+swagger.json
 
 # Secrets and credentials
 *.key
@@ -33,3 +34,6 @@ npm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# local data
+swagger.json

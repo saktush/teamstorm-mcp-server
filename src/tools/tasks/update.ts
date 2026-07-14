@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import { formatTaskMarkdown } from '../../utils/formatters.js';
-import { logRequest, logResponse, logError } from '../../utils/logger.js';
+import { logRequest, logResponse, logError, logger } from '../../utils/logger.js';
 
 const UpdateTaskSchema = z
   .object({
@@ -10,7 +10,9 @@ const UpdateTaskSchema = z
       .string()
       .url()
       .optional()
-      .describe('URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'),
+      .describe(
+        'URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'
+      ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     taskId: z.string().describe('Ключ или ID задачи (например, TS-13 или UUID)'),
     name: z.string().optional().describe('Новое название задачи'),
@@ -50,7 +52,7 @@ export async function updateTask(
     const duration = Date.now() - startTime;
 
     logResponse('teamstorm_update_task', true, duration);
-    console.error(`✅ Updated task ${taskId} in ${duration}ms`);
+    logger.info({ taskId, durationMs: duration }, 'Task updated');
 
     const markdown = formatTaskMarkdown(result);
 
@@ -86,7 +88,12 @@ export function registerUpdateTaskTool(server: McpServer, client: TeamStormClien
       description:
         'Обновить параметры существующей задачи. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
       inputSchema: UpdateTaskSchema,
-      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
     },
     async (params: z.infer<typeof UpdateTaskSchema>) => updateTask(client, params)
   );

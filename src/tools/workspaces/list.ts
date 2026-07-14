@@ -9,7 +9,9 @@ export const listWorkspacesSchema = z
       .string()
       .url()
       .optional()
-      .describe('URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'),
+      .describe(
+        'URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'
+      ),
   })
   .strict();
 
@@ -45,14 +47,26 @@ export async function listWorkspaces(
 
   try {
     logRequest('teamstorm_list_workspaces', {});
-    const result = await client.listWorkspaces();
+
+    const allWorkspaces: Array<{ id: string; key: string; name: string }> = [];
+    let nextToken: string | null | undefined = undefined;
+
+    do {
+      const page = await client.listWorkspaces({
+        maxItemsCount: 1000,
+        fromToken: nextToken ?? undefined,
+      });
+      allWorkspaces.push(...page.items);
+      nextToken = page.nextToken;
+    } while (nextToken);
+
     const duration = Date.now() - startTime;
 
     logResponse('teamstorm_list_workspaces', true, duration);
 
-    logger.info(`Retrieved ${result.items.length} workspaces in ${duration}ms`);
+    logger.info(`Retrieved ${allWorkspaces.length} workspaces in ${duration}ms`);
 
-    if (result.items.length === 0) {
+    if (allWorkspaces.length === 0) {
       return {
         content: [
           {
@@ -64,9 +78,9 @@ export async function listWorkspaces(
     }
 
     const lines: string[] = [];
-    lines.push(`# Доступные пространства TeamStorm (${result.items.length})\n`);
+    lines.push(`# Доступные пространства TeamStorm (${allWorkspaces.length})\n`);
 
-    for (const ws of result.items) {
+    for (const ws of allWorkspaces) {
       lines.push(`**${ws.name}**\n`);
       lines.push(`- Ключ: \`${ws.key}\``);
       lines.push(`- ID: \`${ws.id}\``);
@@ -85,8 +99,8 @@ export async function listWorkspaces(
         },
       ],
       structuredContent: {
-        workspaces: result.items,
-        count: result.items.length,
+        workspaces: allWorkspaces,
+        count: allWorkspaces.length,
       },
     };
   } catch (error) {

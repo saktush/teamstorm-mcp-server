@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import type { TeamStormSprintListResponse } from '../../client/types.js';
-import { logRequest, logResponse, logError } from '../../utils/logger.js';
+import { logRequest, logResponse, logError, logger } from '../../utils/logger.js';
 
 const ListSprintsSchema = z
   .object({
@@ -10,7 +10,9 @@ const ListSprintsSchema = z
       .string()
       .url()
       .optional()
-      .describe('URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'),
+      .describe(
+        'URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'
+      ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     status: z
       .enum(['active', 'completed', 'future'])
@@ -97,7 +99,7 @@ export async function listSprints(
       });
     }
 
-    console.error(`✅ Retrieved ${filteredSprints.length} sprints in ${duration}ms`);
+    logger.info({ count: filteredSprints.length, durationMs: duration }, 'Sprints retrieved');
 
     const markdown = formatSprintsMarkdown({
       ...result,

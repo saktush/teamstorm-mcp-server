@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import type { TeamStormTypeListResponse } from '../../client/types.js';
-import { logRequest, logResponse, logError } from '../../utils/logger.js';
+import { logRequest, logResponse, logError, logger } from '../../utils/logger.js';
 
 const ListTaskTypesSchema = z
   .object({
@@ -10,7 +10,9 @@ const ListTaskTypesSchema = z
       .string()
       .url()
       .optional()
-      .describe('URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'),
+      .describe(
+        'URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'
+      ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
   })
   .strict();
@@ -62,7 +64,7 @@ export async function listTaskTypes(
     const duration = Date.now() - startTime;
 
     logResponse('teamstorm_list_task_types', true, duration);
-    console.error(`✅ Retrieved ${result.items.length} task types in ${duration}ms`);
+    logger.info({ count: result.items.length, durationMs: duration }, 'Task types retrieved');
 
     const markdown = formatTaskTypesMarkdown(result);
 

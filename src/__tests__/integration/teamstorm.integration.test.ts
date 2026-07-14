@@ -237,6 +237,140 @@ describe('TeamStormClient Integration Tests', () => {
     });
   });
 
+  describe('listFolders', () => {
+    it('should fetch folders list successfully', async () => {
+      const mockResponse = {
+        fromToken: '',
+        maxItemsCount: 50,
+        nextToken: null,
+        items: [
+          { id: 'folder-uuid-1', name: 'Development', description: 'Dev folder', parentId: null },
+          { id: 'folder-uuid-2', name: 'Backend', description: null, parentId: 'folder-uuid-1' },
+        ],
+      };
+
+      nock(baseUrl).get(`/workspaces/${workspace}/folders`).reply(200, mockResponse);
+
+      const result = await client.listFolders({ workspace });
+
+      expect(result.items).toHaveLength(2);
+      expect(result.items[0].name).toBe('Development');
+      expect(result.items[1].parentId).toBe('folder-uuid-1');
+    });
+
+    it('should pass query parameters', async () => {
+      nock(baseUrl)
+        .get(`/workspaces/${workspace}/folders`)
+        .query({ name: 'dev', maxItemsCount: '10' })
+        .reply(200, { fromToken: '', maxItemsCount: 10, nextToken: null, items: [] });
+
+      await client.listFolders({ workspace, name: 'dev', maxItemsCount: 10 });
+
+      expect(nock.isDone()).toBe(true);
+    });
+
+    it('should handle 404 workspace not found', async () => {
+      nock(baseUrl)
+        .get(`/workspaces/${workspace}/folders`)
+        .reply(404, { message: 'Workspace not found' });
+
+      await expect(client.listFolders({ workspace })).rejects.toThrow('404');
+    });
+  });
+
+  describe('getFolder', () => {
+    it('should fetch single folder by ID', async () => {
+      const mockFolder = {
+        id: 'folder-uuid-1',
+        name: 'Development',
+        description: 'Dev folder',
+        parentId: null,
+      };
+
+      nock(baseUrl)
+        .get(`/workspaces/${workspace}/folders/folder-uuid-1`)
+        .reply(200, mockFolder);
+
+      const result = await client.getFolder('folder-uuid-1', workspace);
+
+      expect(result.id).toBe('folder-uuid-1');
+      expect(result.name).toBe('Development');
+    });
+
+    it('should handle 404 for non-existent folder', async () => {
+      nock(baseUrl)
+        .get(`/workspaces/${workspace}/folders/nonexistent-uuid`)
+        .reply(404, { message: 'Folder not found' });
+
+      await expect(client.getFolder('nonexistent-uuid', workspace)).rejects.toThrow('404');
+    });
+  });
+
+  describe('listWorkspaces', () => {
+    it('should fetch all workspaces on a single page', async () => {
+      const mockResponse = {
+        fromToken: null,
+        maxItemsCount: 1000,
+        nextToken: null,
+        items: [
+          { id: 'ws-uuid-1', key: 'TS', name: 'TeamStorm' },
+          { id: 'ws-uuid-2', key: 'DEV', name: 'Development' },
+        ],
+      };
+
+      nock(baseUrl).get('/workspaces').query({ maxItemsCount: '1000' }).reply(200, mockResponse);
+
+      const result = await client.listWorkspaces({ maxItemsCount: 1000 });
+
+      expect(result.items).toHaveLength(2);
+      expect(result.items[0].key).toBe('TS');
+      expect(result.nextToken).toBeNull();
+    });
+
+    it('should follow nextToken across multiple pages', async () => {
+      nock(baseUrl)
+        .get('/workspaces')
+        .query({ maxItemsCount: '1000' })
+        .reply(200, {
+          fromToken: null,
+          maxItemsCount: 1000,
+          nextToken: 'page2-token',
+          items: [{ id: 'ws-uuid-1', key: 'TS', name: 'TeamStorm' }],
+        });
+
+      nock(baseUrl)
+        .get('/workspaces')
+        .query({ maxItemsCount: '1000', fromToken: 'page2-token' })
+        .reply(200, {
+          fromToken: 'page2-token',
+          maxItemsCount: 1000,
+          nextToken: null,
+          items: [{ id: 'ws-uuid-2', key: 'DEV', name: 'Development' }],
+        });
+
+      const page1 = await client.listWorkspaces({ maxItemsCount: 1000 });
+      expect(page1.nextToken).toBe('page2-token');
+
+      const page2 = await client.listWorkspaces({ maxItemsCount: 1000, fromToken: 'page2-token' });
+      expect(page2.items).toHaveLength(1);
+      expect(page2.items[0].key).toBe('DEV');
+      expect(page2.nextToken).toBeNull();
+
+      expect(nock.isDone()).toBe(true);
+    });
+
+    it('should pass query params correctly', async () => {
+      nock(baseUrl)
+        .get('/workspaces')
+        .query({ maxItemsCount: '1000' })
+        .reply(200, { fromToken: null, maxItemsCount: 1000, nextToken: null, items: [] });
+
+      await client.listWorkspaces({ maxItemsCount: 1000 });
+
+      expect(nock.isDone()).toBe(true);
+    });
+  });
+
   describe('setBaseUrl normalization', () => {
     it('should accept URL without /cwm/public/api/v1 suffix and normalize it', () => {
       const normalizedClient = new TeamStormClient(token, baseUrl, workspace);

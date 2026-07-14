@@ -7,6 +7,7 @@ services:
     container_name: teamstorm-mcp-server
     ports:
       - "3001:3001"
+      - "3002:3002"
     environment:
       # TeamStorm API configuration
       - TEAMSTORM_API_URL=${TEAMSTORM_API_URL}
@@ -15,9 +16,18 @@ services:
       # Server configuration
       - PORT=3001
       - NODE_ENV=production
-      
+
+      # Defaults to 0.0.0.0 so Docker port mappings work; override via .env or shell env.
+      - LISTEN_HOST=${LISTEN_HOST:-0.0.0.0}
+
       # Optional: trust X-Forwarded-For header (enable only behind a reverse proxy)
       # TRUST_PROXY=false
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3002/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     restart: unless-stopped
     networks:
       - teamstorm-network
