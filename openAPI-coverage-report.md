@@ -1,15 +1,15 @@
 # TeamStorm OpenAPI → MCP Coverage Report
 
-Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing, DocumentsStatuses, DocumentLinks, DocumentComments tools; added Folders create/update tools; updated: 2026-07-13 — added Attributes create/patch tools: CreateAttribute, PatchAttribute, AddAttributeOption, PatchAttributeOption)
+Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing, DocumentsStatuses, DocumentLinks, DocumentComments tools; added Folders create/update tools; updated: 2026-07-13 — added Attributes create/patch tools: CreateAttribute, PatchAttribute, AddAttributeOption, PatchAttributeOption; updated: 2026-07-15 — added Portfolios and PortfolioElements tools, including workitem pin/unpin and name-based lookup)
 
 ## Summary
 
 - Total endpoints: 159
-- Implemented: 49 (31%)
-- Not implemented: 110 (69%)
+- Implemented: 59 (37%)
+- Not implemented: 100 (63%)
 - Total schemas: 179
-- Schemas used: 40
-- Schemas not used: 139
+- Schemas used: 52
+- Schemas not used: 127
 
 ---
 
@@ -116,21 +116,21 @@ Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing
 
 ### PortfolioElements
 
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/portfolio-elements` — operationId: ListPortfolioElements — NOT IMPLEMENTED
-- [ ] `POST /cwm/public/api/v1/workspaces/{workspace}/portfolio-elements` — operationId: (no operationId) — NOT IMPLEMENTED
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/portfolio-elements/{portfolioElementId}` — operationId: GetPortfolioElement — NOT IMPLEMENTED
-- [ ] `PATCH /cwm/public/api/v1/workspaces/{workspace}/portfolio-elements/{portfolioElementId}` — operationId: (no operationId) — NOT IMPLEMENTED
-- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/portfolio-elements/{portfolioElementId}` — operationId: (no operationId) — NOT IMPLEMENTED
-- [ ] `POST /cwm/public/api/v1/workspaces/{workspace}/portfolio-elements/{portfolioElementId}/workitems/{workitem}` — operationId: (no operationId) — NOT IMPLEMENTED
-- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/portfolio-elements/{portfolioElementId}/workitems/{workitem}` — operationId: (no operationId) — NOT IMPLEMENTED
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/portfolio-elements` — operationId: ListPortfolioElements — MCP tool: `teamstorm_list_portfolio_elements`
+- [x] `POST /cwm/public/api/v1/workspaces/{workspace}/portfolio-elements` — operationId: (no operationId) — MCP tool: `teamstorm_create_portfolio_element`
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/portfolio-elements/{portfolioElementId}` — operationId: GetPortfolioElement — MCP tool: `teamstorm_get_portfolio_element`
+- [x] `PATCH /cwm/public/api/v1/workspaces/{workspace}/portfolio-elements/{portfolioElementId}` — operationId: (no operationId) — MCP tool: `teamstorm_update_portfolio_element`
+- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/portfolio-elements/{portfolioElementId}` — operationId: (no operationId) — NOT IMPLEMENTED (intentionally: no delete tools)
+- [x] `POST /cwm/public/api/v1/workspaces/{workspace}/portfolio-elements/{portfolioElementId}/workitems/{workitem}` — operationId: (no operationId) — MCP tool: `teamstorm_set_task_portfolio_element` (accepts portfolioElementId or portfolioElementName)
+- [x] `DELETE /cwm/public/api/v1/workspaces/{workspace}/portfolio-elements/{portfolioElementId}/workitems/{workitem}` — operationId: (no operationId) — MCP tool: `teamstorm_remove_task_portfolio_element` (accepts portfolioElementId or portfolioElementName)
 
 ### Portfolios
 
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/portfolios` — operationId: ListPortfolios — NOT IMPLEMENTED
-- [ ] `POST /cwm/public/api/v1/workspaces/{workspace}/portfolios` — operationId: (no operationId) — NOT IMPLEMENTED
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/portfolios/{portfolioId}` — operationId: GetPortfolio — NOT IMPLEMENTED
-- [ ] `PATCH /cwm/public/api/v1/workspaces/{workspace}/portfolios/{portfolioId}` — operationId: (no operationId) — NOT IMPLEMENTED
-- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/portfolios/{portfolioId}` — operationId: (no operationId) — NOT IMPLEMENTED
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/portfolios` — operationId: ListPortfolios — MCP tool: `teamstorm_list_portfolios`
+- [x] `POST /cwm/public/api/v1/workspaces/{workspace}/portfolios` — operationId: (no operationId) — MCP tool: `teamstorm_create_portfolio`
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/portfolios/{portfolioId}` — operationId: GetPortfolio — MCP tool: `teamstorm_get_portfolio`
+- [x] `PATCH /cwm/public/api/v1/workspaces/{workspace}/portfolios/{portfolioId}` — operationId: (no operationId) — MCP tool: `teamstorm_update_portfolio`
+- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/portfolios/{portfolioId}` — operationId: (no operationId) — NOT IMPLEMENTED (intentionally: no delete tools)
 
 ### Providers
 
@@ -316,8 +316,8 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [ ] `CreateNumberFieldRequestBody` — NOT USED in any MCP tool
 - [ ] `CreateOpenIdConnectionModel` — NOT USED in any MCP tool
 - [ ] `CreateOpenIdUserModel` — NOT USED in any MCP tool
-- [ ] `CreatePortfolioElementRequestBody` — NOT USED in any MCP tool
-- [ ] `CreatePortfolioRequestBody` — NOT USED in any MCP tool
+- [x] `CreatePortfolioElementRequestBody` — used in MCP tool: `teamstorm_create_portfolio_element`
+- [x] `CreatePortfolioRequestBody` — used in MCP tool: `teamstorm_create_portfolio`
 - [ ] `CreateRoleRequestBody` — NOT USED in any MCP tool
 - [ ] `CreateSharedDocumentGroupPermissionBody` — NOT USED in any MCP tool
 - [ ] `CreateSharedDocumentPermissionBody` — NOT USED in any MCP tool
@@ -353,7 +353,7 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [ ] `EstimatesType` — NOT USED in any MCP tool
 - [x] `FolderModel` — used in MCP tools: `teamstorm_get_folder`, `teamstorm_list_folders`, `teamstorm_find_folder`, `teamstorm_get_folder_tree`
 - [x] `FolderModelList` — used in MCP tools: `teamstorm_list_folders`, `teamstorm_get_folder_tree`, `teamstorm_find_folder`
-- [ ] `FolderThumbModel` — NOT USED in any MCP tool
+- [x] `FolderThumbModel` — used in MCP tool: `teamstorm_get_portfolio` (embedded `folder` field on `PortfolioModel`)
 - [ ] `GroupModel` — NOT USED in any MCP tool
 - [ ] `GroupModelList` — NOT USED in any MCP tool
 - [ ] `GroupPrincipalModel` — NOT USED in any MCP tool
@@ -367,8 +367,8 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [x] `PatchAttributeRequestBody` — used in MCP tool: `teamstorm_update_attribute`
 - [ ] `PatchDocumentRequestBody` — NOT USED in any MCP tool
 - [x] `PatchFolderRequestBody` — used in MCP tool: `teamstorm_update_folder`
-- [ ] `PatchPortfolioElementRequestBody` — NOT USED in any MCP tool
-- [ ] `PatchPortfolioRequestBody` — NOT USED in any MCP tool
+- [x] `PatchPortfolioElementRequestBody` — used in MCP tool: `teamstorm_update_portfolio_element`
+- [x] `PatchPortfolioRequestBody` — used in MCP tool: `teamstorm_update_portfolio`
 - [ ] `PatchRoleRequestBody` — NOT USED in any MCP tool
 - [ ] `PatchSharedDocumentPermissionBody` — NOT USED in any MCP tool
 - [ ] `PatchSharedWorkitemPermissionBody` — NOT USED in any MCP tool
@@ -380,12 +380,12 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [x] `PatchWorkitemRequestBody` — used in MCP tool: `teamstorm_update_task`
 - [ ] `PatchWorkspaceRequestBody` — NOT USED in any MCP tool
 - [ ] `Permission` — NOT USED in any MCP tool
-- [ ] `PortfolioElementModel` — NOT USED in any MCP tool
-- [ ] `PortfolioElementModelList` — NOT USED in any MCP tool
-- [ ] `PortfolioElementThumbModel` — NOT USED in any MCP tool
-- [ ] `PortfolioModel` — NOT USED in any MCP tool
-- [ ] `PortfolioModelList` — NOT USED in any MCP tool
-- [ ] `PortfolioThumbModel` — NOT USED in any MCP tool
+- [x] `PortfolioElementModel` — used in MCP tools: `teamstorm_get_portfolio_element`, `teamstorm_create_portfolio_element`, `teamstorm_update_portfolio_element`, `teamstorm_set_task_portfolio_element`
+- [x] `PortfolioElementModelList` — used in MCP tools: `teamstorm_list_portfolio_elements`, `teamstorm_get_tasks_by_portfolio_element_name`
+- [x] `PortfolioElementThumbModel` — used in MCP tool: `teamstorm_get_portfolio` (embedded `elements` field on `PortfolioModel`)
+- [x] `PortfolioModel` — used in MCP tools: `teamstorm_get_portfolio`, `teamstorm_create_portfolio`, `teamstorm_update_portfolio`
+- [x] `PortfolioModelList` — used in MCP tool: `teamstorm_list_portfolios`
+- [x] `PortfolioThumbModel` — used in MCP tool: `teamstorm_get_portfolio_element` (embedded `portfolio` field on `PortfolioElementModel`)
 - [ ] `PrincipalModel` — NOT USED in any MCP tool
 - [ ] `PrincipalType` — NOT USED in any MCP tool
 - [ ] `ProgressType` — NOT USED in any MCP tool
@@ -459,7 +459,7 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [x] `WorkflowModel` — used in MCP tool: `teamstorm_list_workflows`
 - [x] `WorkflowModelList` — used in MCP tool: `teamstorm_list_workflows`
 - [ ] `WorkflowStatusModel` — NOT USED in any MCP tool
-- [ ] `WorkflowThumbModel` — NOT USED in any MCP tool
+- [x] `WorkflowThumbModel` — used in MCP tool: `teamstorm_get_portfolio` (embedded optional `workflow` field on `PortfolioModel`)
 - [ ] `WorkflowType` — NOT USED in any MCP tool
 - [x] `WorkitemLinkModel` — used in MCP tool: `teamstorm_get_task_links`
 - [x] `WorkitemModel` — used in MCP tools: `teamstorm_list_tasks`, `teamstorm_get_task`, `teamstorm_create_task`, `teamstorm_update_task`, `teamstorm_list_tasks_by_parent`, `teamstorm_list_updated_tasks`
@@ -502,8 +502,10 @@ Implemented as of 2026-07-02: all Documents, DocumentsSharing, DocumentsStatuses
 ### OpenId (4 endpoints — entire tag)
 - All 4 OpenID connection management endpoints
 
-### Portfolios + PortfolioElements (12 endpoints — entire tags)
-- All portfolio and portfolio element endpoints
+### Portfolios + PortfolioElements (2 endpoints remaining — DELETE only, intentionally excluded)
+Implemented as of 2026-07-15: ListPortfolios/GetPortfolio/CreatePortfolio/PatchPortfolio (`teamstorm_list_portfolios`, `teamstorm_get_portfolio`, `teamstorm_create_portfolio`, `teamstorm_update_portfolio`); ListPortfolioElements/GetPortfolioElement/CreatePortfolioElement/PatchPortfolioElement (`teamstorm_list_portfolio_elements`, `teamstorm_get_portfolio_element`, `teamstorm_create_portfolio_element`, `teamstorm_update_portfolio_element`); the workitem pin/unpin sub-resource endpoints (`teamstorm_set_task_portfolio_element`, `teamstorm_remove_task_portfolio_element`); plus a combined name-based lookup tool (`teamstorm_get_tasks_by_portfolio_element_name`, not a 1:1 endpoint mapping — composes ListPortfolioElements + ListWorkitems). Still not implemented:
+- `DELETE /cwm/public/api/v1/workspaces/{workspace}/portfolios/{portfolioId}` (intentionally excluded: no delete tools)
+- `DELETE /cwm/public/api/v1/workspaces/{workspace}/portfolio-elements/{portfolioElementId}` (intentionally excluded: no delete tools)
 
 ### Providers (1 endpoint)
 - `GET /cwm/public/api/v1/providers` — GetProviders
@@ -600,12 +602,11 @@ Implemented as of 2026-07-02: all Documents, DocumentsSharing, DocumentsStatuses
 
 1. **Core task operations are well covered**: The MCP server covers the essential CRUD for workitems — list, get, create, update, count, list by parent, list updated. Task delete is the one notable gap.
 
-2. **Read-heavy implementation**: Most implemented endpoints are GET operations. Write operations covered: CreateWorkitem, PatchWorkitem, CreateWorkitemComment, UploadWorkitemAttachments, the Documents write endpoints (create, patch, block/unblock, sharing, workitem links, comments — added 2026-07-02), CreateFolder/PatchFolder (added 2026-07-02), and the two internal time-tracking endpoints.
+2. **Read-heavy implementation**: Most implemented endpoints are GET operations. Write operations covered: CreateWorkitem, PatchWorkitem, CreateWorkitemComment, UploadWorkitemAttachments, the Documents write endpoints (create, patch, block/unblock, sharing, workitem links, comments — added 2026-07-02), CreateFolder/PatchFolder (added 2026-07-02), CreateAttribute/PatchAttribute/AddAttributeOption/PatchAttributeOption (added 2026-07-13), CreatePortfolio/PatchPortfolio/CreatePortfolioElement/PatchPortfolioElement plus the workitem pin/unpin sub-resource endpoints (added 2026-07-15), and the two internal time-tracking endpoints.
 
 3. **Entire feature areas have zero coverage**:
    - Agile boards (all 4 endpoints)
    - Document attachments and versions (DocumentAttachments — 9, DocumentVersions — 3); core Documents, DocumentComments, DocumentLinks, DocumentsSharing, DocumentsStatuses covered since 2026-07-02 (except DELETE)
-   - Portfolio management (PortfolioElements + Portfolios) — 12 endpoints
    - Git Integration Tokens — 6 endpoints
    - OpenID management — 4 endpoints
    - Role management — 5 endpoints
@@ -617,7 +618,7 @@ Implemented as of 2026-07-02: all Documents, DocumentsSharing, DocumentsStatuses
 
 4. **Time Tracking uses internal API**: The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` call `/tasks/api/v1/workitems/{id}/time-tracking-entries` — an internal non-public API path that is not in the public swagger spec. The public swagger has `GetTimeTrackingEntries` and `GetTimeTrackingEntriesUpdates` at `/cwm/public/api/v1/workspaces/time-tracking-entries` which are not implemented.
 
-5. **No delete/mutate operations for most non-task resources**: Sprints, workflows, and types can only be read through MCP — no creation, modification, or deletion is supported for these resources. Folders support create and update (since 2026-07-02) but not delete; attributes support create/patch plus option add/patch (since 2026-07-13) but not delete; tasks/workitems and documents support full non-delete CRUD.
+5. **No delete/mutate operations for most non-task resources**: Sprints, workflows, and types can only be read through MCP — no creation, modification, or deletion is supported for these resources. Folders support create and update (since 2026-07-02) but not delete; attributes support create/patch plus option add/patch (since 2026-07-13) but not delete; portfolios and portfolio elements support full create/patch plus workitem pin/unpin (since 2026-07-15) but not delete; tasks/workitems and documents support full non-delete CRUD.
 
 6. **Attachment upload is partially covered**: Upload works via the two-step OOB process (HTTP POST to `/upload` on MCP server, then `teamstorm_attach_uploaded`). Download is not supported — there is no `DownloadWorkitemAttachments` implementation.
 

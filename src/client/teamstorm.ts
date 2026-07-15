@@ -33,6 +33,14 @@ import type {
   TeamStormFolderListResponse,
   TeamStormCreateFolderRequest,
   TeamStormPatchFolderRequest,
+  TeamStormPortfolioModelList,
+  TeamStormPortfolioModel,
+  TeamStormCreatePortfolioRequest,
+  TeamStormPatchPortfolioRequest,
+  TeamStormPortfolioElementModelList,
+  TeamStormPortfolioElementModel,
+  TeamStormCreatePortfolioElementRequest,
+  TeamStormPatchPortfolioElementRequest,
   TeamStormWorkspaceListResponse,
   TeamStormDocument,
   TeamStormDocumentListResponse,
@@ -262,6 +270,7 @@ export class TeamStormClient {
     type?: string;
     parent?: string;
     sprintId?: string;
+    portfolioElementId?: string;
     name?: string;
     assignee?: string;
     author?: string;
@@ -955,6 +964,186 @@ export class TeamStormClient {
         data
       );
       return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  // Portfolios
+  // Note: ListPortfolios has no pagination (no fromToken/maxItemsCount) — response is just { items }.
+  async listPortfolios(params: {
+    workspace?: string;
+    name?: string;
+    folderId?: string;
+  }): Promise<TeamStormPortfolioModelList> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(params.workspace);
+      const response = await this.client.get<TeamStormPortfolioModelList>(
+        `/workspaces/${ws}/portfolios`,
+        { params: { ...params, workspace: undefined } }
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async getPortfolio(portfolioId: string, workspace?: string): Promise<TeamStormPortfolioModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get<TeamStormPortfolioModel>(
+        `/workspaces/${ws}/portfolios/${portfolioId}`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async createPortfolio(
+    data: TeamStormCreatePortfolioRequest,
+    workspace?: string
+  ): Promise<TeamStormPortfolioModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.post<TeamStormPortfolioModel>(
+        `/workspaces/${ws}/portfolios`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async patchPortfolio(
+    portfolioId: string,
+    data: TeamStormPatchPortfolioRequest,
+    workspace?: string
+  ): Promise<TeamStormPortfolioModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.patch<TeamStormPortfolioModel>(
+        `/workspaces/${ws}/portfolios/${portfolioId}`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  // Portfolio Elements
+  // Note: ListPortfolioElements has no pagination either — response is just { items }.
+  async listPortfolioElements(params: {
+    workspace?: string;
+    name?: string;
+    folderId?: string;
+    portfolioId?: string;
+    status?: string;
+  }): Promise<TeamStormPortfolioElementModelList> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(params.workspace);
+      const response = await this.client.get<TeamStormPortfolioElementModelList>(
+        `/workspaces/${ws}/portfolio-elements`,
+        { params: { ...params, workspace: undefined } }
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async getPortfolioElement(
+    portfolioElementId: string,
+    workspace?: string
+  ): Promise<TeamStormPortfolioElementModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get<TeamStormPortfolioElementModel>(
+        `/workspaces/${ws}/portfolio-elements/${portfolioElementId}`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async createPortfolioElement(
+    data: TeamStormCreatePortfolioElementRequest,
+    workspace?: string
+  ): Promise<TeamStormPortfolioElementModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.post<TeamStormPortfolioElementModel>(
+        `/workspaces/${ws}/portfolio-elements`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async patchPortfolioElement(
+    portfolioElementId: string,
+    data: TeamStormPatchPortfolioElementRequest,
+    workspace?: string
+  ): Promise<TeamStormPortfolioElementModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.patch<TeamStormPortfolioElementModel>(
+        `/workspaces/${ws}/portfolio-elements/${portfolioElementId}`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async assignWorkitemToPortfolioElement(
+    portfolioElementId: string,
+    workitemId: string,
+    workspace?: string
+  ): Promise<TeamStormPortfolioElementModel> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.post<TeamStormPortfolioElementModel>(
+        `/workspaces/${ws}/portfolio-elements/${portfolioElementId}/workitems/${workitemId}`
+      );
+      // Despite the documented 200 + PortfolioElementModel response, some TeamStorm
+      // deployments return an empty body from this endpoint. Fall back to a fresh GET
+      // so callers always get a usable model instead of crashing on undefined fields.
+      if (response.data && response.data.id) {
+        return response.data;
+      }
+      return await this.getPortfolioElement(portfolioElementId, ws);
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async unassignWorkitemFromPortfolioElement(
+    portfolioElementId: string,
+    workitemId: string,
+    workspace?: string
+  ): Promise<void> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      await this.client.delete(
+        `/workspaces/${ws}/portfolio-elements/${portfolioElementId}/workitems/${workitemId}`
+      );
     } catch (error) {
       this.handleError(error as AxiosError);
     }

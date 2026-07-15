@@ -59,6 +59,83 @@ export interface TeamStormPortfolio {
   }>;
 }
 
+// Portfolios / PortfolioElements (top-level entities, distinct from the
+// WorkitemPortfolioModel above which only appears embedded in TeamStormTask)
+export interface TeamStormFolderThumb {
+  id: string;
+  name: string;
+}
+
+export interface TeamStormWorkflowThumb {
+  id: string;
+  name: string;
+}
+
+export interface TeamStormPortfolioThumb {
+  id: string;
+  name: string;
+}
+
+export interface TeamStormPortfolioElementThumb {
+  id: string;
+  name: string;
+}
+
+export interface TeamStormPortfolioModel {
+  id: string;
+  name: string;
+  description?: string | null;
+  folder: TeamStormFolderThumb;
+  elements: TeamStormPortfolioElementThumb[];
+  workflow?: TeamStormWorkflowThumb | null;
+}
+
+export interface TeamStormPortfolioModelList {
+  items: TeamStormPortfolioModel[];
+}
+
+export interface TeamStormCreatePortfolioRequest {
+  name: string;
+  folderId: string;
+}
+
+export interface TeamStormPatchPortfolioRequest {
+  name: string;
+}
+
+export interface TeamStormPortfolioElementModel {
+  id: string;
+  name: string;
+  description?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  status: TeamStormStatus;
+  responsibles: TeamStormUser[];
+  portfolio: TeamStormPortfolioThumb;
+}
+
+export interface TeamStormPortfolioElementModelList {
+  items: TeamStormPortfolioElementModel[];
+}
+
+export interface TeamStormCreatePortfolioElementRequest {
+  portfolioId: string;
+  name: string;
+  description?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  responsibles?: string[] | null;
+}
+
+export interface TeamStormPatchPortfolioElementRequest {
+  name?: string | null;
+  description?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  status?: string | null;
+  responsibles?: string[] | null;
+}
+
 export interface TeamStormWorkspace {
   id: string;
   key: string;
