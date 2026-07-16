@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCP-сервер TeamStorm — инструменты</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #0d1117;
+    --subtle: #161b22;
+    --ink: #e6edf3;
+    --muted: #8b949e;
+    --faint: #6e7681;
+    --line: #21262d;
+    --line-strong: #30363d;
+    --accent: #58a6ff;
+    --w-ink: #d29922;
+    --r-ink: #3fb950;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .page {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+    padding: 12px;
+  }
+  .wrap { max-width: 1600px; margin: 0 auto; }
+
+  .tablewrap {
+    background: var(--surface); border: 1px solid var(--line-strong);
+    border-radius: 6px; overflow-x: auto;
+  }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  thead th {
+    position: sticky; top: 0; z-index: 2;
+    background: var(--subtle); color: var(--muted);
+    text-align: left; font-weight: 600; font-size: 12px;
+    padding: 10px 12px; border-bottom: 1px solid var(--line-strong);
+    white-space: nowrap;
+  }
+  thead th.num, td.num { text-align: right; }
+  td.num { font-variant-numeric: tabular-nums; }
+
+  tbody td { padding: 0 4px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:hover td { background: var(--subtle); }
+  tbody tr.zero td { color: var(--muted); }
+  td.id { color: var(--faint); font-variant-numeric: tabular-nums; }
+  td.name code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 14px; color: var(--accent); font-weight: 500; white-space: nowrap;
+  }
+  tr.zero td.name code { color: var(--muted); }
+  .rwmark {
+    display: inline-block; margin-left: 8px; text-align: center;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px; font-weight: 600;
+  }
+  .rwmark--W { color: rgba(248,81,73,.55); }
+  .rwmark--R { color: rgba(63,185,80,.5); }
+  td.desc { color: var(--muted); max-width: 460px; }
+  td.wrap-col code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 12px; color: var(--muted);
+  }
+  td.wrap-col .dash { color: var(--faint); }
+
+  .rw { font-weight: 500; }
+  .rw--R { color: var(--r-ink); }
+  .rw--W { color: var(--w-ink); }
+  .alvl { font-weight: 600; font-size: 12px; letter-spacing: .02em; }
+  .alvl--low { color: var(--r-ink); }
+  .alvl--medium { color: var(--w-ink); }
+  .alvl--high { color: #f85149; }
+  .tables { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+  .tablegroup { flex: 1 1 480px; min-width: 0; }
+  .tablegroup[hidden] { display: none; }
+  .tcount { margin-left: auto; color: var(--muted); font-weight: 500; font-size: 13px; font-variant-numeric: tabular-nums; }
+
+  .dtag {
+    display: inline-block; font-size: 12px; font-weight: 500; line-height: 18px; white-space: nowrap;
+    padding: 0 8px; border-radius: 2em; border: 1px solid transparent;
+  }
+  .dtag--task  { background: rgba(56,139,253,.15); color: #58a6ff; border-color: #388bfd66; }
+  .dtag--wiki  { background: rgba(163,113,247,.15); color: #d2a8ff; border-color: #a371f766; }
+  .dtag--space { background: rgba(57,197,207,.15);  color: #56d4dd; border-color: #39c5cf66; }
+  .dtag--other { background: rgba(110,118,129,.18); color: #adbac7; border-color: #6e768166; }
+
+  .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .caption { font-size: 12px; color: var(--muted); }
+  .toolbar .lbl { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .cr { color: #3fb950; font-weight: 600; }
+  .cw { color: #f85149; font-weight: 600; }
+  .seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 6px; overflow: hidden; }
+  .seg button {
+    all: unset; cursor: pointer; padding: 7px 13px; font-size: 13px; color: var(--muted);
+    border-left: 1px solid var(--line);
+  }
+  .seg button:first-child { border-left: 0; }
+  .seg button:hover { color: var(--ink); }
+  .seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: #0d1117; font-weight: 600; }
+
+  tr.grouphdr td {
+    background: var(--subtle); color: var(--ink); font-weight: 600; font-size: 12px;
+    padding: 4px 6px; border-top: 1px solid var(--line-strong); border-bottom: 1px solid var(--line-strong);
+    letter-spacing: .02em;
+  }
+  tr.grouphdr .gcount { color: var(--muted); font-weight: 500; margin-left: 8px; }
+
+  footer.legend { margin-top: 12px; font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 16px; }
+  footer.legend b { color: var(--ink); font-weight: 600; }
+  .empty { padding: 28px; text-align: center; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="wrap">
+    <div class="toolbar">
+      <div class="seg" id="tabSeg" role="tablist" aria-label="Раздел">
+        <button data-t="task" aria-pressed="true">Задачи</button>
+        <button data-t="wiki" aria-pressed="false">Вики</button>
+      </div>
+      <span class="tcount" id="tcount"></span>
+    </div>
+    <div class="tables">
+      <div class="tablegroup" data-tab="task">
+        <div class="tablewrap">
+          <table><tbody id="body-task"></tbody></table>
+        </div>
+      </div>
+      <div class="tablegroup" data-tab="wiki" hidden>
+        <div class="tablewrap">
+          <table><tbody id="body-wiki"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// [id, name, domain, desc, scen, wrap, rw]
+const TOOLS = [
+  [1,"create_task","Задача","создание задачи в пространстве",2,"—","W"],
+  [2,"update_task","Задача","обновление задачи",4,"—","W"],
+  [4,"get_task","Задача","получение задачи (включая коллекции: спринты и портфели)",5,"—","R"],
+  [5,"create_page","Вики","создание страницы в пространстве",3,"—","W"],
+  [6,"search_tasks_and_pages_by_text","Прочее","поиск по содержимому и названию задач и страниц",4,"—","R"],
+  [85,"search_tasks_by_name","Прочее","быстрый поиск задач по названию",0,"—","R"],
+  [86,"search_pages_by_name","Вики","быстрый поиск страниц по названию",0,"—","R"],
+  [10,"search_tasks_extended","Задача","детальный поиск / задачи пространства с фильтрацией",7,"—","R"],
+  [11,"create_task_comment","Задача","добавление комментария к задаче",2,"—","W"],
+  [12,"create_task_time_entry","Задача","добавление списания к задаче",1,"—","W"],
+  [13,"get_task_comments","Задача","список комментариев задачи",3,"—","R"],
+  [14,"get_task_time_entries","Задача","списания по задаче",2,"—","R"],
+  [15,"get_task_history","Задача","история изменения задачи",2,"—","R"],
+  [17,"get_page","Вики","получение страницы (включая хлебные крошки)",6,"—","R"],
+  [18,"get_status_categories","Прочее","справочник категорий статусов",1,"—","R"],
+  [19,"get_link_types","Прочее","справочник типов связей",1,"—","R"],
+  [20,"create_task_task_link","Задача","связать задачу с задачей по типу связи",2,"—","W"],
+  [21,"get_workspace_statuses","Пространство","справочник статусов",1,"—","R"],
+  [22,"get_workspace_task_types","Пространство","справочник типов задач",2,"—","R"],
+  [23,"get_workspace_attributes","Пространство","справочник атрибутов",1,"—","R"],
+  [28,"get_task_attachments","Задача","вложения задачи",2,"—","R"],
+  [29,"get_page_versions","Вики","версии страниц",1,"—","R"],
+  [32,"create_folder","Пространство","создание папки в пространстве/папке",1,"—","W"],
+  [33,"search_tasks_by_parent","Задача","задачи в папке / спринте / элементе портфеля",4,"—","R"],
+  [34,"get_task_attachment_file","Задача","скачивание файла вложения задачи",3,"—","R"],
+  [35,"update_page","Вики","обновление страницы",2,"—","W"],
+  [38,"get_my_workspaces","Пространство","список пространств пользователя",0,"—","R"],
+  [39,"create_task_attachment","Задача","добавление вложения к задаче",1,"—","W"],
+  [40,"get_task_links","Задача","получение связей задачи",2,"—","R"],
+  [42,"get_folder","Пространство","получение папки",0,"—","R"],
+  [43,"get_sprint","Пространство","получение спринта (включая капасити)",1,"—","R"],
+  [44,"get_backlog","Пространство","получение беклога",0,"—","R"],
+  [45,"get_portfolio","Пространство","получение портфеля",0,"—","R"],
+  [46,"get_portfolio_item","Пространство","получение элемента портфеля",0,"—","R"],
+  [47,"create_sprint","Пространство","создание спринта (папка обязательна + agile)",1,"—","W"],
+  [48,"create_portfolio_item","Пространство","создание элемента портфеля в портфеле",0,"—","W"],
+  [49,"create_portfolio","Пространство","создание портфеля",0,"—","W"],
+  [53,"get_current_user","Прочее","получение текущего пользователя",0,"—","R"],
+  [54,"get_user","Прочее","получение пользователя по id",0,"—","R"],
+  [55,"get_page_attachments","Вики","вложения страницы",1,"—","R"],
+  [56,"create_page_comment","Вики","добавление комментария к странице",1,"—","W"],
+  [57,"get_page_comments","Вики","список комментариев страницы",1,"—","R"],
+  [58,"delete_task","Задача","удаление задачи",1,"—","W"],
+  [59,"delete_page","Вики","удаление страницы целиком или конкретной версии",1,"—","W"],
+  [64,"get_child_pages","Вики","дочерние страницы у страницы / пространства",1,"—","R"],
+  [67,"delete_task_task_link","Задача","удаление связи задача↔задача",1,"—","W"],
+  [70,"delete_task_time_entry","Задача","удаление списания по задаче",0,"—","W"],
+  [72,"get_page_attachment_file","Вики","скачивание файла вложения страницы",1,"—","R"],
+  [73,"create_page_attachment","Вики","добавление вложения к странице",1,"—","W"],
+  [74,"get_task_children","Задача","дочерние задачи (подзадачи)",1,"—","R"],
+  [75,"get_task_merge_requests","Задача","pull/merge-request'ы задачи",1,"—","R"],
+  [84,"get_task_next_assignee","Задача","следующий исполнитель задачи",0,"—","R"],
+  [79,"get_workspace","Пространство","получение пространства",0,"—","R"],
+  [87,"get_workspace_sprint","Пространство","спринты (и бэклоги) пространства",0,"—","R"],
+  [88,"get_workspace_portfolio","Пространство","портфели пространства",0,"—","R"],
+  [89,"get_workspace_folders","Пространство","папки пространства",0,"—","R"],
+  [80,"create_task_page_link","Задача","связать задачу со страницей",0,"—","W"],
+  [81,"create_page_task_link","Вики","связать страницу с задачей",0,"—","W"],
+  [82,"delete_task_page_link","Задача","удаление связи задача↔страница",0,"—","W"],
+  [83,"delete_page_task_link","Вики","удаление связи страница↔задача",0,"—","W"],
+];
+
+const COLS = [
+  {key:"id",    label:"#",           type:"num", cls:"num id"},
+  {key:"name",  label:"Инструмент",  type:"str", cls:"name"},
+  {key:"access",label:"Доступ",      type:"str", cls:"access"},
+  {key:"desc",  label:"Описание",    type:"str", cls:"desc"},
+];
+
+const rows = TOOLS.map(t => ({id:t[0],name:t[1],domain:t[2],desc:t[3],scen:t[4],wrap:t[5],rw:t[6]}));
+
+// Специальные группы (по имени инструмента). Не перечисленные попадают в «Прочее».
+const WRAP_GROUP = "Специализированные обёртки над универсальными методами";
+const SPECIAL = {
+  // Поиск
+  search_tasks_and_pages_by_text:"Поиск", search_tasks_by_name:"Поиск", search_pages_by_name:"Поиск", search_tasks_extended:"Поиск", search_tasks_by_parent:"Поиск",
+  // Получение отдельной сущности
+  get_task:"Получение отдельной сущности", get_page:"Получение отдельной сущности",
+  get_folder:"Получение отдельной сущности", get_sprint:"Получение отдельной сущности",
+  get_backlog:"Получение отдельной сущности", get_portfolio:"Получение отдельной сущности",
+  get_portfolio_item:"Получение отдельной сущности", get_current_user:"Получение отдельной сущности",
+  get_user:"Получение отдельной сущности", get_workspace:"Получение отдельной сущности",
+  // (бывшая «Навигация в пространстве» — перенесено в Метаданные пространства)
+  get_child_pages:"Метаданные пространства",
+  // Создание сущности
+  create_task:"Создание сущности", create_page:"Создание сущности", create_folder:"Создание сущности",
+  create_sprint:"Создание сущности", create_portfolio:"Создание сущности",
+  create_portfolio_item:"Создание сущности", create_task_task_link:"Создание сущности",
+  create_task_comment:"Создание сущности", create_page_comment:"Создание сущности",
+  create_task_time_entry:"Создание сущности",
+  create_task_attachment:"Создание сущности", create_page_attachment:"Создание сущности",
+  create_task_page_link:"Создание сущности", create_page_task_link:"Создание сущности",
+  // Изменение
+  update_task:"Изменение", update_page:"Изменение",
+  // Удаление сущности
+  delete_task:"Удаление сущности", delete_page:"Удаление сущности",
+  delete_task_task_link:"Удаление сущности", delete_task_time_entry:"Удаление сущности",
+  delete_task_page_link:"Удаление сущности", delete_page_task_link:"Удаление сущности",
+  // Метаданные задачи
+  get_task_comments:"Метаданные задачи", get_task_attachments:"Метаданные задачи",
+  get_task_time_entries:"Метаданные задачи", get_task_history:"Метаданные задачи",
+  get_task_links:"Метаданные задачи",
+  get_task_attachment_file:"Метаданные задачи", get_task_children:"Метаданные задачи",
+  get_task_merge_requests:"Метаданные задачи", get_task_next_assignee:"Метаданные задачи",
+  // Метаданные страницы
+  get_page_comments:"Метаданные страницы", get_page_attachments:"Метаданные страницы",
+  get_page_versions:"Метаданные страницы",
+  get_page_attachment_file:"Метаданные страницы",
+  // Метаданные пространства
+  get_workspace_statuses:"Метаданные пространства", get_workspace_task_types:"Метаданные пространства",
+  get_workspace_attributes:"Метаданные пространства",
+  get_workspace_sprint:"Метаданные пространства", get_workspace_portfolio:"Метаданные пространства",
+  get_workspace_folders:"Метаданные пространства",
+};
+const SPECIAL_ORDER = ["Поиск","Получение отдельной сущности","Создание сущности","Изменение","Удаление сущности","Метаданные задачи","Метаданные страницы","Метаданные пространства",WRAP_GROUP,"Прочее"];
+
+// Группировка по доменам: тула может относиться и к задачам, и к вики — тогда
+// попадает в общую группу «Обе». Само пространство (get_workspace,
+// get_my_workspaces) содержит и задачи, и страницы → «Обе»; agile-настройки
+// пространства (спринты, портфели, папки, справочники) отнесены к «Задачам».
+const DOMAIN_BOTH = new Set(["get_current_user","get_user","get_status_categories","search_tasks_by_name","search_tasks_and_pages_by_text","get_workspace","get_my_workspaces"]);
+const DOMAIN_TASK = new Set(["get_link_types","search_pages_by_name"]);
+
+// Уровень доступа: чтение — всегда low; запись — high, кроме перечисленных.
+const ACCESS_MEDIUM = new Set(["update_task","update_page","create_task_task_link","create_task_page_link","create_page_task_link","create_task_attachment","create_page_attachment"]);
+const ACCESS_LOW_WRITE = new Set(["create_page_comment","create_task_comment","create_task_time_entry"]);
+const ACCESS_RANK = { high: 3, medium: 2, low: 1 };
+
+function counter(subset){
+  const w = subset.filter(r => r.rw === "W").length;
+  return `<span class="cr">Read ${subset.length - w}</span> · <span class="cw">Write ${w}</span> · Total ${subset.length}`;
+}
+
+function esc(s){ return String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
+function plural(n){
+  const a = n % 100, b = n % 10;
+  if (a >= 11 && a <= 14) return "тулов";
+  if (b === 1) return "тул";
+  if (b >= 2 && b <= 4) return "тула";
+  return "тулов";
+}
+function domainGroup(r){
+  if (DOMAIN_BOTH.has(r.name)) return "Обе";
+  if (DOMAIN_TASK.has(r.name)) return "Задачи";
+  if (r.domain === "Вики")     return "Вики";
+  return "Задачи"; // «Задача», «Пространство»/agile и прочее несопоставленное
+}
+function accessLevel(r){
+  if (r.rw === "R") return "low";
+  if (ACCESS_MEDIUM.has(r.name)) return "medium";
+  if (ACCESS_LOW_WRITE.has(r.name)) return "low";
+  return "high";
+}
+function groupOf(r){
+  return r.wrap !== "—" ? WRAP_GROUP : (SPECIAL[r.name] || "Прочее");
+}
+
+function cellHTML(col, r){
+  const v = r[col.key];
+  if (col.key === "name") return `<code>${esc(v)}</code><span class="rwmark rwmark--${r.rw}">${r.rw}</span>`;
+  if (col.key === "domain") {
+    const m = {"Задача":"task","Вики":"wiki","Пространство":"space","Прочее":"other"}[v] || "other";
+    return `<span class="dtag dtag--${m}">${esc(v)}</span>`;
+  }
+  if (col.key === "wrap") return v==="—" ? `<span class="dash">—</span>` : `<code>${esc(v)}</code>`;
+  if (col.key === "rw") return `<span class="rw rw--${v}">${v==='W'?'Запись':'Чтение'}</span>`;
+  if (col.key === "access") { const a = accessLevel(r); return `<span class="alvl alvl--${a}">${a}</span>`; }
+  return esc(v);
+}
+
+function rowHTML(r, n){
+  return `<tr>` +
+    COLS.map(c => `<td class="${c.cls}">${c.key==="id" ? n : cellHTML(c,r)}</td>`).join("") +
+    `</tr>`;
+}
+
+function buildRows(subset){
+  const groups = new Map();
+  subset.forEach(r => {
+    const k = groupOf(r);
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(r);
+  });
+  const entries = [...groups.entries()];
+  entries.sort((a,b) => SPECIAL_ORDER.indexOf(a[0]) - SPECIAL_ORDER.indexOf(b[0]));
+  let n = 0;
+  return entries.map(([k, rs]) => {
+    rs.sort((x,y) => ACCESS_RANK[accessLevel(y)] - ACCESS_RANK[accessLevel(x)]);
+    return `<tr class="grouphdr"><td colspan="${COLS.length}">${esc(k)}` +
+      `<span class="gcount">${rs.length} ${plural(rs.length)}</span></td></tr>` +
+      rs.map(r => rowHTML(r, ++n)).join("");
+  }).join("");
+}
+
+const counterHTML = { task: "", wiki: "" };
+function setCounter(t){ document.getElementById("tcount").innerHTML = counterHTML[t]; }
+
+function render(){
+  // «Обе» попадает в обе таблицы; «Задачи»/«Вики» — только в свою.
+  const taskRows = rows.filter(r => domainGroup(r) !== "Вики");
+  const wikiRows = rows.filter(r => domainGroup(r) !== "Задачи");
+  document.getElementById("body-task").innerHTML = buildRows(taskRows);
+  document.getElementById("body-wiki").innerHTML = buildRows(wikiRows);
+  counterHTML.task = counter(taskRows);
+  counterHTML.wiki = counter(wikiRows);
+  setCounter("task");
+}
+
+document.querySelectorAll("#tabSeg button").forEach(b => {
+  b.addEventListener("click", () => {
+    const t = b.dataset.t;
+    document.querySelectorAll("#tabSeg button").forEach(x => x.setAttribute("aria-pressed", x === b));
+    document.querySelectorAll(".tablegroup").forEach(g => { g.hidden = g.dataset.tab !== t; });
+    setCounter(t);
+  });
+});
+
+render();
+</script>
+</body>
+</html>

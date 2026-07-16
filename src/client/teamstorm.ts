@@ -10,6 +10,7 @@ import type {
   TeamStormCreateTaskRequest,
   TeamStormUpdateTaskRequest,
   TeamStormUserListResponse,
+  TeamStormSprint,
   TeamStormSprintListResponse,
   TeamStormWorkflowListResponse,
   TeamStormTypeListResponse,
@@ -382,6 +383,19 @@ export class TeamStormClient {
       const ws = this.resolveWorkspace(workspace);
       const response = await this.client.get<TeamStormSprintListResponse>(
         `/workspaces/${ws}/sprints`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async getSprint(sprintId: string, workspace?: string): Promise<TeamStormSprint> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get<TeamStormSprint>(
+        `/workspaces/${ws}/sprints/${sprintId}`
       );
       return response.data;
     } catch (error) {

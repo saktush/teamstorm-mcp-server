@@ -1,6 +1,6 @@
 # TeamStorm OpenAPI → MCP Coverage Report
 
-Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing, DocumentsStatuses, DocumentLinks, DocumentComments tools; added Folders create/update tools; updated: 2026-07-13 — added Attributes create/patch tools: CreateAttribute, PatchAttribute, AddAttributeOption, PatchAttributeOption; updated: 2026-07-15 — added Portfolios and PortfolioElements tools, including workitem pin/unpin and name-based lookup)
+Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing, DocumentsStatuses, DocumentLinks, DocumentComments tools; added Folders create/update tools; updated: 2026-07-13 — added Attributes create/patch tools: CreateAttribute, PatchAttribute, AddAttributeOption, PatchAttributeOption; updated: 2026-07-15 — added Portfolios and PortfolioElements tools, including workitem pin/unpin and name-based lookup; updated: 2026-07-16 — fixed `teamstorm_get_task` to render embedded `portfolios` (previously silently dropped) and enriched its `sprint` field with full details via a new internal `GetSprint` call)
 
 ## Summary
 
@@ -154,7 +154,7 @@ Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing
 
 - [x] `GET /cwm/public/api/v1/workspaces/{workspace}/sprints` — operationId: ListSprints — MCP tool: `teamstorm_list_sprints`
 - [ ] `POST /cwm/public/api/v1/workspaces/{workspace}/sprints` — operationId: CreateSprint — NOT IMPLEMENTED
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/sprints/{sprintId}` — operationId: GetSprint — NOT IMPLEMENTED
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/sprints/{sprintId}` — operationId: GetSprint — used internally by `teamstorm_get_task` (`client.getSprint`) to enrich the task's embedded sprint thumb with full details (dates, description); not exposed as its own standalone tool
 - [ ] `PATCH /cwm/public/api/v1/workspaces/{workspace}/sprints/{sprintId}` — operationId: PatchSprint — NOT IMPLEMENTED
 - [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/sprints/{sprintId}` — operationId: DeleteSprint — NOT IMPLEMENTED
 
@@ -410,7 +410,7 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [x] `SprintModel` — used in MCP tool: `teamstorm_list_sprints`
 - [x] `SprintModelList` — used in MCP tool: `teamstorm_list_sprints`
 - [ ] `SprintStates` — NOT USED in any MCP tool
-- [ ] `SprintThumbModel` — NOT USED in any MCP tool
+- [x] `SprintThumbModel` — used in MCP tool: `teamstorm_get_task` (embedded `sprint` field on `WorkitemModel`, before being enriched via `GetSprint`)
 - [ ] `StatusCategoryModel` — NOT USED in any MCP tool
 - [ ] `StatusCategoryModelList` — NOT USED in any MCP tool
 - [ ] `StatusModel` — NOT USED in any MCP tool
@@ -464,7 +464,7 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [x] `WorkitemLinkModel` — used in MCP tool: `teamstorm_get_task_links`
 - [x] `WorkitemModel` — used in MCP tools: `teamstorm_list_tasks`, `teamstorm_get_task`, `teamstorm_create_task`, `teamstorm_update_task`, `teamstorm_list_tasks_by_parent`, `teamstorm_list_updated_tasks`
 - [x] `WorkitemModelList` — used in MCP tools: `teamstorm_list_tasks`
-- [ ] `WorkitemPortfolioModel` — NOT USED in any MCP tool
+- [x] `WorkitemPortfolioModel` — used in MCP tool: `teamstorm_get_task` (embedded `portfolios` field on `WorkitemModel`)
 - [x] `WorkitemsCountModel` — used in MCP tool: `teamstorm_get_task_count`
 - [x] `WorkspaceModel` — used in MCP tool: `teamstorm_list_workspaces`
 - [x] `WorkspaceModelList` — used in MCP tool: `teamstorm_list_workspaces`
@@ -516,11 +516,12 @@ Implemented as of 2026-07-15: ListPortfolios/GetPortfolio/CreatePortfolio/PatchP
 ### Roles (5 endpoints — entire tag)
 - All role management endpoints
 
-### Sprints (4 endpoints, 1 implemented)
+### Sprints (4 endpoints, 2 implemented)
 - `POST /cwm/public/api/v1/workspaces/{workspace}/sprints` — CreateSprint
-- `GET /cwm/public/api/v1/workspaces/{workspace}/sprints/{sprintId}` — GetSprint
 - `PATCH /cwm/public/api/v1/workspaces/{workspace}/sprints/{sprintId}` — PatchSprint
 - `DELETE /cwm/public/api/v1/workspaces/{workspace}/sprints/{sprintId}` — DeleteSprint
+
+Implemented as of 2026-07-16: `GetSprint` — used internally by `teamstorm_get_task` to enrich the task's sprint field (not a standalone tool).
 
 ### StatusCategories + Statuses (4 endpoints — entire tags)
 - All status and status category endpoints
