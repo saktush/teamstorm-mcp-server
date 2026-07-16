@@ -84,10 +84,28 @@ export function formatTaskMarkdown(task: TeamStormTask): string {
 
   if (task.sprint) {
     lines.push(`**Спринт**: ${task.sprint.name}`);
+    if (task.sprint.startDate && task.sprint.endDate) {
+      const start = new Date(task.sprint.startDate).toLocaleDateString('ru-RU');
+      const end = new Date(task.sprint.endDate).toLocaleDateString('ru-RU');
+      lines.push(`**Даты спринта**: ${start} – ${end}`);
+    }
+    if (task.sprint.description) {
+      lines.push(`**Цель спринта**: ${task.sprint.description}`);
+    }
   }
 
   if (task.folder) {
     lines.push(`**Папка**: ${task.folder.name}`);
+  }
+
+  if (task.portfolios.length > 0) {
+    const portfoliosText = task.portfolios
+      .map((p) => {
+        const elements = p.elements.map((e) => e.name).join(', ');
+        return elements ? `${p.name} (${elements})` : p.name;
+      })
+      .join(', ');
+    lines.push(`**Портфели**: ${portfoliosText}`);
   }
 
   lines.push('');

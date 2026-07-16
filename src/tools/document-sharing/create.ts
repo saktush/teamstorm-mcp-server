@@ -21,15 +21,13 @@ export const shareDocumentSchema = z
     userId: z.string().optional().describe('UUID пользователя (обязателен при type=User)'),
     groupId: z.string().optional().describe('UUID группы (обязателен при type=Group)'),
   })
-  .strict()
-  .superRefine((val, ctx) => {
-    if (val.type === 'User' && !val.userId) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'userId обязателен при type=User' });
-    }
-    if (val.type === 'Group' && !val.groupId) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'groupId обязателен при type=Group' });
-    }
-  });
+  .strict();
+// Note: the type=User/Group conditional-required check on userId/groupId is validated at
+// runtime inside shareDocument() below, not via .superRefine() on the schema — chaining
+// .superRefine() turns this into a ZodEffects instance without a `.shape`, which breaks the
+// MCP SDK's JSON Schema generation for the tool (it silently advertises an empty {} schema
+// to callers, see zod-compat.js normalizeObjectSchema/getObjectShape). Keep this a plain
+// z.object(...).strict() so the exposed inputSchema stays accurate.
 
 export async function shareDocument(
   client: TeamStormClient,
@@ -44,6 +42,19 @@ export async function shareDocument(
 
   if (_apiUrl) {
     client.setBaseUrl(_apiUrl);
+  }
+
+  if (body.type === 'User' && !body.userId) {
+    return {
+      content: [{ type: 'text', text: '❌ userId обязателен при type=User' }],
+      isError: true,
+    };
+  }
+  if (body.type === 'Group' && !body.groupId) {
+    return {
+      content: [{ type: 'text', text: '❌ groupId обязателен при type=Group' }],
+      isError: true,
+    };
   }
 
   try {

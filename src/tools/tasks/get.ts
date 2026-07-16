@@ -57,6 +57,17 @@ export async function getTask(
     logResponse('teamstorm_get_task', true, duration);
     logger.info({ taskId: params.taskId, durationMs: duration }, 'Task retrieved');
 
+    if (task.sprint?.id) {
+      try {
+        task.sprint = await client.getSprint(task.sprint.id, params.workspace);
+      } catch (error) {
+        logger.warn(
+          { taskId: params.taskId, sprintId: task.sprint.id, err: error },
+          'Failed to enrich task with full sprint details, using thumb-level sprint'
+        );
+      }
+    }
+
     const markdown = formatTaskMarkdown(task);
 
     return {

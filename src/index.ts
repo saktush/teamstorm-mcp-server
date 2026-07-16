@@ -75,6 +75,17 @@ import {
   registerGetTaskDocumentLinksTool,
   registerListDocumentCommentsTool,
   registerCreateDocumentCommentTool,
+  registerListPortfoliosTool,
+  registerGetPortfolioTool,
+  registerCreatePortfolioTool,
+  registerUpdatePortfolioTool,
+  registerListPortfolioElementsTool,
+  registerGetPortfolioElementTool,
+  registerCreatePortfolioElementTool,
+  registerUpdatePortfolioElementTool,
+  registerSetTaskPortfolioElementTool,
+  registerRemoveTaskPortfolioElementTool,
+  registerGetTasksByPortfolioElementNameTool,
 } from './tools/index.js';
 
 // OOB Upload temp directory
@@ -214,6 +225,17 @@ function registerAllTools(server: McpServer, client: TeamStormClient) {
   registerGetTaskDocumentLinksTool(server, client);
   registerListDocumentCommentsTool(server, client);
   registerCreateDocumentCommentTool(server, client);
+  registerListPortfoliosTool(server, client);
+  registerGetPortfolioTool(server, client);
+  registerCreatePortfolioTool(server, client);
+  registerUpdatePortfolioTool(server, client);
+  registerListPortfolioElementsTool(server, client);
+  registerGetPortfolioElementTool(server, client);
+  registerCreatePortfolioElementTool(server, client);
+  registerUpdatePortfolioElementTool(server, client);
+  registerSetTaskPortfolioElementTool(server, client);
+  registerRemoveTaskPortfolioElementTool(server, client);
+  registerGetTasksByPortfolioElementNameTool(server, client);
 }
 
 // ---------------------------------------------------------------------------

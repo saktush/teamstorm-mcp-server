@@ -2,7 +2,7 @@
 
 ## Project
 
-TeamStorm MCP Server — MCP-сервер для интеграции Claude Code с TeamStorm API. Предоставляет 52 инструмента для работы с задачами, папками, документами, комментариями, атрибутами, вложениями, правами доступа, связями, пользователями, спринтами, workflow и списанием времени.
+TeamStorm MCP Server — MCP-сервер для интеграции Claude Code с TeamStorm API. Предоставляет 63 инструмента для работы с задачами, папками, документами, комментариями, атрибутами, вложениями, правами доступа, связями, пользователями, спринтами, workflow, портфелями и списанием времени.
 
 ## Commands
 
@@ -49,7 +49,7 @@ npm run typecheck        # tsc --noEmit
 
 ### Инструменты (`src/tools/`)
 
-Доменные области: `folders/`, `tasks/`, `comments/`, `attributes/`, `attachments/`, `permissions/`, `links/`, `users/`, `sprints/`, `workflows/`, `types/`, `workspaces/`, `time-tracking/`, `documents/`, `document-sharing/`, `document-statuses/`, `document-links/`, `document-comments/`.
+Доменные области: `folders/`, `tasks/`, `comments/`, `attributes/`, `attachments/`, `permissions/`, `links/`, `users/`, `sprints/`, `workflows/`, `types/`, `workspaces/`, `time-tracking/`, `documents/`, `document-sharing/`, `document-statuses/`, `document-links/`, `document-comments/`, `portfolios/`, `portfolio-elements/`, `portfolio-links/`.
 
 Паттерн каждой папки:
 
@@ -135,6 +135,21 @@ DELETE-эндпоинт папок намеренно не реализован.
 
 Все три write-эндпоинта возвращают `AttributeModel` (200). Клиентские методы: `createAttribute()`, `patchAttribute()`, `addAttributeOption()`, `patchAttributeOption()`. Типы: `TeamStormAttributeModel`, `TeamStormAttributeOption`, `TeamStormAttributeType`, `TeamStormCreateAttributeRequest`, `TeamStormPatchAttributeRequest`, `TeamStormCreateAttributeOptionRequest`, `TeamStormPatchAttributeOptionRequest`.
 
+## Портфели
+
+Портфель — сущность верхнего уровня, хранится в папке пространства; содержит элементы портфеля, каждый из которых может быть закреплён (pin) за неограниченным числом задач, а задача — за неограниченным числом элементов.
+
+Инструменты в `src/tools/portfolios/`: `list`, `get`, `create`, `update`. Инструменты в `src/tools/portfolio-elements/`: `list`, `get`, `create`, `update`. Инструменты в `src/tools/portfolio-links/` (кросс-сущностные, по аналогии с `document-links/`): `set` (закрепить задачу за элементом), `remove` (открепить), `get-tasks-by-name` (найти задачи по названию элемента портфеля). Общие форматтеры — `portfolios/format.ts` (`PortfolioModel`) и `portfolio-elements/format.ts` (`PortfolioElementModel`). DELETE-эндпоинты сущностей (DeletePortfolio, DeletePortfolioElement) намеренно не реализованы.
+
+- `teamstorm_create_portfolio` — `POST /portfolios` — `name`, `folderId` обязательны.
+- `teamstorm_update_portfolio` — `PATCH /portfolios/{id}` — `name` обязателен (API позволяет менять через PATCH только название).
+- `teamstorm_create_portfolio_element` — `POST /portfolio-elements` — `portfolioId`, `name` обязательны; `description`, `startDate`, `endDate`, `responsibles` опциональны.
+- `teamstorm_update_portfolio_element` — `PATCH /portfolio-elements/{id}` — все поля опциональны, включая `status` и полный список `responsibles` (заменяет текущий).
+- `teamstorm_set_task_portfolio_element` / `teamstorm_remove_task_portfolio_element` — `POST`/`DELETE /portfolio-elements/{id}/workitems/{workitem}` — закрепляют/открепляют одну задачу за одним элементом, не затрагивая остальные закрепления задачи. Принимают `portfolioElementId` напрямую ИЛИ `portfolioElementName` (с автоматическим резолвом через `listPortfolioElements`; при неоднозначности — ошибка со списком кандидатов, уточняется через `portfolioId`/`folderId`).
+- `teamstorm_get_tasks_by_portfolio_element_name` — составной инструмент (не имеет прямого соответствия в OpenAPI): находит элемент(ы) портфеля по названию через `listPortfolioElements`, затем для каждого найденного элемента получает задачи через `listTasks({ portfolioElementId })`; результаты группируются по каждому найденному элементу.
+
+Клиентские методы: `listPortfolios()`, `getPortfolio()`, `createPortfolio()`, `patchPortfolio()`, `listPortfolioElements()`, `getPortfolioElement()`, `createPortfolioElement()`, `patchPortfolioElement()`, `assignWorkitemToPortfolioElement()`, `unassignWorkitemFromPortfolioElement()`. Типы: `TeamStormPortfolioModel`, `TeamStormPortfolioModelList`, `TeamStormCreatePortfolioRequest`, `TeamStormPatchPortfolioRequest`, `TeamStormPortfolioElementModel`, `TeamStormPortfolioElementModelList`, `TeamStormCreatePortfolioElementRequest`, `TeamStormPatchPortfolioElementRequest`.
+
 ## Особенности TeamStorm API
 
 ### Создание задач и атрибуты
@@ -146,6 +161,13 @@ DELETE-эндпоинт папок намеренно не реализован.
 - **После изменений в `.env` или коде** — требуется перезапуск MCP-сервера (`npm start` или рестарт Claude Code), так как `.env` читается при старте процесса.
 - **Не резолвьте workspace через `GET /workspaces`** — этот bare-эндпоинт может отдавать 500-е/500-подобные ошибки на некоторых бэкендах (например, `UserNotFoundException` с нулевым GUID автора при повреждённой записи workspace), которых нет при обращении по ключу напрямую. Все инструменты передают `workspace` (ключ или ID) как есть прямо в путь (`/workspaces/{workspace}/...`) и дают бэкенду резолвить его самому — не добавляйте предварительный список-и-сверку по `/workspaces` в новых инструментах.
 - **`parentId` — это GUID, не имя** — если на вход уже пришёл валидный UUID, используйте его напрямую (см. `uuidRegex` в `create.ts`) вместо попытки сматчить его как имя папки по подстроке.
+
+### Портфели
+
+- **`ListPortfolios`/`ListPortfolioElements` не поддерживают пагинацию** — в отличие от всех остальных list-эндпоинтов, у них нет `fromToken`/`maxItemsCount`, ответ — просто `{ items }`. Не добавляй эти параметры в `teamstorm_list_portfolios`/`teamstorm_list_portfolio_elements`.
+- **`PatchPortfolioRequestBody` требует `name`, даже если это переименование** — единственное поле схемы обязательно; частичный PATCH без `name` невозможен на уровне API.
+- **`POST /portfolio-elements/{id}/workitems/{workitem}` может возвращать пустое тело** — несмотря на задокументированный ответ `200 + PortfolioElementModel`, в проде эндпоинт иногда отвечает без тела. `assignWorkitemToPortfolioElement()` в клиенте это обрабатывает: если `response.data` пустой или без `id`, делается дополнительный `GET /portfolio-elements/{id}` для получения актуальной модели — не убирай этот fallback.
+- **Не используй `.superRefine()` на схеме, передаваемой в `inputSchema` `registerTool()`** — MCP SDK определяет properties инструмента по наличию `.shape` у Zod-схемы; `.superRefine()` оборачивает объект в `ZodEffects` без `.shape`, из-за чего SDK молча отдаёт клиентам пустой `{}` inputSchema (сам инструмент при этом продолжает валидировать аргументы правильно, что маскирует проблему до её появления у стороннего вызывающего). Условную/кросс-полевую валидацию (как в `teamstorm_set_task_portfolio_element`/`teamstorm_remove_task_portfolio_element`/`teamstorm_share_document`) делай внутри `execute`-функции инструмента, а не в `.superRefine()`.
 
 ### Документы
 

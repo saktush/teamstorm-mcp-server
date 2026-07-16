@@ -218,3 +218,54 @@ export {
   listDocumentCommentsSchema,
   createDocumentCommentSchema,
 } from './document-comments/index.js';
+
+// Portfolios
+export {
+  listPortfolios,
+  getPortfolio,
+  createPortfolio,
+  updatePortfolio,
+  registerListPortfoliosTool,
+  registerGetPortfolioTool,
+  registerCreatePortfolioTool,
+  registerUpdatePortfolioTool,
+} from './portfolios/index.js';
+export {
+  listPortfoliosSchema,
+  getPortfolioSchema,
+  createPortfolioSchema,
+  updatePortfolioSchema,
+} from './portfolios/index.js';
+
+// Portfolio Elements
+export {
+  listPortfolioElements,
+  getPortfolioElement,
+  createPortfolioElement,
+  updatePortfolioElement,
+  registerListPortfolioElementsTool,
+  registerGetPortfolioElementTool,
+  registerCreatePortfolioElementTool,
+  registerUpdatePortfolioElementTool,
+} from './portfolio-elements/index.js';
+export {
+  listPortfolioElementsSchema,
+  getPortfolioElementSchema,
+  createPortfolioElementSchema,
+  updatePortfolioElementSchema,
+} from './portfolio-elements/index.js';
+
+// Portfolio Links (task <-> portfolio element)
+export {
+  setTaskPortfolioElement,
+  removeTaskPortfolioElement,
+  getTasksByPortfolioElementName,
+  registerSetTaskPortfolioElementTool,
+  registerRemoveTaskPortfolioElementTool,
+  registerGetTasksByPortfolioElementNameTool,
+} from './portfolio-links/index.js';
+export {
+  setTaskPortfolioElementSchema,
+  removeTaskPortfolioElementSchema,
+  getTasksByPortfolioElementNameSchema,
+} from './portfolio-links/index.js';

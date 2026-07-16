@@ -45,8 +45,8 @@ export function formatSprintsMarkdown(data: TeamStormSprintListResponse): string
       lines.push(`**Конец**: ${new Date(sprint.endDate).toLocaleDateString('ru-RU')}`);
     }
 
-    if (sprint.goal) {
-      lines.push(`**Цель**: ${sprint.goal}`);
+    if (sprint.description) {
+      lines.push(`**Цель**: ${sprint.description}`);
     }
 
     lines.push('');

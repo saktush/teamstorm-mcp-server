@@ -95,7 +95,10 @@ describe('TeamStormClient Integration Tests', () => {
         author: { id: '1', displayName: 'User', username: 'user', email: 'user@test.com' },
         changedBy: { id: '1', displayName: 'User', username: 'user', email: 'user@test.com' },
         attributes: [],
-        portfolios: [],
+        sprint: { id: 'sp-1', name: 'Sprint 5' },
+        portfolios: [
+          { id: 'p-1', name: 'Product Portfolio', elements: [{ id: 'e-1', name: 'Q1 Roadmap' }] },
+        ],
         workspace: {
           id: '1',
           key: workspace,
@@ -111,6 +114,10 @@ describe('TeamStormClient Integration Tests', () => {
 
       expect(result.key).toBe('TS-123');
       expect(result.name).toBe('Test Task');
+      expect(result.sprint).toEqual({ id: 'sp-1', name: 'Sprint 5' });
+      expect(result.portfolios).toEqual([
+        { id: 'p-1', name: 'Product Portfolio', elements: [{ id: 'e-1', name: 'Q1 Roadmap' }] },
+      ]);
     });
 
     it('should handle 404 for non-existent task', async () => {
@@ -119,6 +126,34 @@ describe('TeamStormClient Integration Tests', () => {
         .reply(404, { message: 'Task not found' });
 
       await expect(client.getTask('TS-999', workspace)).rejects.toThrow('404');
+    });
+  });
+
+  describe('getSprint', () => {
+    it('should fetch single sprint by ID', async () => {
+      const mockSprint = {
+        id: 'sp-1',
+        name: 'Sprint 5',
+        description: 'Ship the enrichment feature',
+        startDate: '2024-02-01T00:00:00Z',
+        endDate: '2024-02-14T00:00:00Z',
+      };
+
+      nock(baseUrl).get(`/workspaces/${workspace}/sprints/sp-1`).reply(200, mockSprint);
+
+      const result = await client.getSprint('sp-1', workspace);
+
+      expect(result.id).toBe('sp-1');
+      expect(result.name).toBe('Sprint 5');
+      expect(result.description).toBe('Ship the enrichment feature');
+    });
+
+    it('should handle 404 for non-existent sprint', async () => {
+      nock(baseUrl)
+        .get(`/workspaces/${workspace}/sprints/sp-999`)
+        .reply(404, { message: 'Sprint not found' });
+
+      await expect(client.getSprint('sp-999', workspace)).rejects.toThrow('404');
     });
   });
 
