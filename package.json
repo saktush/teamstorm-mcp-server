@@ -6,9 +6,9 @@
   "main": "dist/index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/madebyearth/teamstorm-mcp-server.git"
+    "url": "git+https://github.com/saktush/teamstorm-mcp-server.git"
   },
-  "author": "Ruslan Yakhin <rsyakhin@madebyearth.ru>",
+  "author": "saktush",
   "license": "MIT",
   "keywords": ["mcp", "teamstorm", "claude-code", "task-management", "ai"],
   "files": ["dist", "README.md", "LICENSE"],

@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: madebyearth/teamstorm-mcp-server:latest
+    image: saktush/teamstorm-mcp-server:latest
     container_name: teamstorm-mcp-server
     ports:
       - "3001:3001"
