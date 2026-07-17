@@ -23,7 +23,13 @@ export {
 } from './folders/index.js';
 
 // Workspaces
-export { listWorkspaces, registerListWorkspacesTool } from './workspaces/index.js';
+export {
+  listWorkspaces,
+  registerListWorkspacesTool,
+  getWorkspace,
+  registerGetWorkspaceTool,
+} from './workspaces/index.js';
+export { listWorkspacesSchema, getWorkspaceSchema } from './workspaces/index.js';
 
 // Time Tracking
 export {
@@ -65,8 +71,37 @@ export { listUsers, registerListUsersTool } from './users/index.js';
 export { listUsersSchema } from './users/index.js';
 
 // Sprints
-export { listSprints, registerListSprintsTool } from './sprints/index.js';
-export { listSprintsSchema } from './sprints/index.js';
+export {
+  listSprints,
+  registerListSprintsTool,
+  getSprint,
+  registerGetSprintTool,
+  getBacklog,
+  registerGetBacklogTool,
+  createSprint,
+  registerCreateSprintTool,
+} from './sprints/index.js';
+export {
+  listSprintsSchema,
+  getSprintSchema,
+  getBacklogSchema,
+  createSprintSchema,
+} from './sprints/index.js';
+
+// Agile
+export {
+  listAgileBoards,
+  registerListAgileBoardsTool,
+  getAgileBoard,
+  registerGetAgileBoardTool,
+  createAgileBoard,
+  registerCreateAgileBoardTool,
+} from './agile/index.js';
+export {
+  listAgileBoardsSchema,
+  getAgileBoardSchema,
+  createAgileBoardSchema,
+} from './agile/index.js';
 
 // Workflows
 export { listWorkflows, registerListWorkflowsTool } from './workflows/index.js';

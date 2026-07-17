@@ -12,6 +12,10 @@ import type {
   TeamStormUserListResponse,
   TeamStormSprint,
   TeamStormSprintListResponse,
+  TeamStormCreateSprintRequest,
+  TeamStormAgile,
+  TeamStormAgileListResponse,
+  TeamStormCreateAgileRequest,
   TeamStormWorkflowListResponse,
   TeamStormTypeListResponse,
   TeamStormComment,
@@ -48,6 +52,7 @@ import type {
   TeamStormPortfolioElementModel,
   TeamStormCreatePortfolioElementRequest,
   TeamStormPatchPortfolioElementRequest,
+  TeamStormWorkspace,
   TeamStormWorkspaceListResponse,
   TeamStormDocument,
   TeamStormDocumentListResponse,
@@ -383,12 +388,16 @@ export class TeamStormClient {
     }
   }
 
-  async listSprints(workspace?: string): Promise<TeamStormSprintListResponse> {
+  async listSprints(
+    workspace?: string,
+    params?: { folderId?: string; name?: string }
+  ): Promise<TeamStormSprintListResponse> {
     this.requireBaseUrl();
     try {
       const ws = this.resolveWorkspace(workspace);
       const response = await this.client.get<TeamStormSprintListResponse>(
-        `/workspaces/${ws}/sprints`
+        `/workspaces/${ws}/sprints`,
+        { params }
       );
       return response.data;
     } catch (error) {
@@ -409,6 +418,59 @@ export class TeamStormClient {
     }
   }
 
+  async createSprint(
+    body: TeamStormCreateSprintRequest,
+    workspace?: string
+  ): Promise<TeamStormSprint> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.post<TeamStormSprint>(`/workspaces/${ws}/sprints`, body);
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async listAgile(workspace?: string, folderId?: string): Promise<TeamStormAgileListResponse> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get<TeamStormAgileListResponse>(
+        `/workspaces/${ws}/agile/list`,
+        { params: folderId ? { folderId } : undefined }
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async getAgile(agileId: string, workspace?: string): Promise<TeamStormAgile> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get<TeamStormAgile>(`/workspaces/${ws}/agile/${agileId}`);
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async createAgile(
+    body: TeamStormCreateAgileRequest,
+    workspace?: string
+  ): Promise<TeamStormAgile> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.post<TeamStormAgile>(`/workspaces/${ws}/agile`, body);
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
   async listWorkspaces(params?: {
     fromToken?: string;
     maxItemsCount?: number;
@@ -418,6 +480,16 @@ export class TeamStormClient {
       const response = await this.client.get<TeamStormWorkspaceListResponse>('/workspaces', {
         params,
       });
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async getWorkspace(workspace: string): Promise<TeamStormWorkspace> {
+    this.requireBaseUrl();
+    try {
+      const response = await this.client.get<TeamStormWorkspace>(`/workspaces/${workspace}`);
       return response.data;
     } catch (error) {
       this.handleError(error as AxiosError);

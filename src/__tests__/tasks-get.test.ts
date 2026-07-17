@@ -48,7 +48,7 @@ function buildClient(overrides: {
 
 describe('getTask handler - sprint enrichment', () => {
   it('enriches task.sprint with full sprint details via client.getSprint', async () => {
-    const task = buildTask({ sprint: { id: 'sp1', name: 'Sprint 5' } });
+    const task = buildTask({ sprint: { id: 'sp1', name: 'Sprint 5', isBacklog: false } });
     const getSprint = vi.fn().mockResolvedValue({
       id: 'sp1',
       name: 'Sprint 5',
@@ -71,14 +71,18 @@ describe('getTask handler - sprint enrichment', () => {
   });
 
   it('falls back to the thumb-level sprint when client.getSprint fails', async () => {
-    const task = buildTask({ sprint: { id: 'sp1', name: 'Sprint 5' } });
+    const task = buildTask({ sprint: { id: 'sp1', name: 'Sprint 5', isBacklog: false } });
     const getSprint = vi.fn().mockRejectedValue(new Error('sprint deleted'));
     const client = buildClient({ getTask: vi.fn().mockResolvedValue(task), getSprint });
 
     const result = await getTask(client, { workspace: 'ws1', taskId: 'TS-1' });
 
     expect(result.isError).toBeUndefined();
-    expect(result.structuredContent?.sprint).toEqual({ id: 'sp1', name: 'Sprint 5' });
+    expect(result.structuredContent?.sprint).toEqual({
+      id: 'sp1',
+      name: 'Sprint 5',
+      isBacklog: false,
+    });
   });
 
   it('does not call getSprint when the task has no sprint', async () => {

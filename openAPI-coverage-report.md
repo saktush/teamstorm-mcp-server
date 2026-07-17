@@ -1,15 +1,15 @@
 # TeamStorm OpenAPI → MCP Coverage Report
 
-Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing, DocumentsStatuses, DocumentLinks, DocumentComments tools; added Folders create/update tools; updated: 2026-07-13 — added Attributes create/patch tools: CreateAttribute, PatchAttribute, AddAttributeOption, PatchAttributeOption; updated: 2026-07-15 — added Portfolios and PortfolioElements tools, including workitem pin/unpin and name-based lookup; updated: 2026-07-16 — fixed `teamstorm_get_task` to render embedded `portfolios` (previously silently dropped) and enriched its `sprint` field with full details via a new internal `GetSprint` call; updated: 2026-07-17 — added CreateWorkitemLink (`teamstorm_create_task_link`, with name-or-id link-type resolution), ListLinkTypes (`teamstorm_list_link_types`), ListStatusCategories (`teamstorm_list_status_categories`), ListStatuses/GetStatus (`teamstorm_list_workspace_statuses`/`teamstorm_get_workspace_status`); also fixed a pre-existing response-shape bug in `teamstorm_get_task_links` (ListWorkitemLinks returns a bare array with the full embedded linked workitem, not `{items: [...]}` with thin source/target — found by diffing a live API response against the client's assumed type))
+Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing, DocumentsStatuses, DocumentLinks, DocumentComments tools; added Folders create/update tools; updated: 2026-07-13 — added Attributes create/patch tools: CreateAttribute, PatchAttribute, AddAttributeOption, PatchAttributeOption; updated: 2026-07-15 — added Portfolios and PortfolioElements tools, including workitem pin/unpin and name-based lookup; updated: 2026-07-16 — fixed `teamstorm_get_task` to render embedded `portfolios` (previously silently dropped) and enriched its `sprint` field with full details via a new internal `GetSprint` call; updated: 2026-07-17 — added CreateWorkitemLink (`teamstorm_create_task_link`, with name-or-id link-type resolution), ListLinkTypes (`teamstorm_list_link_types`), ListStatusCategories (`teamstorm_list_status_categories`), ListStatuses/GetStatus (`teamstorm_list_workspace_statuses`/`teamstorm_get_workspace_status`); also fixed a pre-existing response-shape bug in `teamstorm_get_task_links` (ListWorkitemLinks returns a bare array with the full embedded linked workitem, not `{items: [...]}` with thin source/target — found by diffing a live API response against the client's assumed type); updated: 2026-07-17 (later same day) — added GetWorkspace (`teamstorm_get_workspace`), GetSprint as a standalone tool (`teamstorm_get_sprint`, with client-computed team capacity), CreateSprint (`teamstorm_create_sprint`, resolves folderId→agileId), and the full Agile tag except delete: GetAgileExtensions/GetAgile/CreateAgile (`teamstorm_list_agile_boards`/`teamstorm_get_agile_board`/`teamstorm_create_agile_board`); added a composite `teamstorm_get_backlog` (filters ListSprints by folder for `isBacklog: true`, no dedicated REST resource exists for it))
 
 ## Summary
 
 - Total endpoints: 159
-- Implemented: 65 (41%)
-- Not implemented: 94 (59%)
+- Implemented: 70 (44%)
+- Not implemented: 89 (56%)
 - Total schemas: 179
-- Schemas used: 66
-- Schemas not used: 113
+- Schemas used: 73
+- Schemas not used: 106
 
 ---
 
@@ -17,10 +17,10 @@ Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing
 
 ### Agile
 
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/agile/{agileId}` — operationId: GetAgile — NOT IMPLEMENTED
-- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/agile/{agileId}` — operationId: DeleteAgile — NOT IMPLEMENTED
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/agile/list` — operationId: GetAgileExtensions — NOT IMPLEMENTED
-- [ ] `POST /cwm/public/api/v1/workspaces/{workspace}/agile` — operationId: CreateAgile — NOT IMPLEMENTED
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/agile/{agileId}` — operationId: GetAgile — MCP tool: `teamstorm_get_agile_board`
+- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/agile/{agileId}` — operationId: DeleteAgile — NOT IMPLEMENTED (intentionally: no delete tools)
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/agile/list` — operationId: GetAgileExtensions — MCP tool: `teamstorm_list_agile_boards` (also used internally by `teamstorm_create_sprint`'s folder→agile resolver)
+- [x] `POST /cwm/public/api/v1/workspaces/{workspace}/agile` — operationId: CreateAgile — MCP tool: `teamstorm_create_agile_board` (note: request body has no `name` field — server derives it)
 
 ### Attributes
 
@@ -152,11 +152,11 @@ Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing
 
 ### Sprints
 
-- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/sprints` — operationId: ListSprints — MCP tool: `teamstorm_list_sprints`
-- [ ] `POST /cwm/public/api/v1/workspaces/{workspace}/sprints` — operationId: CreateSprint — NOT IMPLEMENTED
-- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/sprints/{sprintId}` — operationId: GetSprint — used internally by `teamstorm_get_task` (`client.getSprint`) to enrich the task's embedded sprint thumb with full details (dates, description); not exposed as its own standalone tool
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/sprints` — operationId: ListSprints — MCP tool: `teamstorm_list_sprints` (also used by `teamstorm_get_backlog`, filtering `folderId` results for `isBacklog: true`)
+- [x] `POST /cwm/public/api/v1/workspaces/{workspace}/sprints` — operationId: CreateSprint — MCP tool: `teamstorm_create_sprint` (resolves `folderId`→`agileId` via `GetAgileExtensions`)
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/sprints/{sprintId}` — operationId: GetSprint — used internally by `teamstorm_get_task` (`client.getSprint`) to enrich the task's embedded sprint thumb; also now a standalone tool, `teamstorm_get_sprint` (adds a client-computed team capacity figure — not an API field)
 - [ ] `PATCH /cwm/public/api/v1/workspaces/{workspace}/sprints/{sprintId}` — operationId: PatchSprint — NOT IMPLEMENTED
-- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/sprints/{sprintId}` — operationId: DeleteSprint — NOT IMPLEMENTED
+- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/sprints/{sprintId}` — operationId: DeleteSprint — NOT IMPLEMENTED (intentionally: no delete tools)
 
 ### StatusCategories
 
@@ -275,9 +275,9 @@ Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing
 
 - [ ] `POST /cwm/public/api/v1/workspaces` — operationId: CreateWorkspace — NOT IMPLEMENTED
 - [x] `GET /cwm/public/api/v1/workspaces` — operationId: ListWorkspaces — MCP tool: `teamstorm_list_workspaces`
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}` — operationId: GetWorkspace — NOT IMPLEMENTED
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}` — operationId: GetWorkspace — MCP tool: `teamstorm_get_workspace` (unverified live — may share the bare-list-endpoint author-record flakiness noted below)
 - [ ] `PATCH /cwm/public/api/v1/workspaces/{workspace}` — operationId: PatchWorkspace — NOT IMPLEMENTED
-- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}` — operationId: DeleteWorkspace — NOT IMPLEMENTED
+- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}` — operationId: DeleteWorkspace — NOT IMPLEMENTED (intentionally: no delete tools)
 
 ---
 
@@ -289,7 +289,7 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 
 ## Schema / Data Types Coverage
 
-- [x] `AgileModel` — referenced in Agile endpoints (not implemented in MCP)
+- [x] `AgileModel` — used in MCP tools: `teamstorm_list_agile_boards`, `teamstorm_get_agile_board`, `teamstorm_create_agile_board`
 - [ ] `AntivirusScanVerdict` — NOT USED in any MCP tool
 - [x] `AttachmentModel` — used in MCP tools: `teamstorm_get_task_attachment`, `teamstorm_attach_uploaded`
 - [x] `AttachmentModelList` — used in MCP tools: `teamstorm_list_task_attachments`, `teamstorm_attach_uploaded`
@@ -303,7 +303,7 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [x] `CommentModelList` — used in MCP tool: `teamstorm_list_task_comments`
 - [x] `CommentVisibilitySettingsModel` — used in MCP tool: `teamstorm_get_comment_visibility`
 - [ ] `CommentVisibilityType` — NOT USED in any MCP tool
-- [ ] `CreateAgileRequestBody` — NOT USED in any MCP tool
+- [x] `CreateAgileRequestBody` — used in MCP tool: `teamstorm_create_agile_board`
 - [x] `CreateAttributeOptionModel` — used in MCP tool: `teamstorm_create_attribute` (options array)
 - [x] `CreateAttributeOptionRequestBody` — used in MCP tool: `teamstorm_add_attribute_option`
 - [x] `CreateAttributeRequestBody` — used in MCP tool: `teamstorm_create_attribute`
@@ -325,7 +325,7 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [ ] `CreateSharedWorkitemGroupPermissionBody` — NOT USED in any MCP tool
 - [ ] `CreateSharedWorkitemPermissionBody` — NOT USED in any MCP tool
 - [ ] `CreateSharedWorkitemUserPermissionBody` — NOT USED in any MCP tool
-- [ ] `CreateSprintRequestBody` — NOT USED in any MCP tool
+- [x] `CreateSprintRequestBody` — used in MCP tool: `teamstorm_create_sprint`
 - [ ] `CreateStatusRequestBody` — NOT USED in any MCP tool
 - [ ] `CreateTagFieldRequestBody` — NOT USED in any MCP tool
 - [ ] `CreateTimeFieldRequestBody` — NOT USED in any MCP tool
@@ -350,7 +350,7 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [ ] `DocumentsModelList` — NOT USED in any MCP tool
 - [ ] `DocumentsStatusModelList` — NOT USED in any MCP tool
 - [x] `ErrorModel` — used in all MCP tools (error handling)
-- [ ] `EstimatesType` — NOT USED in any MCP tool
+- [x] `EstimatesType` — used in MCP tools: `teamstorm_create_agile_board`, `teamstorm_list_agile_boards`, `teamstorm_get_agile_board`
 - [x] `FolderModel` — used in MCP tools: `teamstorm_get_folder`, `teamstorm_list_folders`, `teamstorm_find_folder`, `teamstorm_get_folder_tree`
 - [x] `FolderModelList` — used in MCP tools: `teamstorm_list_folders`, `teamstorm_get_folder_tree`, `teamstorm_find_folder`
 - [x] `FolderThumbModel` — used in MCP tool: `teamstorm_get_portfolio` (embedded `folder` field on `PortfolioModel`)
@@ -406,10 +406,10 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [x] `SharedWorkitemUserPermissionModel` — used in MCP tool: `teamstorm_get_task_permissions`
 - [ ] `SimpleRoleModel` — NOT USED in any MCP tool
 - [ ] `SimpleRoleModelList` — NOT USED in any MCP tool
-- [ ] `SprintMemberRequestBody` — NOT USED in any MCP tool
+- [x] `SprintMemberRequestBody` — used in MCP tool: `teamstorm_create_sprint` (`team` array)
 - [x] `SprintModel` — used in MCP tool: `teamstorm_list_sprints`
 - [x] `SprintModelList` — used in MCP tool: `teamstorm_list_sprints`
-- [ ] `SprintStates` — NOT USED in any MCP tool
+- [x] `SprintStates` — used in MCP tools: `teamstorm_get_sprint`, `teamstorm_get_backlog` (`state` field)
 - [x] `SprintThumbModel` — used in MCP tool: `teamstorm_get_task` (embedded `sprint` field on `WorkitemModel`, before being enriched via `GetSprint`)
 - [x] `StatusCategoryModel` — used in MCP tools: `teamstorm_list_status_categories`, `teamstorm_list_workspace_statuses`, `teamstorm_get_workspace_status` (embedded in `category`)
 - [x] `StatusCategoryModelList` — used in MCP tool: `teamstorm_list_status_categories`
@@ -417,7 +417,7 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [x] `StatusModelList` — used in MCP tool: `teamstorm_list_workspace_statuses`
 - [ ] `SystemRoles` — NOT USED in any MCP tool
 - [ ] `TagFieldValueModel` — NOT USED in any MCP tool
-- [ ] `TeamMemberModel` — NOT USED in any MCP tool
+- [x] `TeamMemberModel` — used in MCP tools: `teamstorm_get_sprint`, `teamstorm_get_backlog` (`team` field, source for the computed capacity figure)
 - [ ] `TimeFieldValueModel` — NOT USED in any MCP tool
 - [ ] `TimeTrackingEntryModel` — NOT USED in any MCP tool (time tracking uses internal non-public API)
 - [ ] `TimeTrackingEntryTypeModel` — NOT USED in any MCP tool
@@ -466,18 +466,16 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [x] `WorkitemModelList` — used in MCP tools: `teamstorm_list_tasks`
 - [x] `WorkitemPortfolioModel` — used in MCP tool: `teamstorm_get_task` (embedded `portfolios` field on `WorkitemModel`)
 - [x] `WorkitemsCountModel` — used in MCP tool: `teamstorm_get_task_count`
-- [x] `WorkspaceModel` — used in MCP tool: `teamstorm_list_workspaces`
+- [x] `WorkspaceModel` — used in MCP tools: `teamstorm_list_workspaces`, `teamstorm_get_workspace`
 - [x] `WorkspaceModelList` — used in MCP tool: `teamstorm_list_workspaces`
 
 ---
 
 ## Not Implemented Endpoints (Summary List)
 
-### Agile (4 endpoints)
-- `GET /cwm/public/api/v1/workspaces/{workspace}/agile/{agileId}` — GetAgile — Agile
-- `DELETE /cwm/public/api/v1/workspaces/{workspace}/agile/{agileId}` — DeleteAgile — Agile
-- `GET /cwm/public/api/v1/workspaces/{workspace}/agile/list` — GetAgileExtensions — Agile
-- `POST /cwm/public/api/v1/workspaces/{workspace}/agile` — CreateAgile — Agile
+### Agile (1 endpoint remaining, 3 implemented)
+Implemented as of 2026-07-17 (later same day): GetAgile/GetAgileExtensions/CreateAgile (`teamstorm_get_agile_board`/`teamstorm_list_agile_boards`/`teamstorm_create_agile_board`). Still not implemented:
+- `DELETE /cwm/public/api/v1/workspaces/{workspace}/agile/{agileId}` — DeleteAgile (intentionally excluded: no delete tools)
 
 ### Attributes (2 endpoints remaining — DELETE only, intentionally excluded)
 Implemented as of 2026-07-13: CreateAttribute (`teamstorm_create_attribute`), PatchAttribute (`teamstorm_update_attribute`), AddAttributeOption (`teamstorm_add_attribute_option`), PatchAttributeOption (`teamstorm_update_attribute_option`). Still not implemented:
@@ -513,12 +511,10 @@ Implemented as of 2026-07-15: ListPortfolios/GetPortfolio/CreatePortfolio/PatchP
 ### Roles (5 endpoints — entire tag)
 - All role management endpoints
 
-### Sprints (4 endpoints, 2 implemented)
-- `POST /cwm/public/api/v1/workspaces/{workspace}/sprints` — CreateSprint
+### Sprints (2 endpoints remaining, 3 implemented)
+Implemented as of 2026-07-16: `GetSprint` — used internally by `teamstorm_get_task` to enrich the task's sprint field. Implemented as of 2026-07-17 (later same day): `GetSprint` also exposed as a standalone tool (`teamstorm_get_sprint`), and `CreateSprint` (`teamstorm_create_sprint`). Still not implemented:
 - `PATCH /cwm/public/api/v1/workspaces/{workspace}/sprints/{sprintId}` — PatchSprint
-- `DELETE /cwm/public/api/v1/workspaces/{workspace}/sprints/{sprintId}` — DeleteSprint
-
-Implemented as of 2026-07-16: `GetSprint` — used internally by `teamstorm_get_task` to enrich the task's sprint field (not a standalone tool).
+- `DELETE /cwm/public/api/v1/workspaces/{workspace}/sprints/{sprintId}` — DeleteSprint (intentionally excluded: no delete tools)
 
 ### Statuses (1 endpoint remaining)
 Implemented as of 2026-07-17: ListStatusCategories (`teamstorm_list_status_categories`), ListStatuses (`teamstorm_list_workspace_statuses`), GetStatus (`teamstorm_get_workspace_status`). Still not implemented:
@@ -587,11 +583,11 @@ Implemented as of 2026-07-17: CreateWorkitemLink (`teamstorm_create_task_link`),
 - `DELETE /cwm/public/api/v1/workspaces/{workspace}/users/{userId}/roles/{roleId}` — RemoveRoleForUser
 - `GET /cwm/public/api/v1/workspaces/{workspace}/users/{userId}/roles` — GetUserRoles
 
-### Workspaces (4 endpoints, 1 implemented)
+### Workspaces (3 endpoints remaining, 2 implemented)
+Implemented as of 2026-07-17 (later same day): `GetWorkspace` (`teamstorm_get_workspace`). Still not implemented:
 - `POST /cwm/public/api/v1/workspaces` — CreateWorkspace
-- `GET /cwm/public/api/v1/workspaces/{workspace}` — GetWorkspace
 - `PATCH /cwm/public/api/v1/workspaces/{workspace}` — PatchWorkspace
-- `DELETE /cwm/public/api/v1/workspaces/{workspace}` — DeleteWorkspace
+- `DELETE /cwm/public/api/v1/workspaces/{workspace}` — DeleteWorkspace (intentionally excluded: no delete tools)
 
 ---
 
@@ -604,7 +600,6 @@ Implemented as of 2026-07-17: CreateWorkitemLink (`teamstorm_create_task_link`),
 2. **Read-heavy implementation**: Most implemented endpoints are GET operations. Write operations covered: CreateWorkitem, PatchWorkitem, CreateWorkitemComment, UploadWorkitemAttachments, the Documents write endpoints (create, patch, block/unblock, sharing, workitem links, comments — added 2026-07-02), CreateFolder/PatchFolder (added 2026-07-02), CreateAttribute/PatchAttribute/AddAttributeOption/PatchAttributeOption (added 2026-07-13), CreatePortfolio/PatchPortfolio/CreatePortfolioElement/PatchPortfolioElement plus the workitem pin/unpin sub-resource endpoints (added 2026-07-15), and the two internal time-tracking endpoints.
 
 3. **Entire feature areas have zero coverage**:
-   - Agile boards (all 4 endpoints)
    - Document attachments and versions (DocumentAttachments — 9, DocumentVersions — 3); core Documents, DocumentComments, DocumentLinks, DocumentsSharing, DocumentsStatuses covered since 2026-07-02 (except DELETE)
    - Git Integration Tokens — 6 endpoints
    - OpenID management — 4 endpoints
@@ -617,10 +612,10 @@ Implemented as of 2026-07-17: CreateWorkitemLink (`teamstorm_create_task_link`),
 
 4. **Time Tracking uses internal API**: The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` call `/tasks/api/v1/workitems/{id}/time-tracking-entries` — an internal non-public API path that is not in the public swagger spec. The public swagger has `GetTimeTrackingEntries` and `GetTimeTrackingEntriesUpdates` at `/cwm/public/api/v1/workspaces/time-tracking-entries` which are not implemented.
 
-5. **No delete/mutate operations for most non-task resources**: Sprints, workflows, and types can only be read through MCP — no creation, modification, or deletion is supported for these resources. Folders support create and update (since 2026-07-02) but not delete; attributes support create/patch plus option add/patch (since 2026-07-13) but not delete; portfolios and portfolio elements support full create/patch plus workitem pin/unpin (since 2026-07-15) but not delete; tasks/workitems and documents support full non-delete CRUD.
+5. **No delete/mutate operations for most non-task resources**: Workflows and types can only be read through MCP — no creation, modification, or deletion is supported for these resources. Folders support create and update (since 2026-07-02) but not delete; attributes support create/patch plus option add/patch (since 2026-07-13) but not delete; portfolios and portfolio elements support full create/patch plus workitem pin/unpin (since 2026-07-15) but not delete; sprints support create (since 2026-07-17) but not patch/delete; Agile boards support create (since 2026-07-17) but not delete (there is no PatchAgile in the public API); tasks/workitems and documents support full non-delete CRUD.
 
 6. **Attachment upload is partially covered**: Upload works via the two-step OOB process (HTTP POST to `/upload` on MCP server, then `teamstorm_attach_uploaded`). Download is not supported — there is no `DownloadWorkitemAttachments` implementation.
 
-7. **Schema coverage is low (17%)**: Only schemas directly associated with implemented endpoints are used. All request body schemas for unimplemented write operations, plus all portfolio, document, role, and agile schemas, are unused.
+7. **Schema coverage is low (41%)**: Only schemas directly associated with implemented endpoints are used. All request body schemas for unimplemented write operations, plus most portfolio, document, and role schemas, are unused.
 
 8. **The `GetAttribute` endpoint mismatch**: The MCP tool `teamstorm_list_attributes` maps to `ListAttributes` (GET workspace attributes). The individual `GetAttribute` endpoint (GET single attribute by ID) has no MCP tool. The `teamstorm_get_task_attributes` tool maps to `ListWorkitemAttributes` (workitem attributes), not `GetAttribute`.

@@ -28,12 +28,34 @@ export interface TeamStormWorkflow {
   description?: string;
 }
 
+export interface TeamStormSprintTeamMember {
+  user: TeamStormUser;
+  hoursPerDay: number;
+  daysOff: number;
+}
+
 export interface TeamStormSprint {
   id: string;
   name: string;
   startDate?: string;
   endDate?: string;
   description?: string;
+  state?: 'New' | 'Active' | 'Completed' | null;
+  workdays?: number | null;
+  isBacklog: boolean;
+  team?: TeamStormSprintTeamMember[] | null;
+}
+
+export interface TeamStormCreateSprintRequest {
+  agileId: string;
+  name: string;
+  description?: string | null;
+  startDate: string;
+  endDate: string;
+  workdays: number;
+  copyViewsFromSprint?: string | null;
+  estimatedStoryPoints: number;
+  team: Array<{ userId: string; daysOff?: number; hoursPerDay?: number }>;
 }
 
 export interface TeamStormFolder {
@@ -516,6 +538,24 @@ export interface TeamStormDocumentPermission {
 export interface TeamStormSprintListResponse {
   items: TeamStormSprint[];
 }
+
+// Agile boards (owns the sprints/backlog of a folder — GET .../agile/{id})
+export interface TeamStormAgile {
+  id: string;
+  name: string;
+  folderId: string;
+  estimatesType: 'EstimatesInTime' | 'EstimatesInStoryPoints';
+}
+
+// CreateAgileRequestBody has no `name` field (additionalProperties: false) even
+// though AgileModel requires one in the response — the server derives it, likely
+// from the folder's name. Don't add a name param when building this request.
+export interface TeamStormCreateAgileRequest {
+  folderId: string;
+  estimatesType: 'EstimatesInTime' | 'EstimatesInStoryPoints';
+}
+
+export type TeamStormAgileListResponse = TeamStormAgile[];
 
 export interface TeamStormWorkflowListResponse {
   items: TeamStormWorkflow[];

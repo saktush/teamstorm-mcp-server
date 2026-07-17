@@ -64,6 +64,7 @@ describe('formatTaskMarkdown', () => {
         startDate: '2024-02-01T00:00:00Z',
         endDate: '2024-02-14T00:00:00Z',
         description: 'Ship the enrichment feature',
+        isBacklog: false,
       },
     });
 

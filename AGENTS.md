@@ -2,7 +2,7 @@
 
 ## Project
 
-TeamStorm MCP Server — MCP-сервер для интеграции Claude Code с TeamStorm API. Предоставляет 68 инструментов для работы с задачами, папками, документами, комментариями, атрибутами, вложениями, правами доступа, связями, пользователями, спринтами, workflow, портфелями, списанием времени и справочными данными (типы связей, статусы, категории статусов).
+TeamStorm MCP Server — MCP-сервер для интеграции Claude Code с TeamStorm API. Предоставляет 75 инструментов для работы с задачами, папками, документами, комментариями, атрибутами, вложениями, правами доступа, связями, пользователями, спринтами, Agile-бордами, workflow, портфелями, списанием времени и справочными данными (типы связей, статусы, категории статусов).
 
 ## Источники
 
@@ -54,7 +54,7 @@ npm run typecheck        # tsc --noEmit
 
 ### Инструменты (`src/tools/`)
 
-Доменные области: `folders/`, `tasks/`, `comments/`, `attributes/`, `attachments/`, `permissions/`, `links/`, `link-types/`, `status-categories/`, `statuses/`, `users/`, `sprints/`, `workflows/`, `types/`, `workspaces/`, `time-tracking/`, `documents/`, `document-sharing/`, `document-statuses/`, `document-links/`, `document-comments/`, `portfolios/`, `portfolio-elements/`, `portfolio-links/`.
+Доменные области: `folders/`, `tasks/`, `comments/`, `attributes/`, `attachments/`, `permissions/`, `links/`, `link-types/`, `status-categories/`, `statuses/`, `users/`, `sprints/`, `agile/`, `workflows/`, `types/`, `workspaces/`, `time-tracking/`, `documents/`, `document-sharing/`, `document-statuses/`, `document-links/`, `document-comments/`, `portfolios/`, `portfolio-elements/`, `portfolio-links/`.
 
 Паттерн каждой папки:
 
@@ -165,6 +165,20 @@ DELETE-эндпоинт папок намеренно не реализован.
 - `teamstorm_list_status_categories` — единственный по-настоящему глобальный справочник в клиенте: `GET /status-categories` не имеет `{workspace}` в пути и не принимает `workspace` в схеме инструмента — не добавляй `resolveWorkspace()` в `listStatusCategories()`.
 
 Клиентские методы: `getTaskLinks()`, `createTaskLink()`, `listLinkTypes()`, `listStatusCategories()`, `listWorkspaceStatuses()`, `getWorkspaceStatus()`. Типы: `TeamStormLink`, `TeamStormLinkListResponse`, `TeamStormLinkType`, `TeamStormLinkTypeListResponse`, `TeamStormCreateTaskLinkRequest`, `TeamStormStatusCategory`, `TeamStormStatusCategoryListResponse`, `TeamStormWorkspaceStatusListResponse` (переиспользует существующий `TeamStormStatus`).
+
+## Спринты и Agile
+
+Спринты принадлежат Agile-борду (`AgileModel`), который включает agile (спринты + беклог) для конкретной папки. У пространства нет отдельного REST-ресурса «беклог» — это обычный `SprintModel` с флагом `isBacklog: true`.
+
+Инструменты в `src/tools/sprints/`: `list` (все спринты пространства), `get` (один спринт по `sprintId`, с вычисленным капасити команды), `get-backlog` (беклог-спринт папки), `create` (создание спринта). Инструменты в `src/tools/agile/`: `list`, `get`, `create` — управление Agile-бордами. Инструменты в `src/tools/workspaces/`: `list`, `get`.
+
+- **«Капасити» спринта — не поле API**, а вычисляемая на клиенте величина: для каждого участника команды `(workdays спринта − daysOff участника) × hoursPerDay участника`, сумма по всем участникам даёт общее капасити в часах. Формула реализована в `src/tools/sprints/get.ts` (`computeSprintCapacity`) и переиспользуется в `get-backlog.ts`. `teamstorm_get_sprint`/`teamstorm_get_backlog` возвращают вычисленное значение отдельным полем `capacity` в `structuredContent`, не подменяя сырые `team`/`workdays` данные API.
+- **`teamstorm_get_backlog`** реализован как фильтр по `ListSprints({folderId})` (`isBacklog === true`), а не обёртка над `GetAgile` — беклог семантически является спринтом, а не отдельной сущностью борда. `listSprints()` в клиенте теперь принимает опциональные `folderId`/`name` (раньше игнорировались, хотя публичный API их поддерживает).
+- **`teamstorm_create_sprint`** требует `agileId`, которого обычно нет под рукой — инструмент принимает `folderId` ИЛИ `agileId` и резолвит первое во второе через `resolveAgileId()` (`src/tools/sprints/resolve-agile.ts`, `listAgile(workspace, folderId)`), по аналогии с `resolveLinkTypeId()`. Если у папки ещё нет Agile-борда — явная ошибка с указанием создать его через `teamstorm_create_agile_board` (инструмент **не** создаёт борд автоматически как побочный эффект).
+- **`CreateAgileRequestBody` не принимает `name`** (`additionalProperties: false` — только `folderId` и `estimatesType`), хотя `AgileModel` в ответе `name` требует — сервер выводит его сам (предположительно из имени папки). Не добавляйте `name` в схему `teamstorm_create_agile_board`.
+- **`GetWorkspace`, вероятно, подвержен той же нестабильности**, что и bare `GET /workspaces` (см. ниже про `UserNotFoundException`) — оба возвращают `author: UserModel`. Не проверено вживую на момент реализации (нет токена в `.env` этого окружения) — проверьте на реальном workspace перед тем, как полагаться на `teamstorm_get_workspace` в проде.
+
+Клиентские методы: `listSprints()`, `getSprint()`, `createSprint()`, `listAgile()`, `getAgile()`, `createAgile()`, `getWorkspace()`. Типы: `TeamStormSprint` (расширен: `isBacklog`, `state`, `workdays`, `team`), `TeamStormSprintTeamMember`, `TeamStormCreateSprintRequest`, `TeamStormAgile`, `TeamStormCreateAgileRequest`, `TeamStormAgileListResponse`.
 
 ## Особенности TeamStorm API
 

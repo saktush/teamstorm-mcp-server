@@ -30,6 +30,7 @@ import {
   registerCreateFolderTool,
   registerUpdateFolderTool,
   registerListWorkspacesTool,
+  registerGetWorkspaceTool,
   registerCreateTimeEntryTool,
   registerListTimeEntriesTool,
   registerListTasksTool,
@@ -41,6 +42,12 @@ import {
   registerListUpdatedTasksTool,
   registerListUsersTool,
   registerListSprintsTool,
+  registerGetSprintTool,
+  registerGetBacklogTool,
+  registerCreateSprintTool,
+  registerListAgileBoardsTool,
+  registerGetAgileBoardTool,
+  registerCreateAgileBoardTool,
   registerListWorkflowsTool,
   registerListTaskTypesTool,
   registerListTaskCommentsTool,
@@ -185,6 +192,7 @@ function registerAllTools(server: McpServer, client: TeamStormClient) {
   registerCreateFolderTool(server, client);
   registerUpdateFolderTool(server, client);
   registerListWorkspacesTool(server, client);
+  registerGetWorkspaceTool(server, client);
   registerCreateTimeEntryTool(server, client);
   registerListTimeEntriesTool(server, client);
   registerListTasksTool(server, client);
@@ -196,6 +204,12 @@ function registerAllTools(server: McpServer, client: TeamStormClient) {
   registerListUpdatedTasksTool(server, client);
   registerListUsersTool(server, client);
   registerListSprintsTool(server, client);
+  registerGetSprintTool(server, client);
+  registerGetBacklogTool(server, client);
+  registerCreateSprintTool(server, client);
+  registerListAgileBoardsTool(server, client);
+  registerGetAgileBoardTool(server, client);
+  registerCreateAgileBoardTool(server, client);
   registerListWorkflowsTool(server, client);
   registerListTaskTypesTool(server, client);
   registerListTaskCommentsTool(server, client);
