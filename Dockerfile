@@ -3,6 +3,9 @@ FROM node:24-alpine AS builder
 
 WORKDIR /app
 
+# Patch bundled npm to fix CVEs in its vendored undici/tar deps (CVE-2026-12151, CVE-2026-53655)
+RUN npm install -g npm@11.18.0
+
 # Copy package files
 COPY package*.json ./
 
@@ -22,6 +25,9 @@ RUN npm run build
 FROM node:24-alpine
 
 WORKDIR /app
+
+# Patch bundled npm to fix CVEs in its vendored undici/tar deps (CVE-2026-12151, CVE-2026-53655)
+RUN npm install -g npm@11.18.0
 
 # Create non-root user
 RUN addgroup -g 1001 -S appgroup && \
