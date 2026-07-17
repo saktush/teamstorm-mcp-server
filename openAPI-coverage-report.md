@@ -1,15 +1,15 @@
 # TeamStorm OpenAPI → MCP Coverage Report
 
-Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing, DocumentsStatuses, DocumentLinks, DocumentComments tools; added Folders create/update tools; updated: 2026-07-13 — added Attributes create/patch tools: CreateAttribute, PatchAttribute, AddAttributeOption, PatchAttributeOption; updated: 2026-07-15 — added Portfolios and PortfolioElements tools, including workitem pin/unpin and name-based lookup; updated: 2026-07-16 — fixed `teamstorm_get_task` to render embedded `portfolios` (previously silently dropped) and enriched its `sprint` field with full details via a new internal `GetSprint` call)
+Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing, DocumentsStatuses, DocumentLinks, DocumentComments tools; added Folders create/update tools; updated: 2026-07-13 — added Attributes create/patch tools: CreateAttribute, PatchAttribute, AddAttributeOption, PatchAttributeOption; updated: 2026-07-15 — added Portfolios and PortfolioElements tools, including workitem pin/unpin and name-based lookup; updated: 2026-07-16 — fixed `teamstorm_get_task` to render embedded `portfolios` (previously silently dropped) and enriched its `sprint` field with full details via a new internal `GetSprint` call; updated: 2026-07-17 — added CreateWorkitemLink (`teamstorm_create_task_link`, with name-or-id link-type resolution), ListLinkTypes (`teamstorm_list_link_types`), ListStatusCategories (`teamstorm_list_status_categories`), ListStatuses/GetStatus (`teamstorm_list_workspace_statuses`/`teamstorm_get_workspace_status`); also fixed a pre-existing response-shape bug in `teamstorm_get_task_links` (ListWorkitemLinks returns a bare array with the full embedded linked workitem, not `{items: [...]}` with thin source/target — found by diffing a live API response against the client's assumed type))
 
 ## Summary
 
 - Total endpoints: 159
-- Implemented: 59 (37%)
-- Not implemented: 100 (63%)
+- Implemented: 65 (41%)
+- Not implemented: 94 (59%)
 - Total schemas: 179
-- Schemas used: 52
-- Schemas not used: 127
+- Schemas used: 66
+- Schemas not used: 113
 
 ---
 
@@ -105,7 +105,7 @@ Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing
 
 ### LinkTypes
 
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/link-types` — operationId: ListLinkTypes — NOT IMPLEMENTED
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/link-types` — operationId: ListLinkTypes — MCP tool: `teamstorm_list_link_types`
 
 ### OpenId
 
@@ -160,13 +160,13 @@ Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing
 
 ### StatusCategories
 
-- [ ] `GET /cwm/public/api/v1/status-categories` — operationId: ListStatusCategories — NOT IMPLEMENTED
+- [x] `GET /cwm/public/api/v1/status-categories` — operationId: ListStatusCategories — MCP tool: `teamstorm_list_status_categories` (global endpoint, no `{workspace}` in path)
 
 ### Statuses
 
 - [ ] `POST /cwm/public/api/v1/workspaces/{workspace}/statuses` — operationId: CreateStatus — NOT IMPLEMENTED
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/statuses` — operationId: ListStatuses — NOT IMPLEMENTED
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/statuses/{status}` — operationId: GetStatus — NOT IMPLEMENTED
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/statuses` — operationId: ListStatuses — MCP tool: `teamstorm_list_workspace_statuses`
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/statuses/{status}` — operationId: GetStatus — MCP tool: `teamstorm_get_workspace_status`
 
 ### TimeTracking
 
@@ -231,9 +231,9 @@ Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing
 
 ### WorkitemLinks
 
-- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/workitems/{workitem}/links` — operationId: ListWorkitemLinks — MCP tool: `teamstorm_get_task_links`
-- [ ] `POST /cwm/public/api/v1/workspaces/{workspace}/workitems/{workitem}/links` — operationId: CreateWorkitemLink — NOT IMPLEMENTED
-- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/links/{linkId}` — operationId: DeleteWorkitemLink — NOT IMPLEMENTED
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/workitems/{workitem}/links` — operationId: ListWorkitemLinks — MCP tool: `teamstorm_get_task_links` (fixed 2026-07-17: response is a bare `WorkitemLinkModel[]` embedding the full linked workitem, not the previously-assumed `{items: [{id, linkType, source, target}]}` shape — verified against a live workspace)
+- [x] `POST /cwm/public/api/v1/workspaces/{workspace}/workitems/{workitem}/links` — operationId: CreateWorkitemLink — MCP tool: `teamstorm_create_task_link` (accepts link type by id or by name/key, resolved via `teamstorm_list_link_types`)
+- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/links/{linkId}` — operationId: DeleteWorkitemLink — NOT IMPLEMENTED (intentionally: no delete tools)
 
 ### Workitems
 
@@ -338,7 +338,7 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [ ] `CreateUserFieldValueModel` — NOT USED in any MCP tool
 - [ ] `CreateWorkflowRequestBody` — NOT USED in any MCP tool
 - [ ] `CreateWorkflowStatusRequestBody` — NOT USED in any MCP tool
-- [x] `CreateWorkitemLinkRequestBody` — NOT USED in any MCP tool (CreateWorkitemLink not implemented)
+- [x] `CreateWorkitemLinkRequestBody` — used in MCP tool: `teamstorm_create_task_link`
 - [x] `CreateWorkitemRequestBody` — used in MCP tool: `teamstorm_create_task`
 - [ ] `CreateWorkspaceRequestBody` — NOT USED in any MCP tool
 - [ ] `DateFieldValueModel` — NOT USED in any MCP tool
@@ -357,8 +357,8 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [ ] `GroupModel` — NOT USED in any MCP tool
 - [ ] `GroupModelList` — NOT USED in any MCP tool
 - [ ] `GroupPrincipalModel` — NOT USED in any MCP tool
-- [x] `LinkTypeModel` — used in MCP tool: `teamstorm_get_task_links`
-- [x] `LinkTypeModelList` — NOT USED directly (ListLinkTypes not implemented, but LinkTypeModel used in links response)
+- [x] `LinkTypeModel` — used in MCP tools: `teamstorm_get_task_links`, `teamstorm_create_task_link`, `teamstorm_list_link_types`
+- [x] `LinkTypeModelList` — used in MCP tool: `teamstorm_list_link_types`
 - [ ] `NumberFieldValueModel` — NOT USED in any MCP tool
 - [ ] `OpenIdConnectionModel` — NOT USED in any MCP tool
 - [ ] `OptionModel` — NOT USED in any MCP tool
@@ -411,10 +411,10 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [x] `SprintModelList` — used in MCP tool: `teamstorm_list_sprints`
 - [ ] `SprintStates` — NOT USED in any MCP tool
 - [x] `SprintThumbModel` — used in MCP tool: `teamstorm_get_task` (embedded `sprint` field on `WorkitemModel`, before being enriched via `GetSprint`)
-- [ ] `StatusCategoryModel` — NOT USED in any MCP tool
-- [ ] `StatusCategoryModelList` — NOT USED in any MCP tool
-- [ ] `StatusModel` — NOT USED in any MCP tool
-- [ ] `StatusModelList` — NOT USED in any MCP tool
+- [x] `StatusCategoryModel` — used in MCP tools: `teamstorm_list_status_categories`, `teamstorm_list_workspace_statuses`, `teamstorm_get_workspace_status` (embedded in `category`)
+- [x] `StatusCategoryModelList` — used in MCP tool: `teamstorm_list_status_categories`
+- [x] `StatusModel` — used in MCP tools: `teamstorm_list_workspace_statuses`, `teamstorm_get_workspace_status`
+- [x] `StatusModelList` — used in MCP tool: `teamstorm_list_workspace_statuses`
 - [ ] `SystemRoles` — NOT USED in any MCP tool
 - [ ] `TagFieldValueModel` — NOT USED in any MCP tool
 - [ ] `TeamMemberModel` — NOT USED in any MCP tool
@@ -461,7 +461,7 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [ ] `WorkflowStatusModel` — NOT USED in any MCP tool
 - [x] `WorkflowThumbModel` — used in MCP tool: `teamstorm_get_portfolio` (embedded optional `workflow` field on `PortfolioModel`)
 - [ ] `WorkflowType` — NOT USED in any MCP tool
-- [x] `WorkitemLinkModel` — used in MCP tool: `teamstorm_get_task_links`
+- [x] `WorkitemLinkModel` — used in MCP tools: `teamstorm_get_task_links`, `teamstorm_create_task_link`
 - [x] `WorkitemModel` — used in MCP tools: `teamstorm_list_tasks`, `teamstorm_get_task`, `teamstorm_create_task`, `teamstorm_update_task`, `teamstorm_list_tasks_by_parent`, `teamstorm_list_updated_tasks`
 - [x] `WorkitemModelList` — used in MCP tools: `teamstorm_list_tasks`
 - [x] `WorkitemPortfolioModel` — used in MCP tool: `teamstorm_get_task` (embedded `portfolios` field on `WorkitemModel`)
@@ -496,9 +496,6 @@ Implemented as of 2026-07-02: all Documents, DocumentsSharing, DocumentsStatuses
 ### GitIntegrationTokens (6 endpoints — entire tag)
 - All 6 token management endpoints
 
-### LinkTypes (1 endpoint)
-- `GET /cwm/public/api/v1/workspaces/{workspace}/link-types` — ListLinkTypes
-
 ### OpenId (4 endpoints — entire tag)
 - All 4 OpenID connection management endpoints
 
@@ -523,8 +520,9 @@ Implemented as of 2026-07-15: ListPortfolios/GetPortfolio/CreatePortfolio/PatchP
 
 Implemented as of 2026-07-16: `GetSprint` — used internally by `teamstorm_get_task` to enrich the task's sprint field (not a standalone tool).
 
-### StatusCategories + Statuses (4 endpoints — entire tags)
-- All status and status category endpoints
+### Statuses (1 endpoint remaining)
+Implemented as of 2026-07-17: ListStatusCategories (`teamstorm_list_status_categories`), ListStatuses (`teamstorm_list_workspace_statuses`), GetStatus (`teamstorm_get_workspace_status`). Still not implemented:
+- `POST /cwm/public/api/v1/workspaces/{workspace}/statuses` — CreateStatus
 
 ### TimeTracking (2 endpoints — entire tag, using internal API instead)
 - `GET /cwm/public/api/v1/workspaces/time-tracking-entries` — GetTimeTrackingEntries
@@ -567,9 +565,9 @@ Implemented as of 2026-07-16: `GetSprint` — used internally by `teamstorm_get_
 - `DELETE /cwm/public/api/v1/workspaces/{workspace}/workitems/{workitem}/comments/{commentId}` — DeleteWorkitemComment
 - `PUT /cwm/public/api/v1/workspaces/{workspace}/workitems/{workitem}/comments/{commentId}/visibility` — UpdateWorkitemCommentVisibilitySettings
 
-### WorkitemLinks (2 endpoints, 1 implemented)
-- `POST /cwm/public/api/v1/workspaces/{workspace}/workitems/{workitem}/links` — CreateWorkitemLink
-- `DELETE /cwm/public/api/v1/workspaces/{workspace}/links/{linkId}` — DeleteWorkitemLink
+### WorkitemLinks (1 endpoint remaining, 2 implemented)
+Implemented as of 2026-07-17: CreateWorkitemLink (`teamstorm_create_task_link`), in addition to the pre-existing ListWorkitemLinks (`teamstorm_get_task_links`, response-shape bug also fixed this date). Still not implemented:
+- `DELETE /cwm/public/api/v1/workspaces/{workspace}/links/{linkId}` — DeleteWorkitemLink (intentionally excluded: no delete tools)
 
 ### Workitems (1 endpoint, 7 implemented)
 - `DELETE /cwm/public/api/v1/workspaces/{workspace}/workitems/{workitem}` — DeleteWorkitem

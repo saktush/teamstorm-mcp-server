@@ -59,6 +59,11 @@ import {
   registerAttachUploadedFileTool,
   registerGetTaskPermissionsTool,
   registerGetTaskLinksTool,
+  registerCreateTaskLinkTool,
+  registerListLinkTypesTool,
+  registerListStatusCategoriesTool,
+  registerListWorkspaceStatusesTool,
+  registerGetWorkspaceStatusTool,
   registerListDocumentsTool,
   registerGetDocumentTool,
   registerCreateDocumentTool,
@@ -209,6 +214,11 @@ function registerAllTools(server: McpServer, client: TeamStormClient) {
   registerAttachUploadedFileTool(server, client);
   registerGetTaskPermissionsTool(server, client);
   registerGetTaskLinksTool(server, client);
+  registerCreateTaskLinkTool(server, client);
+  registerListLinkTypesTool(server, client);
+  registerListStatusCategoriesTool(server, client);
+  registerListWorkspaceStatusesTool(server, client);
+  registerGetWorkspaceStatusTool(server, client);
   registerListDocumentsTool(server, client);
   registerGetDocumentTool(server, client);
   registerCreateDocumentTool(server, client);

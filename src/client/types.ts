@@ -367,26 +367,44 @@ export interface TeamStormPermissionListResponse {
 }
 
 // Links (task relationships)
-export interface TeamStormLink {
+// GET /workspaces/{workspace}/workitems/{workitem}/links returns a bare array
+// (no `items` wrapper) where each entry embeds the FULL linked workitem — verified
+// live against a real workspace, matches swagger's WorkitemLinkModel exactly.
+export interface TeamStormLinkType {
   id: string;
-  linkType: {
-    id: string;
-    name: string;
-  };
-  source: {
-    id: string;
-    key: string;
-    name: string;
-  };
-  target: {
-    id: string;
-    key: string;
-    name: string;
-  };
+  name: string;
+  key: string | null;
 }
 
-export interface TeamStormLinkListResponse {
-  items: TeamStormLink[];
+export interface TeamStormLink {
+  id: string;
+  type: TeamStormLinkType;
+  linkedWorkitem: TeamStormTask;
+}
+
+export type TeamStormLinkListResponse = TeamStormLink[];
+
+export interface TeamStormLinkTypeListResponse {
+  items: TeamStormLinkType[];
+}
+
+export interface TeamStormCreateTaskLinkRequest {
+  type: string;
+  linkedWorkitem: string;
+}
+
+// Statuses (workitem-level, distinct from TeamStormDocumentStatus)
+export interface TeamStormStatusCategory {
+  id: string;
+  name: string;
+}
+
+export interface TeamStormStatusCategoryListResponse {
+  items: TeamStormStatusCategory[];
+}
+
+export interface TeamStormWorkspaceStatusListResponse {
+  items: TeamStormStatus[];
 }
 
 // Updated tasks

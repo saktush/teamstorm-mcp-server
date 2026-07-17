@@ -28,7 +28,13 @@ import type {
   TeamStormAttachmentVersion,
   TeamStormAttachmentVersionListResponse,
   TeamStormPermissionListResponse,
+  TeamStormLink,
   TeamStormLinkListResponse,
+  TeamStormLinkTypeListResponse,
+  TeamStormCreateTaskLinkRequest,
+  TeamStormStatusCategoryListResponse,
+  TeamStormWorkspaceStatusListResponse,
+  TeamStormStatus,
   TeamStormUpdatedTaskListResponse,
   TeamStormFolderModel,
   TeamStormFolderListResponse,
@@ -737,6 +743,77 @@ export class TeamStormClient {
       const ws = this.resolveWorkspace(workspace);
       const response = await this.client.get<TeamStormLinkListResponse>(
         `/workspaces/${ws}/workitems/${taskId}/links`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async createTaskLink(
+    taskId: string,
+    data: TeamStormCreateTaskLinkRequest,
+    workspace?: string
+  ): Promise<TeamStormLink> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.post<TeamStormLink>(
+        `/workspaces/${ws}/workitems/${taskId}/links`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  // Link types
+  async listLinkTypes(workspace?: string): Promise<TeamStormLinkTypeListResponse> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get<TeamStormLinkTypeListResponse>(
+        `/workspaces/${ws}/link-types`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  // Status categories (global — not workspace-scoped)
+  async listStatusCategories(): Promise<TeamStormStatusCategoryListResponse> {
+    this.requireBaseUrl();
+    try {
+      const response =
+        await this.client.get<TeamStormStatusCategoryListResponse>('/status-categories');
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  // Workspace statuses (workitem-level, distinct from document statuses)
+  async listWorkspaceStatuses(workspace?: string): Promise<TeamStormWorkspaceStatusListResponse> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get<TeamStormWorkspaceStatusListResponse>(
+        `/workspaces/${ws}/statuses`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async getWorkspaceStatus(statusId: string, workspace?: string): Promise<TeamStormStatus> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get<TeamStormStatus>(
+        `/workspaces/${ws}/statuses/${statusId}`
       );
       return response.data;
     } catch (error) {

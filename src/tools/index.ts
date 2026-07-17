@@ -143,6 +143,28 @@ export { getTaskPermissionsSchema } from './permissions/index.js';
 // Links
 export { getTaskLinks, registerGetTaskLinksTool } from './links/index.js';
 export { getTaskLinksSchema } from './links/index.js';
+export { createTaskLink, registerCreateTaskLinkTool } from './links/index.js';
+export { createTaskLinkSchema } from './links/index.js';
+
+// Link Types
+export { listLinkTypes, registerListLinkTypesTool } from './link-types/index.js';
+export { listLinkTypesSchema } from './link-types/index.js';
+
+// Status Categories
+export {
+  listStatusCategories,
+  registerListStatusCategoriesTool,
+} from './status-categories/index.js';
+export { listStatusCategoriesSchema } from './status-categories/index.js';
+
+// Workspace Statuses (workitem-level, distinct from Document Statuses below)
+export {
+  listWorkspaceStatuses,
+  registerListWorkspaceStatusesTool,
+  getWorkspaceStatus,
+  registerGetWorkspaceStatusTool,
+} from './statuses/index.js';
+export { listWorkspaceStatusesSchema, getWorkspaceStatusSchema } from './statuses/index.js';
 
 // Documents
 export {

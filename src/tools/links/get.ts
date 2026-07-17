@@ -22,9 +22,9 @@ export function registerGetTaskLinksTool(server: McpServer, client: TeamStormCli
   server.registerTool(
     'teamstorm_get_task_links',
     {
-      title: 'Получить связи задачи',
+      title: 'Получить связанные задачи',
       description:
-        'Получить связи задачи (связанные задачи). Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить связи задачи вместе с полной информацией о каждой связанной задаче (статус, исполнитель, папка, спринт и т.д.). Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
       inputSchema: getTaskLinksSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
@@ -49,7 +49,7 @@ export async function getTaskLinks(
 
   try {
     logRequest('teamstorm_get_task_links', { workspace, taskId });
-    const response: TeamStormLinkListResponse = await client.getTaskLinks(
+    const links: TeamStormLinkListResponse = await client.getTaskLinks(
       args.taskId,
       args.workspace
     );
@@ -57,7 +57,7 @@ export async function getTaskLinks(
 
     logResponse('teamstorm_get_task_links', true, duration);
 
-    if (response.items.length === 0) {
+    if (links.length === 0) {
       return {
         content: [
           {
@@ -68,24 +68,31 @@ export async function getTaskLinks(
       };
     }
 
-    const linksText = response.items
-      .map(
-        (link: TeamStormLink, index: number) =>
-          `**${index + 1}. ${link.linkType.name}**\n` +
-          `   🔗 Тип связи: ${link.linkType.name} (${link.linkType.id})\n` +
-          `   📤 От: ${link.source.name} (${link.source.key})\n` +
-          `   📥 К: ${link.target.name} (${link.target.key})`
-      )
+    const linksText = links
+      .map((link: TeamStormLink, index: number) => {
+        const t = link.linkedWorkitem;
+        const status = t.status
+          ? `${t.status.name} (${t.status.category?.name ?? 'Без категории'})`
+          : 'Без статуса';
+        const assignee = t.assignee ? t.assignee.displayName : 'Не назначен';
+        return (
+          `**${index + 1}. ${link.type.name}${link.type.key ? ` (${link.type.key})` : ''}**\n` +
+          `   🔗 ${t.key}: ${t.name}\n` +
+          `   📌 Статус: ${status}\n` +
+          `   👤 Исполнитель: ${assignee}` +
+          (t.folder ? `\n   📁 Папка: ${t.folder.name}` : '')
+        );
+      })
       .join('\n\n');
 
     return {
       content: [
         {
           type: 'text',
-          text: `🔗 Связи задачи ${args.taskId} (${response.items.length} шт.):\n\n${linksText}`,
+          text: `🔗 Связи задачи ${args.taskId} (${links.length} шт.):\n\n${linksText}`,
         },
       ],
-      structuredContent: response as unknown as Record<string, unknown>,
+      structuredContent: { items: links } as unknown as Record<string, unknown>,
     };
   } catch (error) {
     logError(error as Error, { workspace, taskId: args.taskId });

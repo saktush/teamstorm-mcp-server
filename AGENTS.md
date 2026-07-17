@@ -2,7 +2,12 @@
 
 ## Project
 
-TeamStorm MCP Server — MCP-сервер для интеграции Claude Code с TeamStorm API. Предоставляет 63 инструмента для работы с задачами, папками, документами, комментариями, атрибутами, вложениями, правами доступа, связями, пользователями, спринтами, workflow, портфелями и списанием времени.
+TeamStorm MCP Server — MCP-сервер для интеграции Claude Code с TeamStorm API. Предоставляет 68 инструментов для работы с задачами, папками, документами, комментариями, атрибутами, вложениями, правами доступа, связями, пользователями, спринтами, workflow, портфелями, списанием времени и справочными данными (типы связей, статусы, категории статусов).
+
+## Источники
+
+- **Публичная OpenAPI-спецификация**: `https://work.teamstorm.io/cwm/public/swagger/v1/swagger.json` — источник истины при планировании новых инструментов (пути, схемы запросов/ответов, operationId). Учти: описания полей в спеке почти всегда пустые ("Has not description."), поэтому реальную форму ответа стоит проверять живым запросом, а не только по спеке (см. пример расхождения в разделе «Связи» ниже).
+- **`openAPI-coverage-report.md`** (корень репозитория) — таблица покрытия: какие эндпоинты спеки уже реализованы как MCP-инструменты, а какие нет. Обновляется при каждом добавлении инструментов.
 
 ## Commands
 
@@ -49,7 +54,7 @@ npm run typecheck        # tsc --noEmit
 
 ### Инструменты (`src/tools/`)
 
-Доменные области: `folders/`, `tasks/`, `comments/`, `attributes/`, `attachments/`, `permissions/`, `links/`, `users/`, `sprints/`, `workflows/`, `types/`, `workspaces/`, `time-tracking/`, `documents/`, `document-sharing/`, `document-statuses/`, `document-links/`, `document-comments/`, `portfolios/`, `portfolio-elements/`, `portfolio-links/`.
+Доменные области: `folders/`, `tasks/`, `comments/`, `attributes/`, `attachments/`, `permissions/`, `links/`, `link-types/`, `status-categories/`, `statuses/`, `users/`, `sprints/`, `workflows/`, `types/`, `workspaces/`, `time-tracking/`, `documents/`, `document-sharing/`, `document-statuses/`, `document-links/`, `document-comments/`, `portfolios/`, `portfolio-elements/`, `portfolio-links/`.
 
 Паттерн каждой папки:
 
@@ -149,6 +154,17 @@ DELETE-эндпоинт папок намеренно не реализован.
 - `teamstorm_get_tasks_by_portfolio_element_name` — составной инструмент (не имеет прямого соответствия в OpenAPI): находит элемент(ы) портфеля по названию через `listPortfolioElements`, затем для каждого найденного элемента получает задачи через `listTasks({ portfolioElementId })`; результаты группируются по каждому найденному элементу.
 
 Клиентские методы: `listPortfolios()`, `getPortfolio()`, `createPortfolio()`, `patchPortfolio()`, `listPortfolioElements()`, `getPortfolioElement()`, `createPortfolioElement()`, `patchPortfolioElement()`, `assignWorkitemToPortfolioElement()`, `unassignWorkitemFromPortfolioElement()`. Типы: `TeamStormPortfolioModel`, `TeamStormPortfolioModelList`, `TeamStormCreatePortfolioRequest`, `TeamStormPatchPortfolioRequest`, `TeamStormPortfolioElementModel`, `TeamStormPortfolioElementModelList`, `TeamStormCreatePortfolioElementRequest`, `TeamStormPatchPortfolioElementRequest`.
+
+## Связи и справочные данные
+
+Инструменты в `src/tools/links/`: `get` (связи задачи), `create` (создать связь). Инструменты в `src/tools/link-types/`: `list`. Инструменты в `src/tools/status-categories/`: `list` (глобальный, без workspace). Инструменты в `src/tools/statuses/`: `list`, `get` (статусы задач — не путать с `document-statuses/`, это разные сущности с разными эндпоинтами).
+
+- **`GET /workspaces/{ws}/workitems/{id}/links` возвращает "широкий" ответ** — `WorkitemLinkModel[]` (голый массив, без обёртки `items`), каждый элемент — `{id, type: LinkTypeModel, linkedWorkitem: WorkitemModel}`, где `linkedWorkitem` — это **полная** модель связанной задачи (статус, исполнитель, папка, спринт, атрибуты и т.д.), а не облегчённый thumb. До 2026-07-17 клиентский тип `TeamStormLink`/`TeamStormLinkListResponse` не соответствовал этой форме (ожидал `{items: [{id, linkType, source, target}]}` с урезанными source/target) — расхождение обнаружено сверкой с реальным ответом API (спека даёт только "Has not description.", не проверяй по ней вслепую) и исправлено; `teamstorm_get_task_links` теперь и есть "широкий" инструмент получения связанных задач — отдельного `get_linked_workitems` не заводили.
+- `teamstorm_create_task_link` — `POST /workspaces/{ws}/workitems/{id}/links` — принимает `linkedWorkitem` (ключ/ID второй задачи) и тип связи либо напрямую (`linkTypeId`, UUID), либо по названию/ключу (`linkTypeName`, например «Связана»/«Relates» — резолвится через `listLinkTypes()`, ошибка со списком кандидатов при неоднозначности/отсутствии). Не идемпотентно: повторный вызов создаёт вторую связь (см. `409 Conflict` в спеке для дублей, которые бэкенд всё же отклоняет).
+- **`DeleteWorkitemLink` намеренно не реализован** — как и все DELETE-эндпоинты в этом проекте (см. `TODO.log`, раздел «Deletes»).
+- `teamstorm_list_status_categories` — единственный по-настоящему глобальный справочник в клиенте: `GET /status-categories` не имеет `{workspace}` в пути и не принимает `workspace` в схеме инструмента — не добавляй `resolveWorkspace()` в `listStatusCategories()`.
+
+Клиентские методы: `getTaskLinks()`, `createTaskLink()`, `listLinkTypes()`, `listStatusCategories()`, `listWorkspaceStatuses()`, `getWorkspaceStatus()`. Типы: `TeamStormLink`, `TeamStormLinkListResponse`, `TeamStormLinkType`, `TeamStormLinkTypeListResponse`, `TeamStormCreateTaskLinkRequest`, `TeamStormStatusCategory`, `TeamStormStatusCategoryListResponse`, `TeamStormWorkspaceStatusListResponse` (переиспользует существующий `TeamStormStatus`).
 
 ## Особенности TeamStorm API
 
