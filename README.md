@@ -469,6 +469,10 @@ teamstorm-mcp-server/
 
 ---
 
+## Благодарности
+
+Проект основан на оригинальной работе Ruslan Yakhin ([madebyearth](https://github.com/madebyearth)).
+
 ## Лицензия
 
 MIT
