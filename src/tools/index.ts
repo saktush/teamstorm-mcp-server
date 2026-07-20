@@ -69,6 +69,10 @@ export {
 // Users
 export { listUsers, registerListUsersTool } from './users/index.js';
 export { listUsersSchema } from './users/index.js';
+export { getUser, registerGetUserTool } from './users/index.js';
+export { getUserSchema } from './users/index.js';
+export { listAllUsers, registerListAllUsersTool } from './users/index.js';
+export { listAllUsersSchema } from './users/index.js';
 
 // Sprints
 export {
@@ -157,11 +161,13 @@ export {
   listAttachmentVersions,
   getAttachmentVersion,
   attachUploadedFile,
+  getTaskAttachmentFile,
   registerListTaskAttachmentsTool,
   registerGetTaskAttachmentTool,
   registerListAttachmentVersionsTool,
   registerGetAttachmentVersionTool,
   registerAttachUploadedFileTool,
+  registerGetTaskAttachmentFileTool,
 } from './attachments/index.js';
 export {
   ListTaskAttachmentsSchema,
@@ -169,7 +175,20 @@ export {
   listAttachmentVersionsSchema,
   getAttachmentVersionSchema,
   attachUploadedFileSchema,
+  getTaskAttachmentFileSchema,
 } from './attachments/index.js';
+
+// Document Attachments
+export {
+  listDocumentAttachments,
+  getDocumentAttachmentFile,
+  registerListDocumentAttachmentsTool,
+  registerGetDocumentAttachmentFileTool,
+} from './document-attachments/index.js';
+export {
+  listDocumentAttachmentsSchema,
+  getDocumentAttachmentFileSchema,
+} from './document-attachments/index.js';
 
 // Permissions (Sharing)
 export { getTaskPermissions, registerGetTaskPermissionsTool } from './permissions/index.js';

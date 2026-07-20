@@ -9,6 +9,7 @@ import type {
   TeamStormTaskListResponse,
   TeamStormCreateTaskRequest,
   TeamStormUpdateTaskRequest,
+  TeamStormUser,
   TeamStormUserListResponse,
   TeamStormSprint,
   TeamStormSprintListResponse,
@@ -60,7 +61,11 @@ import type {
   TeamStormDocumentStatus,
   TeamStormDocumentStatusListResponse,
   TeamStormDocumentPermission,
+  TeamStormDownloadedFile,
 } from './types.js';
+
+// Mirrors the existing upload cap; single source of truth reused by the OOB download route in index.ts.
+export const MAX_ATTACHMENT_DOWNLOAD_SIZE = 50 * 1024 * 1024;
 
 export class TeamStormClient {
   private client: AxiosInstance;
@@ -277,6 +282,54 @@ export class TeamStormClient {
     return sanitized;
   }
 
+  /** Extract a filename from a Content-Disposition header, preferring the UTF-8 filename* form. */
+  private parseContentDisposition(header?: string): string | undefined {
+    if (!header) return undefined;
+    const star = header.match(/filename\*=UTF-8''([^;]+)/i);
+    if (star) {
+      try {
+        return decodeURIComponent(star[1]);
+      } catch {
+        // fall through to the plain form
+      }
+    }
+    const plain = header.match(/filename="?([^";]+)"?/i);
+    return plain ? plain[1] : undefined;
+  }
+
+  /** Reverse of the ext->mime mapping in uploadTaskAttachmentBuffer, used as a download filename fallback. */
+  private guessFileName(attachmentId: string, contentType?: string): string {
+    const ext =
+      contentType === 'image/png'
+        ? '.png'
+        : contentType === 'image/jpeg'
+          ? '.jpg'
+          : contentType === 'image/gif'
+            ? '.gif'
+            : contentType === 'application/pdf'
+              ? '.pdf'
+              : contentType === 'application/zip'
+                ? '.zip'
+                : '';
+    return `attachment-${attachmentId}${ext}`;
+  }
+
+  /**
+   * With responseType: 'arraybuffer', axios buffers 4xx/5xx error bodies as raw bytes too
+   * (regardless of the server's declared Content-Type), so error.response.data arrives as a
+   * Buffer/ArrayBuffer instead of the parsed ErrorModel JSON that extractErrorMessage expects.
+   * Decode it back to JSON (or text) before handleError() runs.
+   */
+  private decodeArrayBufferError(data: unknown): unknown {
+    if (!(data instanceof Buffer) && !(data instanceof ArrayBuffer)) return data;
+    const text = Buffer.from(data as ArrayBuffer).toString('utf-8');
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text;
+    }
+  }
+
   async listTasks(params: {
     workspace?: string;
     type?: string;
@@ -382,6 +435,37 @@ export class TeamStormClient {
     try {
       const ws = this.resolveWorkspace(workspace);
       const response = await this.client.get<TeamStormUserListResponse>(`/workspaces/${ws}/users`);
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  // Global user lookup — GET /users/{user} has no {workspace} segment, same reasoning as
+  // listStatusCategories(): a genuinely global endpoint, do not add resolveWorkspace() here.
+  async getUser(user: string, providerId?: string): Promise<TeamStormUser> {
+    this.requireBaseUrl();
+    try {
+      const response = await this.client.get<TeamStormUser>(`/users/${encodeURIComponent(user)}`, {
+        params: providerId ? { providerId } : undefined,
+      });
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  // Global user search — GET /users, instance-wide and server-side filtered (unlike listUsers(),
+  // which fetches one workspace's members and filters client-side).
+  async listAllUsers(params?: {
+    displayName?: string;
+    email?: string;
+    username?: string;
+    providerId?: string;
+  }): Promise<TeamStormUserListResponse> {
+    this.requireBaseUrl();
+    try {
+      const response = await this.client.get<TeamStormUserListResponse>('/users', { params });
       return response.data;
     } catch (error) {
       this.handleError(error as AxiosError);
@@ -788,6 +872,46 @@ export class TeamStormClient {
       return response.data;
     } catch (error) {
       this.handleError(error as AxiosError);
+    }
+  }
+
+  // DownloadWorkitemAttachments documents no 200 response schema in the spec (raw octet-stream
+  // in practice) — filename resolution relies on Content-Disposition, with a generic fallback,
+  // and deliberately does not do a second round-trip to getTaskAttachment() for the name.
+  async downloadTaskAttachmentBuffer(
+    taskId: string,
+    attachmentId: string,
+    workspace?: string
+  ): Promise<TeamStormDownloadedFile> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get(
+        `/workspaces/${ws}/workitems/${taskId}/attachments/${attachmentId}/download`,
+        {
+          responseType: 'arraybuffer',
+          maxContentLength: MAX_ATTACHMENT_DOWNLOAD_SIZE,
+          maxBodyLength: MAX_ATTACHMENT_DOWNLOAD_SIZE,
+        }
+      );
+      const buffer = Buffer.from(response.data as ArrayBuffer);
+      const contentType = (response.headers['content-type'] as string) || undefined;
+      const fileName =
+        this.parseContentDisposition(
+          response.headers['content-disposition'] as string | undefined
+        ) ?? this.guessFileName(attachmentId, contentType);
+      return { buffer, contentType, fileName };
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      if (!axiosError.response && axiosError.message?.includes('maxContentLength')) {
+        throw new Error(
+          `Вложение слишком большое для скачивания (лимит ${MAX_ATTACHMENT_DOWNLOAD_SIZE / 1024 / 1024} МБ).`
+        );
+      }
+      if (axiosError.response) {
+        axiosError.response.data = this.decodeArrayBufferError(axiosError.response.data);
+      }
+      this.handleError(axiosError);
     }
   }
 
@@ -1565,6 +1689,62 @@ export class TeamStormClient {
       return response.data;
     } catch (error) {
       this.handleError(error as AxiosError);
+    }
+  }
+
+  // Document attachments — same AttachmentModel/AttachmentModelList schemas as WorkitemAttachments
+  // (verified against swagger.json), so this reuses TeamStormAttachment/TeamStormAttachmentListResponse
+  // rather than introducing parallel document-specific types.
+  async listDocumentAttachments(
+    documentId: string,
+    workspace?: string
+  ): Promise<TeamStormAttachmentListResponse> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get<TeamStormAttachmentListResponse>(
+        `/workspaces/${ws}/documents/${documentId}/attachments`
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async downloadDocumentAttachmentBuffer(
+    documentId: string,
+    attachmentId: string,
+    workspace?: string
+  ): Promise<TeamStormDownloadedFile> {
+    this.requireBaseUrl();
+    try {
+      const ws = this.resolveWorkspace(workspace);
+      const response = await this.client.get(
+        `/workspaces/${ws}/documents/${documentId}/attachments/${attachmentId}/download`,
+        {
+          responseType: 'arraybuffer',
+          maxContentLength: MAX_ATTACHMENT_DOWNLOAD_SIZE,
+          maxBodyLength: MAX_ATTACHMENT_DOWNLOAD_SIZE,
+        }
+      );
+      const buffer = Buffer.from(response.data as ArrayBuffer);
+      const contentType = (response.headers['content-type'] as string) || undefined;
+      const fileName =
+        this.parseContentDisposition(
+          response.headers['content-disposition'] as string | undefined
+        ) ?? this.guessFileName(attachmentId, contentType);
+      return { buffer, contentType, fileName };
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      if (!axiosError.response && axiosError.message?.includes('maxContentLength')) {
+        throw new Error(
+          `Вложение слишком большое для скачивания (лимит ${MAX_ATTACHMENT_DOWNLOAD_SIZE / 1024 / 1024} МБ).`
+        );
+      }
+      if (axiosError.response) {
+        axiosError.response.data = this.decodeArrayBufferError(axiosError.response.data);
+      }
+      this.handleError(axiosError);
     }
   }
 }

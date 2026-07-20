@@ -1,15 +1,15 @@
 # TeamStorm OpenAPI → MCP Coverage Report
 
-Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing, DocumentsStatuses, DocumentLinks, DocumentComments tools; added Folders create/update tools; updated: 2026-07-13 — added Attributes create/patch tools: CreateAttribute, PatchAttribute, AddAttributeOption, PatchAttributeOption; updated: 2026-07-15 — added Portfolios and PortfolioElements tools, including workitem pin/unpin and name-based lookup; updated: 2026-07-16 — fixed `teamstorm_get_task` to render embedded `portfolios` (previously silently dropped) and enriched its `sprint` field with full details via a new internal `GetSprint` call; updated: 2026-07-17 — added CreateWorkitemLink (`teamstorm_create_task_link`, with name-or-id link-type resolution), ListLinkTypes (`teamstorm_list_link_types`), ListStatusCategories (`teamstorm_list_status_categories`), ListStatuses/GetStatus (`teamstorm_list_workspace_statuses`/`teamstorm_get_workspace_status`); also fixed a pre-existing response-shape bug in `teamstorm_get_task_links` (ListWorkitemLinks returns a bare array with the full embedded linked workitem, not `{items: [...]}` with thin source/target — found by diffing a live API response against the client's assumed type); updated: 2026-07-17 (later same day) — added GetWorkspace (`teamstorm_get_workspace`), GetSprint as a standalone tool (`teamstorm_get_sprint`, with client-computed team capacity), CreateSprint (`teamstorm_create_sprint`, resolves folderId→agileId), and the full Agile tag except delete: GetAgileExtensions/GetAgile/CreateAgile (`teamstorm_list_agile_boards`/`teamstorm_get_agile_board`/`teamstorm_create_agile_board`); added a composite `teamstorm_get_backlog` (filters ListSprints by folder for `isBacklog: true`, no dedicated REST resource exists for it))
+Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing, DocumentsStatuses, DocumentLinks, DocumentComments tools; added Folders create/update tools; updated: 2026-07-13 — added Attributes create/patch tools: CreateAttribute, PatchAttribute, AddAttributeOption, PatchAttributeOption; updated: 2026-07-15 — added Portfolios and PortfolioElements tools, including workitem pin/unpin and name-based lookup; updated: 2026-07-16 — fixed `teamstorm_get_task` to render embedded `portfolios` (previously silently dropped) and enriched its `sprint` field with full details via a new internal `GetSprint` call; updated: 2026-07-17 — added CreateWorkitemLink (`teamstorm_create_task_link`, with name-or-id link-type resolution), ListLinkTypes (`teamstorm_list_link_types`), ListStatusCategories (`teamstorm_list_status_categories`), ListStatuses/GetStatus (`teamstorm_list_workspace_statuses`/`teamstorm_get_workspace_status`); also fixed a pre-existing response-shape bug in `teamstorm_get_task_links` (ListWorkitemLinks returns a bare array with the full embedded linked workitem, not `{items: [...]}` with thin source/target — found by diffing a live API response against the client's assumed type); updated: 2026-07-17 (later same day) — added GetWorkspace (`teamstorm_get_workspace`), GetSprint as a standalone tool (`teamstorm_get_sprint`, with client-computed team capacity), CreateSprint (`teamstorm_create_sprint`, resolves folderId→agileId), and the full Agile tag except delete: GetAgileExtensions/GetAgile/CreateAgile (`teamstorm_list_agile_boards`/`teamstorm_get_agile_board`/`teamstorm_create_agile_board`); added a composite `teamstorm_get_backlog` (filters ListSprints by folder for `isBacklog: true`, no dedicated REST resource exists for it); updated: 2026-07-20 — added global GetUser/ListUsers (`teamstorm_get_user`/`teamstorm_list_all_users`, distinct from the existing workspace-scoped `teamstorm_list_users`), DownloadWorkitemAttachments (`teamstorm_get_task_attachment_file`, new out-of-band download infrastructure: `GET /download/:id`, `src/utils/download-store.ts`, TTL cleanup, separate rate limiter — mirrors the existing OOB upload flow), and a new `document-attachments/` domain covering GetDocumentAttachments/DownloadDocumentAttachments (`teamstorm_list_document_attachments`/`teamstorm_get_document_attachment_file`, reusing the same download infrastructure); `get_current_user` evaluated and intentionally not implemented — no backing endpoint exists anywhere in the spec; extended `TeamStormAttachment` with `version`/`antivirusVerdict` (both required in `AttachmentModel` but previously missing) and fixed `TeamStormAttachmentListResponse` to drop phantom pagination fields not present in `AttachmentModelList`; also corrected a pre-existing mixup where `teamstorm_list_users`'s actual response schema (`UserModelList`) and the global `ListUsers` schema (`UsersModelList`) were swapped in this report)
 
 ## Summary
 
 - Total endpoints: 159
-- Implemented: 70 (44%)
-- Not implemented: 89 (56%)
+- Implemented: 75 (47%)
+- Not implemented: 84 (53%)
 - Total schemas: 179
-- Schemas used: 73
-- Schemas not used: 106
+- Schemas used: 75
+- Schemas not used: 104
 
 ---
 
@@ -36,14 +36,14 @@ Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing
 ### DocumentAttachments
 
 - [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/attachments/{attachmentId}` — operationId: GetDocumentAttachment — NOT IMPLEMENTED
-- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/attachments/{attachmentId}` — operationId: DeleteDocumentAttachment — NOT IMPLEMENTED
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/attachments` — operationId: GetDocumentAttachments — NOT IMPLEMENTED
-- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/attachments` — operationId: DeleteDocumentAttachments — NOT IMPLEMENTED
+- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/attachments/{attachmentId}` — operationId: DeleteDocumentAttachment — NOT IMPLEMENTED (intentionally: no delete tools)
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/attachments` — operationId: GetDocumentAttachments — MCP tool: `teamstorm_list_document_attachments`
+- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/attachments` — operationId: DeleteDocumentAttachments — NOT IMPLEMENTED (intentionally: no delete tools)
 - [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/attachments/{attachmentId}/versions/{attachmentVersion}` — operationId: GetDocumentAttachmentWithVersions — NOT IMPLEMENTED
-- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/attachments/{attachmentId}/versions/{attachmentVersion}` — operationId: DeleteDocumentAttachmentVersion — NOT IMPLEMENTED
+- [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/attachments/{attachmentId}/versions/{attachmentVersion}` — operationId: DeleteDocumentAttachmentVersion — NOT IMPLEMENTED (intentionally: no delete tools)
 - [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/attachments/versions` — operationId: GetDocumentAttachmentsWithVersions — NOT IMPLEMENTED
 - [ ] `POST /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/attachments/{attachmentId}/upload` — operationId: UploadDocumentAttachments — NOT IMPLEMENTED
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/attachments/{attachmentId}/download` — operationId: DownloadDocumentAttachments — NOT IMPLEMENTED
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/documents/{document}/attachments/{attachmentId}/download` — operationId: DownloadDocumentAttachments — MCP tool: `teamstorm_get_document_attachment_file` (same out-of-band download infra as `teamstorm_get_task_attachment_file`)
 
 ### DocumentComments
 
@@ -190,8 +190,8 @@ Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing
 
 ### Users
 
-- [ ] `GET /cwm/public/api/v1/users` — operationId: ListUsers — NOT IMPLEMENTED (MCP uses workspace-scoped `/workspaces/{ws}/users` endpoint)
-- [ ] `GET /cwm/public/api/v1/users/{user}` — operationId: GetUser — NOT IMPLEMENTED
+- [x] `GET /cwm/public/api/v1/users` — operationId: ListUsers — MCP tool: `teamstorm_list_all_users` (global, server-side filtered by displayName/email/username/providerId — distinct from workspace-scoped `teamstorm_list_users`)
+- [x] `GET /cwm/public/api/v1/users/{user}` — operationId: GetUser — MCP tool: `teamstorm_get_user` (global, no workspace in path)
 - [ ] `POST /cwm/public/api/v1/users/block/{userId}` — operationId: BlockUser — NOT IMPLEMENTED
 - [ ] `POST /cwm/public/api/v1/users/unblock/{userId}` — operationId: UnblockUser — NOT IMPLEMENTED
 
@@ -213,7 +213,7 @@ Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing
 - [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/workitems/{workitem}/attachments/{attachmentId}/versions/{attachmentVersion}` — operationId: DeleteWorkitemAttachmentVersion — NOT IMPLEMENTED
 - [x] `GET /cwm/public/api/v1/workspaces/{workspace}/workitems/{workitem}/attachments/versions` — operationId: GetWorkitemAttachmentsWithVersions — MCP tool: `teamstorm_list_attachment_versions`
 - [x] `POST /cwm/public/api/v1/workspaces/{workspace}/workitems/{workitem}/attachments/{attachmentId}/upload` — operationId: UploadWorkitemAttachments — MCP tool: `teamstorm_attach_uploaded`
-- [ ] `GET /cwm/public/api/v1/workspaces/{workspace}/workitems/{workitem}/attachments/{attachmentId}/download` — operationId: DownloadWorkitemAttachments — NOT IMPLEMENTED
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/workitems/{workitem}/attachments/{attachmentId}/download` — operationId: DownloadWorkitemAttachments — MCP tool: `teamstorm_get_task_attachment_file` (out-of-band: saves to disk, returns a `GET /download/:id` URL — see AGENTS.md "Загрузка и скачивание файлов")
 
 ### WorkitemAttributes
 
@@ -264,7 +264,7 @@ Generated: 2026-07-01 (updated: 2026-07-02 — added Documents, DocumentsSharing
 
 ### WorkspaceUsers
 
-- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/users` — operationId: GetWorkspaceUsers — MCP tool: `teamstorm_list_users`
+- [x] `GET /cwm/public/api/v1/workspaces/{workspace}/users` — operationId: GetWorkspaceUsers — MCP tool: `teamstorm_list_users` (response schema is actually `UserModelList`, not `UsersModelList` — corrected 2026-07-20, found while cross-checking schemas for the new global user tools)
 - [ ] `POST /cwm/public/api/v1/workspaces/{workspace}/users/{userId}` — operationId: AddWorkspaceUser — NOT IMPLEMENTED
 - [ ] `DELETE /cwm/public/api/v1/workspaces/{workspace}/users/{userId}` — operationId: RemoveWorkspaceUser — NOT IMPLEMENTED
 - [ ] `POST /cwm/public/api/v1/workspaces/{workspace}/users/{userId}/roles/{roleId}` — operationId: AddUserRole — NOT IMPLEMENTED
@@ -290,9 +290,9 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 ## Schema / Data Types Coverage
 
 - [x] `AgileModel` — used in MCP tools: `teamstorm_list_agile_boards`, `teamstorm_get_agile_board`, `teamstorm_create_agile_board`
-- [ ] `AntivirusScanVerdict` — NOT USED in any MCP tool
-- [x] `AttachmentModel` — used in MCP tools: `teamstorm_get_task_attachment`, `teamstorm_attach_uploaded`
-- [x] `AttachmentModelList` — used in MCP tools: `teamstorm_list_task_attachments`, `teamstorm_attach_uploaded`
+- [x] `AntivirusScanVerdict` — used in MCP tools: all attachment tools that return `TeamStormAttachment` (field added 2026-07-20 — was previously missing from the type despite being required in `AttachmentModel`)
+- [x] `AttachmentModel` — used in MCP tools: `teamstorm_get_task_attachment`, `teamstorm_attach_uploaded`, `teamstorm_list_document_attachments`
+- [x] `AttachmentModelList` — used in MCP tools: `teamstorm_list_task_attachments`, `teamstorm_attach_uploaded`, `teamstorm_list_document_attachments`
 - [x] `AttributeModel` — used in MCP tools: `teamstorm_create_attribute`, `teamstorm_update_attribute`, `teamstorm_add_attribute_option`, `teamstorm_update_attribute_option`
 - [x] `AttributeOptionModel` — used in MCP tools: `teamstorm_create_attribute`, `teamstorm_update_attribute`, `teamstorm_add_attribute_option`, `teamstorm_update_attribute_option` (options in AttributeModel response)
 - [x] `AttributeType` — used in MCP tool: `teamstorm_create_attribute`
@@ -452,10 +452,10 @@ The MCP tools `teamstorm_create_time_entry` and `teamstorm_list_time_entries` us
 - [ ] `UpdateUserFieldRequestBody` — NOT USED in any MCP tool
 - [ ] `UpdateUserFieldValueModel` — NOT USED in any MCP tool
 - [x] `UserFieldValueModel` — NOT USED directly, but user fields appear in WorkitemModel
-- [x] `UserModel` — used in MCP tool: `teamstorm_list_users`
-- [ ] `UserModelList` — NOT USED in any MCP tool (MCP uses `UsersModelList` for workspace users)
+- [x] `UserModel` — used in MCP tools: `teamstorm_list_users`, `teamstorm_get_user`, `teamstorm_list_all_users`
+- [x] `UserModelList` — used in MCP tool: `teamstorm_list_users` (workspace-scoped `GetWorkspaceUsers` — corrected 2026-07-20; previously misattributed to `UsersModelList` below)
 - [x] `UserPrincipalModel` — used in MCP tool: `teamstorm_get_task_permissions`
-- [x] `UsersModelList` — used in MCP tool: `teamstorm_list_users`
+- [x] `UsersModelList` — used in MCP tool: `teamstorm_list_all_users` (global `ListUsers`, no pagination fields — corrected 2026-07-20)
 - [x] `WorkflowModel` — used in MCP tool: `teamstorm_list_workflows`
 - [x] `WorkflowModelList` — used in MCP tool: `teamstorm_list_workflows`
 - [ ] `WorkflowStatusModel` — NOT USED in any MCP tool
@@ -483,9 +483,9 @@ Implemented as of 2026-07-13: CreateAttribute (`teamstorm_create_attribute`), Pa
 - `DELETE /cwm/public/api/v1/workspaces/{workspace}/attributes/{attributeId}/options/{optionId}` — DeleteAttributeOption (intentionally excluded: no delete tools)
 
 ### Documents (remaining gaps)
-Implemented as of 2026-07-02: all Documents, DocumentsSharing, DocumentsStatuses, DocumentLinks, DocumentComments endpoints except DELETE (intentionally excluded). Still not implemented:
+Implemented as of 2026-07-02: all Documents, DocumentsSharing, DocumentsStatuses, DocumentLinks, DocumentComments endpoints except DELETE (intentionally excluded). Implemented as of 2026-07-20: GetDocumentAttachments/DownloadDocumentAttachments (`teamstorm_list_document_attachments`/`teamstorm_get_document_attachment_file`). Still not implemented:
 - All DELETE endpoints: DeleteDocument, DeleteSharedDocumentPermission, DeleteDocumentWorkitemLink, DeleteDocumentComment
-- All DocumentAttachments endpoints (9)
+- Remaining DocumentAttachments endpoints (7 of 9): single-item GetDocumentAttachment, versions (GetDocumentAttachmentWithVersions/GetDocumentAttachmentsWithVersions), UploadDocumentAttachments, and the 3 DELETE endpoints
 - All DocumentVersions endpoints (3)
 
 ### Folders (1 endpoint)
@@ -535,9 +535,8 @@ Implemented as of 2026-07-17: ListStatusCategories (`teamstorm_list_status_categ
 ### UserGroups (2 endpoints — entire tag)
 - All user group listing endpoints
 
-### Users (4 endpoints — entire global user tag)
-- `GET /cwm/public/api/v1/users` — ListUsers (global)
-- `GET /cwm/public/api/v1/users/{user}` — GetUser
+### Users (2 endpoints remaining, 2 implemented)
+Implemented as of 2026-07-20: ListUsers/GetUser (`teamstorm_list_all_users`/`teamstorm_get_user`, both global — see AGENTS.md "Пользователи"). Still not implemented (administrative, not requested):
 - `POST /cwm/public/api/v1/users/block/{userId}` — BlockUser
 - `POST /cwm/public/api/v1/users/unblock/{userId}` — UnblockUser
 
@@ -547,11 +546,11 @@ Implemented as of 2026-07-17: ListStatusCategories (`teamstorm_list_status_categ
 - `PATCH /cwm/public/api/v1/workspaces/{workspace}/workflows/{workflow}` — PatchWorkflow
 - `DELETE /cwm/public/api/v1/workspaces/{workspace}/workflows/{workflow}` — DeleteWorkflow
 
-### WorkitemAttachments (3 endpoints, 5 implemented)
+### WorkitemAttachments (3 endpoints remaining — DELETE only, intentionally excluded, 6 implemented)
+Implemented as of 2026-07-20: DownloadWorkitemAttachments (`teamstorm_get_task_attachment_file`, out-of-band download — see AGENTS.md "Загрузка и скачивание файлов"). Still not implemented:
 - `DELETE /cwm/public/api/v1/workspaces/{workspace}/workitems/{workitem}/attachments/{attachmentId}` — DeleteWorkitemAttachment
 - `DELETE /cwm/public/api/v1/workspaces/{workspace}/workitems/{workitem}/attachments` — DeleteWorkitemAttachments
 - `DELETE /cwm/public/api/v1/workspaces/{workspace}/workitems/{workitem}/attachments/{attachmentId}/versions/{attachmentVersion}` — DeleteWorkitemAttachmentVersion
-- `GET /cwm/public/api/v1/workspaces/{workspace}/workitems/{workitem}/attachments/{attachmentId}/download` — DownloadWorkitemAttachments
 
 ### WorkitemAttributes (1 endpoint, 1 implemented)
 - `PUT /cwm/public/api/v1/workspaces/{workspace}/workitems/{workitem}/attributes/{attributeId}` — UpdateWorkitemAttribute
@@ -600,7 +599,7 @@ Implemented as of 2026-07-17 (later same day): `GetWorkspace` (`teamstorm_get_wo
 2. **Read-heavy implementation**: Most implemented endpoints are GET operations. Write operations covered: CreateWorkitem, PatchWorkitem, CreateWorkitemComment, UploadWorkitemAttachments, the Documents write endpoints (create, patch, block/unblock, sharing, workitem links, comments — added 2026-07-02), CreateFolder/PatchFolder (added 2026-07-02), CreateAttribute/PatchAttribute/AddAttributeOption/PatchAttributeOption (added 2026-07-13), CreatePortfolio/PatchPortfolio/CreatePortfolioElement/PatchPortfolioElement plus the workitem pin/unpin sub-resource endpoints (added 2026-07-15), and the two internal time-tracking endpoints.
 
 3. **Entire feature areas have zero coverage**:
-   - Document attachments and versions (DocumentAttachments — 9, DocumentVersions — 3); core Documents, DocumentComments, DocumentLinks, DocumentsSharing, DocumentsStatuses covered since 2026-07-02 (except DELETE)
+   - Document versions (DocumentVersions — 3 endpoints); DocumentAttachments now partially covered (2 of 9 — list + download, since 2026-07-20), core Documents, DocumentComments, DocumentLinks, DocumentsSharing, DocumentsStatuses covered since 2026-07-02 (except DELETE)
    - Git Integration Tokens — 6 endpoints
    - OpenID management — 4 endpoints
    - Role management — 5 endpoints
@@ -614,8 +613,8 @@ Implemented as of 2026-07-17 (later same day): `GetWorkspace` (`teamstorm_get_wo
 
 5. **No delete/mutate operations for most non-task resources**: Workflows and types can only be read through MCP — no creation, modification, or deletion is supported for these resources. Folders support create and update (since 2026-07-02) but not delete; attributes support create/patch plus option add/patch (since 2026-07-13) but not delete; portfolios and portfolio elements support full create/patch plus workitem pin/unpin (since 2026-07-15) but not delete; sprints support create (since 2026-07-17) but not patch/delete; Agile boards support create (since 2026-07-17) but not delete (there is no PatchAgile in the public API); tasks/workitems and documents support full non-delete CRUD.
 
-6. **Attachment upload is partially covered**: Upload works via the two-step OOB process (HTTP POST to `/upload` on MCP server, then `teamstorm_attach_uploaded`). Download is not supported — there is no `DownloadWorkitemAttachments` implementation.
+6. **Attachment upload and download both use two-step OOB processes** (since 2026-07-20 for download): upload is HTTP POST to `/upload` on the MCP server, then `teamstorm_attach_uploaded`; download is `teamstorm_get_task_attachment_file`/`teamstorm_get_document_attachment_file` (which fetch from TeamStorm and stage the file on the MCP server), then HTTP GET `/download/:id`. Both share the same auth mechanism (`validateUploadAuth`) and its limitation: only works when `TEAMSTORM_API_TOKEN` is configured server-side, not in multi-user HTTP mode with per-session tokens.
 
-7. **Schema coverage is low (41%)**: Only schemas directly associated with implemented endpoints are used. All request body schemas for unimplemented write operations, plus most portfolio, document, and role schemas, are unused.
+7. **Schema coverage is low (42%)**: Only schemas directly associated with implemented endpoints are used. All request body schemas for unimplemented write operations, plus most portfolio, document, and role schemas, are unused.
 
 8. **The `GetAttribute` endpoint mismatch**: The MCP tool `teamstorm_list_attributes` maps to `ListAttributes` (GET workspace attributes). The individual `GetAttribute` endpoint (GET single attribute by ID) has no MCP tool. The `teamstorm_get_task_attributes` tool maps to `ListWorkitemAttributes` (workitem attributes), not `GetAttribute`.

@@ -19,6 +19,11 @@ import { validateUploadAuth } from './utils/upload-auth.js';
 import { logger } from './utils/logger.js';
 import { TeamStormClient } from './client/teamstorm.js';
 import { parseUpload, UploadError } from './utils/upload-handler.js';
+import {
+  loadDownloadMeta,
+  getDownloadFilePath,
+  buildContentDispositionHeader,
+} from './utils/download-store.js';
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -41,6 +46,8 @@ import {
   registerListTasksByParentTool,
   registerListUpdatedTasksTool,
   registerListUsersTool,
+  registerGetUserTool,
+  registerListAllUsersTool,
   registerListSprintsTool,
   registerGetSprintTool,
   registerGetBacklogTool,
@@ -64,6 +71,7 @@ import {
   registerListAttachmentVersionsTool,
   registerGetAttachmentVersionTool,
   registerAttachUploadedFileTool,
+  registerGetTaskAttachmentFileTool,
   registerGetTaskPermissionsTool,
   registerGetTaskLinksTool,
   registerCreateTaskLinkTool,
@@ -87,6 +95,8 @@ import {
   registerGetTaskDocumentLinksTool,
   registerListDocumentCommentsTool,
   registerCreateDocumentCommentTool,
+  registerListDocumentAttachmentsTool,
+  registerGetDocumentAttachmentFileTool,
   registerListPortfoliosTool,
   registerGetPortfolioTool,
   registerCreatePortfolioTool,
@@ -111,19 +121,47 @@ try {
   );
 }
 
+// OOB Download temp directory — mirrors UPLOAD_DIR; same locally-defined-constant pattern as
+// DOWNLOAD_DIR in tools/attachments/download.ts (both point at the same on-disk path).
+const DOWNLOAD_DIR = path.join(os.tmpdir(), 'teamstorm-downloads');
+try {
+  fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
+} catch (err) {
+  logger.error(
+    { error: err instanceof Error ? err.message : String(err), dir: DOWNLOAD_DIR },
+    'Failed to create download directory'
+  );
+}
+
 // Upload security limits
 const MAX_UPLOAD_SIZE = 50 * 1024 * 1024; // 50 MB
 const UPLOAD_TTL_MS = 60 * 60 * 1000; // 1 hour
+const DOWNLOAD_TTL_MS = 60 * 60 * 1000; // 1 hour — same as uploads; TTL (not delete-on-serve) so a
+// human retrying a failed curl doesn't have to re-run the whole MCP tool call and burn another
+// TeamStorm rate-limit slot.
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 10;
 
 const rateLimiter = new Map<string, { count: number; resetTime: number }>();
+// Separate from the upload rate limiter so one operation can't starve the other's budget.
+const downloadRateLimiter = new Map<string, { count: number; resetTime: number }>();
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
   const entry = rateLimiter.get(ip);
   if (!entry || now > entry.resetTime) {
     rateLimiter.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  entry.count++;
+  return entry.count <= RATE_LIMIT_MAX_REQUESTS;
+}
+
+function checkDownloadRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = downloadRateLimiter.get(ip);
+  if (!entry || now > entry.resetTime) {
+    downloadRateLimiter.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
     return true;
   }
   entry.count++;
@@ -159,6 +197,35 @@ async function cleanupOrphanedUploads(): Promise<void> {
   }
 }
 
+async function cleanupOrphanedDownloads(): Promise<void> {
+  try {
+    const entries = await fsPromises.readdir(DOWNLOAD_DIR);
+    const now = Date.now();
+    const counts = await Promise.all(
+      entries.map(async (f) => {
+        const fp = path.join(DOWNLOAD_DIR, f);
+        try {
+          const stat = await fsPromises.stat(fp);
+          if (now - stat.mtimeMs > DOWNLOAD_TTL_MS) {
+            await fsPromises.unlink(fp);
+            return 1;
+          }
+        } catch {
+          /* concurrent removal */
+        }
+        return 0;
+      })
+    );
+    const cleaned = counts.reduce<number>((a, b) => a + b, 0);
+    if (cleaned > 0) logger.info({ cleaned }, 'Cleaned up orphaned download files');
+  } catch (err) {
+    logger.error(
+      { error: err instanceof Error ? err.message : String(err) },
+      'Download cleanup failed'
+    );
+  }
+}
+
 function cleanupRateLimiter(): void {
   const now = Date.now();
   let cleaned = 0;
@@ -171,13 +238,32 @@ function cleanupRateLimiter(): void {
   if (cleaned > 0) logger.debug({ cleaned }, 'Cleaned up stale rate limiter entries');
 }
 
+function cleanupDownloadRateLimiter(): void {
+  const now = Date.now();
+  let cleaned = 0;
+  for (const [ip, entry] of downloadRateLimiter) {
+    if (now > entry.resetTime) {
+      downloadRateLimiter.delete(ip);
+      cleaned++;
+    }
+  }
+  if (cleaned > 0) logger.debug({ cleaned }, 'Cleaned up stale download rate limiter entries');
+}
+
 setInterval(
   () => {
     cleanupRateLimiter();
+    cleanupDownloadRateLimiter();
     cleanupOrphanedUploads().catch((err) =>
       logger.error(
         { error: err instanceof Error ? err.message : String(err) },
         'Scheduled upload cleanup failed'
+      )
+    );
+    cleanupOrphanedDownloads().catch((err) =>
+      logger.error(
+        { error: err instanceof Error ? err.message : String(err) },
+        'Scheduled download cleanup failed'
       )
     );
   },
@@ -203,6 +289,8 @@ function registerAllTools(server: McpServer, client: TeamStormClient) {
   registerListTasksByParentTool(server, client);
   registerListUpdatedTasksTool(server, client);
   registerListUsersTool(server, client);
+  registerGetUserTool(server, client);
+  registerListAllUsersTool(server, client);
   registerListSprintsTool(server, client);
   registerGetSprintTool(server, client);
   registerGetBacklogTool(server, client);
@@ -226,6 +314,7 @@ function registerAllTools(server: McpServer, client: TeamStormClient) {
   registerListAttachmentVersionsTool(server, client);
   registerGetAttachmentVersionTool(server, client);
   registerAttachUploadedFileTool(server, client);
+  registerGetTaskAttachmentFileTool(server, client);
   registerGetTaskPermissionsTool(server, client);
   registerGetTaskLinksTool(server, client);
   registerCreateTaskLinkTool(server, client);
@@ -249,6 +338,8 @@ function registerAllTools(server: McpServer, client: TeamStormClient) {
   registerGetTaskDocumentLinksTool(server, client);
   registerListDocumentCommentsTool(server, client);
   registerCreateDocumentCommentTool(server, client);
+  registerListDocumentAttachmentsTool(server, client);
+  registerGetDocumentAttachmentFileTool(server, client);
   registerListPortfoliosTool(server, client);
   registerGetPortfolioTool(server, client);
   registerCreatePortfolioTool(server, client);
@@ -360,6 +451,57 @@ async function runHttp() {
     }
   };
 
+  // --- OOB Download endpoint (mirrors /upload, reversed) ---
+  // Auth reuses validateUploadAuth as-is — same mechanism/limitation as uploads: it only succeeds
+  // when TEAMSTORM_API_TOKEN is configured server-side; multi-user HTTP mode (per-session bearer
+  // tokens, no server-wide token) always rejects here, inherited verbatim for consistency.
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const downloadHandler = (req: express.Request, res: express.Response) => {
+    const authResult = validateUploadAuth(req);
+    if (!authResult.ok) {
+      res.status(401).json({ error: authResult.reason });
+      return;
+    }
+
+    const clientIp = getTrustProxy()
+      ? (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0].trim() ||
+        (req.headers['x-real-ip'] as string | undefined) ||
+        req.ip ||
+        'unknown'
+      : req.ip || 'unknown';
+
+    if (!checkDownloadRateLimit(clientIp)) {
+      logger.warn({ ip: clientIp }, 'Download rate limit exceeded');
+      res.status(429).json({ error: 'Rate limit exceeded. Max 10 downloads per minute.' });
+      return;
+    }
+
+    const id = req.params.id as string;
+    if (!uuidRegex.test(id)) {
+      res.status(400).json({ error: 'Invalid download id' });
+      return;
+    }
+
+    const meta = loadDownloadMeta(DOWNLOAD_DIR, id);
+    const filePath = getDownloadFilePath(DOWNLOAD_DIR, id);
+    if (!meta || !fs.existsSync(filePath)) {
+      res.status(404).json({ error: 'Download not found or expired' });
+      return;
+    }
+
+    res.setHeader('Content-Type', meta.contentType || 'application/octet-stream');
+    res.setHeader('Content-Disposition', buildContentDispositionHeader(meta.fileName));
+    res.setHeader('Content-Length', String(meta.size));
+
+    const stream = fs.createReadStream(filePath);
+    stream.on('error', (err) => {
+      logger.error({ error: err.message, id }, 'Download stream error');
+      if (!res.headersSent) res.status(500).json({ error: 'Failed to read file' });
+    });
+    stream.pipe(res);
+    // No delete after serving — TTL cleanup handles expiry, allowing retries within the window.
+  };
+
   // --- MCP endpoint (stateful with session persistence) ---
   const transports = new Map<string, StreamableHTTPServerTransport>();
   const sessionClients = new Map<string, TeamStormClient>();
@@ -398,7 +540,18 @@ async function runHttp() {
 2. Вызовите инструмент teamstorm_attach_uploaded с полученным uploadId.
 
 Ограничения: max 50 MB, файл живёт на сервере 1 час, rate limit 10 загрузок в минуту.
-Если mcp-server-host не указан — сервер доступен на localhost:PORT из конфигурации.`,
+Если mcp-server-host не указан — сервер доступен на localhost:PORT из конфигурации.
+
+## Скачивание вложений (attachments)
+
+Чтобы скачать вложение задачи или документа, выполните два шага:
+
+1. Вызовите инструмент teamstorm_get_task_attachment_file (или teamstorm_get_document_attachment_file)
+   с workspace/taskId(или documentId)/attachmentId. Инструмент вернёт downloadId и точную команду curl.
+2. HTTP GET на http://<mcp-server-host>:<port>/download/<downloadId>,
+   заголовок Authorization: PrivateToken <TEAMSTORM_API_TOKEN>. Тело ответа — сырые байты файла.
+
+Ограничения: max 50 MB, файл живёт на сервере 1 час, rate limit 10 скачиваний в минуту.`,
         }
       );
       registerAllTools(mcpServer, requestClient);
@@ -502,6 +655,7 @@ async function runHttp() {
     next();
   });
   app.post('/upload', uploadHandler);
+  app.get('/download/:id', downloadHandler);
   app.post('/mcp', mcpHandler);
   app.post('/sse', mcpHandler);
   app.get('/sse', mcpHandler);

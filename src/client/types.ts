@@ -5,6 +5,7 @@ export interface TeamStormUser {
   displayName: string;
   username: string;
   email: string;
+  providerId?: string | null;
 }
 
 export interface TeamStormStatus {
@@ -336,18 +337,15 @@ export interface TeamStormPatchAttributeOptionRequest {
 }
 
 // Attachments
-export interface TeamStormAttachment {
-  attachmentId: string;
-  workspaceId: string;
-  createdBy: TeamStormUser;
-  fileId: string;
-  name: string;
-  type: string;
-  size: number;
-  createdAt: string;
-}
+export type TeamStormAntivirusVerdict =
+  | 'WaitToScan'
+  | 'Detected'
+  | 'NotDetected'
+  | 'Processing'
+  | 'Error'
+  | 'Skipped';
 
-export interface TeamStormAttachmentVersion {
+export interface TeamStormAttachment {
   attachmentId: string;
   workspaceId: string;
   createdBy: TeamStormUser;
@@ -357,20 +355,26 @@ export interface TeamStormAttachmentVersion {
   type: string;
   size: number;
   createdAt: string;
+  antivirusVerdict: TeamStormAntivirusVerdict;
 }
 
+// GetWorkitemAttachmentWithVersions/GetWorkitemAttachmentsWithVersions return the same
+// AttachmentModel/AttachmentModelList as the non-versioned endpoints (verified against swagger.json) —
+// no separate "version" schema exists on the API side.
+export type TeamStormAttachmentVersion = TeamStormAttachment;
+
 export interface TeamStormAttachmentListResponse {
-  fromToken: string;
-  maxItemsCount: number;
-  nextToken: string;
   items: TeamStormAttachment[];
 }
 
-export interface TeamStormAttachmentVersionListResponse {
-  fromToken: string;
-  maxItemsCount: number;
-  nextToken: string;
-  items: TeamStormAttachmentVersion[];
+export type TeamStormAttachmentVersionListResponse = TeamStormAttachmentListResponse;
+
+// Binary download of a task/document attachment — the Download* endpoints document no 200
+// response schema (raw octet-stream in practice), so this shape is derived from the HTTP response.
+export interface TeamStormDownloadedFile {
+  buffer: Buffer;
+  contentType?: string;
+  fileName?: string;
 }
 
 // Sharing / Access Control

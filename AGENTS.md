@@ -2,7 +2,7 @@
 
 ## Project
 
-TeamStorm MCP Server — MCP-сервер для интеграции Claude Code с TeamStorm API. Предоставляет 75 инструментов для работы с задачами, папками, документами, комментариями, атрибутами, вложениями, правами доступа, связями, пользователями, спринтами, Agile-бордами, workflow, портфелями, списанием времени и справочными данными (типы связей, статусы, категории статусов).
+TeamStorm MCP Server — MCP-сервер для интеграции Claude Code с TeamStorm API. Предоставляет 80 инструментов для работы с задачами, папками, документами, комментариями, атрибутами, вложениями (включая скачивание), правами доступа, связями, пользователями (workspace и глобально), спринтами, Agile-бордами, workflow, портфелями, списанием времени и справочными данными (типы связей, статусы, категории статусов).
 
 ## Источники
 
@@ -38,6 +38,7 @@ npm run typecheck        # tsc --noEmit
   - `POST /mcp`, `GET /mcp` — основной MCP endpoint
   - `POST /sse`, `GET /sse` — SSE-совместимый MCP endpoint (тот же handler)
   - `POST /upload` — загрузка файлов (auth + rate limit)
+  - `GET /download/:id` — скачивание файлов, ранее подготовленных инструментами `teamstorm_get_task_attachment_file`/`teamstorm_get_document_attachment_file` (тот же auth + rate limit механизм, отдельный лимитер)
 - Middleware инжектирует `Accept: application/json, text/event-stream` для MCP-клиентов (Claude Code, Cursor), которые не передают его
 - Конфигурация загружается через Zod-валидацию из `.env` (ленивая, без `process.exit()` на импорте)
 
@@ -54,7 +55,7 @@ npm run typecheck        # tsc --noEmit
 
 ### Инструменты (`src/tools/`)
 
-Доменные области: `folders/`, `tasks/`, `comments/`, `attributes/`, `attachments/`, `permissions/`, `links/`, `link-types/`, `status-categories/`, `statuses/`, `users/`, `sprints/`, `agile/`, `workflows/`, `types/`, `workspaces/`, `time-tracking/`, `documents/`, `document-sharing/`, `document-statuses/`, `document-links/`, `document-comments/`, `portfolios/`, `portfolio-elements/`, `portfolio-links/`.
+Доменные области: `folders/`, `tasks/`, `comments/`, `attributes/`, `attachments/`, `permissions/`, `links/`, `link-types/`, `status-categories/`, `statuses/`, `users/`, `sprints/`, `agile/`, `workflows/`, `types/`, `workspaces/`, `time-tracking/`, `documents/`, `document-sharing/`, `document-statuses/`, `document-links/`, `document-comments/`, `document-attachments/`, `portfolios/`, `portfolio-elements/`, `portfolio-links/`.
 
 Паттерн каждой папки:
 
@@ -87,17 +88,19 @@ npm run typecheck        # tsc --noEmit
 
 Accessors: `getApiToken()`, `getApiUrl()`, `getWorkspace()`, `getPort()`, `getListenHost()`, `getNodeEnv()`, `getTrustProxy()`
 
-## Загрузка файлов (Out-of-Band)
+## Загрузка и скачивание файлов (Out-of-Band)
 
-Файлы загружаются через `POST /upload` → сохраняются в tmp (`teamstorm-uploads`, TTL 1 час) → прикрепляются инструментом `teamstorm_attach_uploaded`. Имена файлов декодируются из CP1251/UTF-8.
+**Загрузка**: файлы загружаются через `POST /upload` → сохраняются в tmp (`teamstorm-uploads`, TTL 1 час) → прикрепляются инструментом `teamstorm_attach_uploaded`. Имена файлов декодируются из CP1251/UTF-8.
 
-Безопасность upload endpoint:
+**Скачивание** (зеркальный поток, `src/utils/download-store.ts` + `GET /download/:id`): инструмент (`teamstorm_get_task_attachment_file` или `teamstorm_get_document_attachment_file`) скачивает файл из TeamStorm через `TeamStormClient.download{Task,Document}AttachmentBuffer()`, сохраняет его в tmp (`teamstorm-downloads`, TTL 1 час, `saveDownloadFile()`) и возвращает `downloadId` + готовую команду `curl`. Второй шаг — обычный `GET /download/:id`, тело ответа — сырые байты файла с корректными `Content-Type`/`Content-Disposition`. Очистка — по TTL (не при первом скачивании), чтобы неудачный `curl` можно было повторить без повторного похода в TeamStorm.
 
-- Аутентификация: `PrivateToken` или `Bearer` в `Authorization`
-- Rate limit: 10 запросов/мин на IP (с учётом `TRUST_PROXY`)
-- Ограничение размера: 50 МБ
+Безопасность upload/download endpoints:
+
+- Аутентификация: `PrivateToken` или `Bearer` в `Authorization`, через `validateUploadAuth()` — переиспользуется как есть для `/download/:id`. **Важное ограничение**: срабатывает только если на сервере задан `TEAMSTORM_API_TOKEN` (`.env`); в multi-user HTTP режиме (токен только в заголовке каждого запроса, без серверного токена) оба endpoint'а всегда отвечают 401. Ограничение унаследовано у upload-потока намеренно, не исправлялось при добавлении download.
+- Rate limit: 10 запросов/мин на IP на каждый endpoint отдельно (с учётом `TRUST_PROXY`) — у upload и download свои независимые `Map`, чтобы одна операция не съедала лимит другой
+- Ограничение размера: 50 МБ (`MAX_UPLOAD_SIZE` в `index.ts` / `MAX_ATTACHMENT_DOWNLOAD_SIZE` в `client/teamstorm.ts`)
 - Права файлов: `0o600` (только владелец)
-- Очистка устаревших файлов: каждые 30 минут (удаляются файлы старше 1 часа)
+- Очистка устаревших файлов: каждые 30 минут (удаляются файлы старше 1 часа) — общий `setInterval` в `index.ts` для upload и download
 
 ## Папки
 
@@ -123,11 +126,13 @@ DELETE-эндпоинт папок намеренно не реализован.
 
 ## Документы
 
-Инструменты в `src/tools/documents/` (list, get, create, update, block, unblock), `document-sharing/` (list, create, update), `document-statuses/` (list, get), `document-links/` (list-tasks, create, list-documents), `document-comments/` (list, create). DELETE-эндпоинты документов намеренно не реализованы.
+Инструменты в `src/tools/documents/` (list, get, create, update, block, unblock), `document-sharing/` (list, create, update), `document-statuses/` (list, get), `document-links/` (list-tasks, create, list-documents), `document-comments/` (list, create), `document-attachments/` (list, download). DELETE-эндпоинты документов намеренно не реализованы.
 
-Клиентские методы в `src/client/teamstorm.ts`: `listDocuments()`, `getDocument()`, `createDocument()`, `patchDocument()`, `blockDocument()`, `unblockDocument()`, `listDocumentPermissions()`, `createDocumentPermission()`, `patchDocumentPermission()`, `listDocumentStatuses()`, `getDocumentStatus()`, `getDocumentWorkitemLinks()`, `createDocumentWorkitemLink()`, `getWorkitemDocumentLinks()`, `listDocumentComments()`, `createDocumentComment()`.
+Клиентские методы в `src/client/teamstorm.ts`: `listDocuments()`, `getDocument()`, `createDocument()`, `patchDocument()`, `blockDocument()`, `unblockDocument()`, `listDocumentPermissions()`, `createDocumentPermission()`, `patchDocumentPermission()`, `listDocumentStatuses()`, `getDocumentStatus()`, `getDocumentWorkitemLinks()`, `createDocumentWorkitemLink()`, `getWorkitemDocumentLinks()`, `listDocumentComments()`, `createDocumentComment()`, `listDocumentAttachments()`, `downloadDocumentAttachmentBuffer()`.
 
 Типы: `TeamStormDocument`, `TeamStormDocumentListResponse`, `TeamStormDocumentStatus`, `TeamStormDocumentPermission`, `TeamStormCreateDocumentRequest`.
+
+**`document-attachments/` — только 2 из 9 эндпоинтов тега `DocumentAttachments`** (тег был полностью не реализован): `teamstorm_list_document_attachments` (`GetDocumentAttachments`, нужен чтобы вообще узнать `attachmentId` документа — в отличие от задач, для документов не было ни одного инструмента вложений) и `teamstorm_get_document_attachment_file` (`DownloadDocumentAttachments`, через общую OOB download-инфраструктуру — см. «Загрузка и скачивание файлов» выше). Остальные 7 (одиночный `GetDocumentAttachment`, версии, upload, delete) не реализованы — не запрашивались. `AttachmentModel`/`AttachmentModelList` идентичны между `WorkitemAttachments` и `DocumentAttachments` (сверено по спеке), поэтому переиспользуются типы `TeamStormAttachment`/`TeamStormAttachmentListResponse`, отдельных `TeamStormDocumentAttachment*` не заводили.
 
 ## Атрибуты
 
@@ -139,6 +144,17 @@ DELETE-эндпоинт папок намеренно не реализован.
 - `teamstorm_update_attribute_option` — `PATCH /attributes/{id}/options` — переименовать опцию по `id`. Возвращает весь `AttributeModel`.
 
 Все три write-эндпоинта возвращают `AttributeModel` (200). Клиентские методы: `createAttribute()`, `patchAttribute()`, `addAttributeOption()`, `patchAttributeOption()`. Типы: `TeamStormAttributeModel`, `TeamStormAttributeOption`, `TeamStormAttributeType`, `TeamStormCreateAttributeRequest`, `TeamStormPatchAttributeRequest`, `TeamStormCreateAttributeOptionRequest`, `TeamStormPatchAttributeOptionRequest`.
+
+## Пользователи
+
+Два независимых API-тега с разным охватом:
+
+- **Глобальные `Users`** (`GET /users`, `GET /users/{user}` — без `{workspace}` в пути): видят пользователей по всему инстансу, независимо от членства в конкретном пространстве. Реализованы как `teamstorm_list_all_users` (поиск по `displayName`/`email`/`username`/`providerId`, фильтрация на стороне сервера, без пагинации — `UsersModelList` не имеет `fromToken`) и `teamstorm_get_user` (профиль по ID/username — удобно резолвить голый UUID из чужого поля вроде `createdBy`, не зная в каком пространстве состоит пользователь).
+- **`WorkspaceUsers`** (`GET /workspaces/{workspace}/users`): только участники конкретного пространства — уже реализовано как `teamstorm_list_users` (клиентская фильтрация по подстроке).
+- **`BlockUser`/`UnblockUser`, `AddWorkspaceUser`/`RemoveWorkspaceUser`, управление ролями** — административные/деструктивные операции, намеренно не реализованы (не запрашивались).
+- **`get_current_user` невозможен на уровне API** — в спеке нет ни одного эндпоинта `/me`/`current` в любом теге, аутентификация — непрозрачный `PrivateToken` (не JWT, не декодируется), ни один ответ не содержит идентифицирующего пользователя заголовка. Инструмент не реализован (не заглушка, а осознанное отсутствие) — резолвить личность вызывающего через публичный API нельзя.
+
+Клиентские методы: `getUser()`, `listAllUsers()` (в дополнение к существующему `listUsers()`). Типы: `TeamStormUser` (расширен опциональным `providerId`), `TeamStormUserListResponse`.
 
 ## Портфели
 
@@ -204,6 +220,13 @@ DELETE-эндпоинт папок намеренно не реализован.
 - **`PATCH /documents/{id}` меняет только `status`** — схема `PatchDocumentRequestBody` содержит единственное поле `status`. Название, содержимое и метки через публичный API изменить нельзя.
 - **`POST /documents/{id}/workitem-links` возвращает 204 No Content** — клиентский метод `createDocumentWorkitemLink()` ничего не возвращает; не пытайтесь парсить тело ответа.
 - **Выдача доступа (`POST /documents/{id}/sharing`)** — дискриминированное тело: `type=User` требует `userId`, `type=Group` требует `groupId`. Валидация в Zod-схеме через `superRefine`.
+
+### Вложения (Attachments)
+
+- **`AttachmentModel` требует `version` и `antivirusVerdict`**, которых не было в `TeamStormAttachment` до 2026-07-20 — расхождение найдено при добавлении `document-attachments/`, когда потребовалось сверить схему для переиспользования. Исправлено (оба поля добавлены как обязательные); заодно `TeamStormAttachmentVersion`/`TeamStormAttachmentVersionListResponse` стали алиасами `TeamStormAttachment`/`TeamStormAttachmentListResponse` — `GetWorkitemAttachmentWithVersions`/`GetWorkitemAttachmentsWithVersions` в спеке возвращают ту же `AttachmentModel`/`AttachmentModelList`, отдельной «версионной» схемы на стороне API нет.
+- **`AttachmentModelList`/`AttachmentModelList` не имеют полей пагинации** — `{ items }` и всё, `fromToken`/`maxItemsCount`/`nextToken` в схеме отсутствуют (`additionalProperties: false`). `TeamStormAttachmentListResponse` раньше объявлял их как обязательные — исправлено; не добавляйте туда пагинацию обратно.
+- **`Download{Workitem,Document}Attachments` не документируют схему 200-ответа** — только `ErrorModel` для 4xx/5xx. На практике это сырой `application/octet-stream`; имя файла (если сервер его отдаёт) — только через заголовок `Content-Disposition`, спека этого не описывает. Живая проверка (какая форма `filename=`/`filename*=` реально приходит) ещё не выполнена — нет токена в `.env` этого окружения, см. `openAPI-coverage-report.md`.
+- **С `responseType: 'arraybuffer'` axios буферизует и тела ошибок** — 4xx/5xx на download-эндпоинтах приходят как `Buffer`, а не распарсенный `ErrorModel` JSON, которого ждёт `extractErrorMessage()`. `downloadTaskAttachmentBuffer()`/`downloadDocumentAttachmentBuffer()` прогоняют `error.response.data` через `decodeArrayBufferError()` (JSON.parse с фолбэком на текст) перед вызовом `handleError()` — без этого сообщение об ошибке превращается в мусор.
 
 ## Docker
 
