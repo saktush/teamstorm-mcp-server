@@ -1,6 +1,6 @@
 # TeamStorm MCP Server
 
-MCP-сервер для интеграции AI-агентов (Claude Code, Cursor) с TeamStorm API. Предоставляет **63 инструмента** для работы с задачами, папками, документами, комментариями, атрибутами, вложениями, правами доступа, связями, пользователями, спринтами, workflow, портфелями и списанием времени.
+MCP-сервер для интеграции AI-агентов (Claude Code, Cursor) с TeamStorm API. Предоставляет **80 инструментов** для работы с задачами, папками, документами, комментариями, атрибутами, вложениями (включая скачивание), правами доступа, связями, пользователями (workspace и глобально), спринтами, Agile-бордами, workflow, портфелями, списанием времени и справочными данными (типы связей, статусы, категории статусов).
 
 ## Быстрый старт
 
@@ -246,9 +246,9 @@ npm run lint      # ESLint
 
 ## Архитектура
 
-- **`src/index.ts`** — точка входа: HTTP-сервер (порт 3001) + health-check (3002) + OOB upload. Каждый MCP-запрос создаёт новый `McpServer`.
+- **`src/index.ts`** — точка входа: HTTP-сервер (порт 3001) + health-check (3002) + OOB upload/download. Сессионная модель: первый запрос без `mcp-session-id` создаёт `McpServer` + `TeamStormClient`, повторные запросы с тем же `mcp-session-id` переиспользуют их.
 - **`src/client/teamstorm.ts`** — `TeamStormClient`: axios-клиент с `setBaseUrl()` для переключения URL в рантайме (автоматически дополняет неполные URL до `/cwm/public/api/v1`).
-- **`src/tools/`** — 63 инструмента по доменам. Каждый: Zod-схема с `apiUrl` + `execute` → клиент → Markdown.
+- **`src/tools/`** — 80 инструментов по доменам. Каждый: Zod-схема с `apiUrl` + `execute` → клиент → Markdown.
 - **`src/utils/`** — Pino-логгер (с redact и ленивым NODE_ENV) + форматтеры (task, bytes, duration).
 
 ## Структура проекта
@@ -262,20 +262,26 @@ teamstorm-mcp-server/
 │   │   └── types.ts          # Полные TS-интерфейсы всех сущностей TeamStorm
 │   ├── tools/
 │   │   ├── folders/          # Инструменты для работы с папками
-│   │   │   ├── list.ts, get.ts, get-tree.ts, find.ts
+│   │   │   ├── list.ts, get.ts, get-tree.ts, find.ts, create.ts, update.ts
 │   │   ├── tasks/            # Инструменты для работы с задачами
 │   │   │   ├── list.ts, get.ts, create.ts, update.ts, count.ts
 │   │   │   ├── list-by-parent.ts, list-updated.ts
 │   │   ├── comments/         # Инструменты для комментариев
 │   │   │   ├── list.ts, create.ts, visibility.ts
 │   │   ├── attributes/       # Инструменты для атрибутов
-│   │   │   ├── get.ts, list.ts
-│   │   ├── attachments/      # Инструменты для вложений
-│   │   │   ├── list.ts, get.ts, versions-list.ts, version-get.ts, oob-upload.ts
+│   │   │   ├── get.ts, list.ts, create.ts, update.ts, add-option.ts, update-option.ts
+│   │   ├── attachments/      # Инструменты для вложений задач
+│   │   │   ├── list.ts, get.ts, versions-list.ts, version-get.ts, oob-upload.ts, download.ts
 │   │   ├── permissions/      # Инструменты для прав доступа
 │   │   │   └── get.ts
-│   │   ├── links/            # Инструменты для связей
-│   │   │   └── get.ts
+│   │   ├── links/            # Связи задач
+│   │   │   ├── get.ts, create.ts
+│   │   ├── link-types/       # Типы связей (справочник)
+│   │   │   └── list.ts
+│   │   ├── status-categories/ # Категории статусов (глобальный справочник)
+│   │   │   └── list.ts
+│   │   ├── statuses/         # Статусы задач пространства
+│   │   │   ├── list.ts, get.ts
 │   │   ├── documents/        # Инструменты для документов
 │   │   │   ├── list.ts, get.ts, create.ts, update.ts, block.ts, unblock.ts
 │   │   ├── document-sharing/ # Доступ к документам
@@ -286,22 +292,26 @@ teamstorm-mcp-server/
 │   │   │   ├── list-tasks.ts, create.ts, list-documents.ts
 │   │   ├── document-comments/ # Комментарии к документам
 │   │   │   ├── list.ts, create.ts
+│   │   ├── document-attachments/ # Вложения документов
+│   │   │   ├── list.ts, download.ts
 │   │   ├── portfolios/       # Инструменты для портфелей
 │   │   │   ├── list.ts, get.ts, create.ts, update.ts
 │   │   ├── portfolio-elements/ # Инструменты для элементов портфеля
 │   │   │   ├── list.ts, get.ts, create.ts, update.ts
 │   │   ├── portfolio-links/  # Закрепление задач за элементами портфеля
 │   │   │   ├── set.ts, remove.ts, get-tasks-by-name.ts
-│   │   ├── users/            # Пользователи пространства
-│   │   │   └── list.ts
-│   │   ├── sprints/          # Спринты с фильтром по статусу
-│   │   │   └── list.ts
+│   │   ├── users/            # Пользователи (workspace и глобально)
+│   │   │   ├── list.ts, get.ts, list-all.ts
+│   │   ├── sprints/          # Спринты и беклог
+│   │   │   ├── list.ts, get.ts, get-backlog.ts, create.ts
+│   │   ├── agile/            # Agile-борды
+│   │   │   ├── list.ts, get.ts, create.ts
 │   │   ├── workflows/        # Доступные процессы
 │   │   │   └── list.ts
 │   │   ├── types/            # Типы задач
 │   │   │   └── list.ts
 │   │   ├── workspaces/       # Доступные пространства
-│   │   │   └── list.ts
+│   │   │   ├── list.ts, get.ts
 │   │   └── time-tracking/    # Списания времени
 │   │       ├── create.ts, list.ts
 │   ├── utils/
@@ -370,6 +380,7 @@ teamstorm-mcp-server/
 | `teamstorm_list_attachment_versions` | Все версии вложений задачи                                      |
 | `teamstorm_get_attachment_version`   | Метаданные конкретной версии вложения                           |
 | `teamstorm_attach_uploaded`          | Прикрепление загруженного файла к задаче (после `POST /upload`) |
+| `teamstorm_get_task_attachment_file` | Скачивание файла вложения (готовит `GET /download/:id`)         |
 
 ### Управление доступом
 
@@ -379,9 +390,19 @@ teamstorm-mcp-server/
 
 ### Связи
 
-| Инструмент                 | Описание                        |
-| -------------------------- | ------------------------------- |
-| `teamstorm_get_task_links` | Связи задачи (связанные задачи) |
+| Инструмент                  | Описание                                                                |
+| ---------------------------- | ------------------------------------------------------------------------ |
+| `teamstorm_get_task_links`   | Связи задачи (связанные задачи, включая полную модель linked workitem) |
+| `teamstorm_create_task_link` | Создание связи (тип по ID или по названию/ключу)                        |
+
+### Типы связей и статусы (справочники)
+
+| Инструмент                          | Описание                                                   |
+| ------------------------------------- | ------------------------------------------------------------- |
+| `teamstorm_list_link_types`         | Список доступных типов связей                              |
+| `teamstorm_list_status_categories`  | Категории статусов (глобальный справочник, без workspace)  |
+| `teamstorm_list_workspace_statuses` | Статусы задач пространства                                 |
+| `teamstorm_get_workspace_status`    | Статус задачи по ID                                        |
 
 ### Документы
 
@@ -424,6 +445,13 @@ teamstorm-mcp-server/
 | `teamstorm_list_document_comments`  | Все комментарии к документу         |
 | `teamstorm_create_document_comment` | Добавление комментария к документу  |
 
+### Вложения документов
+
+| Инструмент                           | Описание                                                         |
+| -------------------------------------- | ------------------------------------------------------------------- |
+| `teamstorm_list_document_attachments`  | Список вложений документа                                        |
+| `teamstorm_get_document_attachment_file` | Скачивание файла вложения документа (готовит `GET /download/:id`) |
+
 ### Портфели
 
 | Инструмент                  | Описание                                                        |
@@ -450,15 +478,39 @@ teamstorm-mcp-server/
 | `teamstorm_remove_task_portfolio_element`      | Открепить задачу от элемента портфеля (по ID или по названию элемента)                 |
 | `teamstorm_get_tasks_by_portfolio_element_name` | Найти элемент(ы) портфеля по названию и получить задачи, закреплённые за каждым из них |
 
+### Пользователи
+
+| Инструмент                | Описание                                                                          |
+| --------------------------- | ------------------------------------------------------------------------------------ |
+| `teamstorm_list_users`     | Пользователи пространства (с поиском)                                             |
+| `teamstorm_get_user`       | Профиль пользователя по ID/username (глобально, без привязки к workspace)        |
+| `teamstorm_list_all_users` | Поиск пользователей по всему инстансу (displayName/email/username/providerId)     |
+
+### Спринты
+
+| Инструмент                | Описание                                                          |
+| --------------------------- | ---------------------------------------------------------------------- |
+| `teamstorm_list_sprints`   | Спринты пространства с фильтром по папке/названию                 |
+| `teamstorm_get_sprint`     | Спринт по ID, с вычисленным капасити команды                      |
+| `teamstorm_get_backlog`    | Беклог-спринт папки (`isBacklog: true`)                           |
+| `teamstorm_create_sprint`  | Создание спринта (по `folderId` или `agileId`)                    |
+
+### Agile-борды
+
+| Инструмент                     | Описание                                             |
+| --------------------------------- | --------------------------------------------------------- |
+| `teamstorm_list_agile_boards`   | Список Agile-бордов пространства                     |
+| `teamstorm_get_agile_board`     | Agile-борд по ID                                      |
+| `teamstorm_create_agile_board`  | Создание Agile-борда для папки                        |
+
 ### Справочники
 
 | Инструмент                  | Описание                                                |
 | --------------------------- | ------------------------------------------------------- |
-| `teamstorm_list_users`      | Пользователи пространства (с поиском)                   |
-| `teamstorm_list_sprints`    | Спринты с фильтром по статусу (active/completed/future) |
 | `teamstorm_list_workflows`  | Доступные процессы (workflows)                          |
 | `teamstorm_list_task_types` | Типы задач                                              |
 | `teamstorm_list_workspaces` | Все доступные пространства (workspaces), все страницы   |
+| `teamstorm_get_workspace`   | Пространство по ключу/ID                                |
 
 ### Время
 
