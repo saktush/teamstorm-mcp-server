@@ -109,6 +109,8 @@ import {
   registerRemoveTaskPortfolioElementTool,
   registerGetTasksByPortfolioElementNameTool,
 } from './tools/index.js';
+import { registerAllPrompts } from './prompts/index.js';
+import { registerAllResources } from './resources/index.js';
 
 // OOB Upload temp directory
 const UPLOAD_DIR = path.join(os.tmpdir(), 'teamstorm-uploads');
@@ -555,6 +557,8 @@ async function runHttp() {
         }
       );
       registerAllTools(mcpServer, requestClient);
+      registerAllPrompts(mcpServer);
+      registerAllResources(mcpServer, requestClient);
 
       transport = new StreamableHTTPServerTransport({
         enableJsonResponse: true,

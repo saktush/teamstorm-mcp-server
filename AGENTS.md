@@ -2,7 +2,7 @@
 
 ## Project
 
-TeamStorm MCP Server — MCP-сервер для интеграции Claude Code с TeamStorm API. Предоставляет 80 инструментов для работы с задачами, папками, документами, комментариями, атрибутами, вложениями (включая скачивание), правами доступа, связями, пользователями (workspace и глобально), спринтами, Agile-бордами, workflow, портфелями, списанием времени и справочными данными (типы связей, статусы, категории статусов).
+TeamStorm MCP Server — MCP-сервер для интеграции Claude Code с TeamStorm API. Предоставляет 80 инструментов + 4 промпта + 3 ресурса для работы с задачами, папками, документами, комментариями, атрибутами, вложениями (включая скачивание), правами доступа, связями, пользователями (workspace и глобально), спринтами, Agile-бордами, workflow, портфелями, списанием времени и справочными данными (типы связей, статусы, категории статусов).
 
 ## Источники
 
@@ -64,6 +64,31 @@ npm run typecheck        # tsc --noEmit
 - Каждая схема имеет опциональный `apiUrl` параметр для переопределения URL API
 - В `execute`: `if (apiUrl) client.setBaseUrl(apiUrl)` → вызов клиента → форматирование через `utils/formatters.ts`
 - Все инструменты используют `logRequest`/`logResponse`/`logError` из `utils/logger.ts`
+
+### Промпты (`src/prompts/`)
+
+4 MCP-промпта — шаблоны рабочих процессов поверх существующих инструментов (`teamstorm_analyze_folder_comments`, `teamstorm_sprint_standup_digest`, `teamstorm_document_review_package`, `teamstorm_task_triage`).
+
+Паттерн:
+
+- Каждый файл экспортирует `register<Имя>Prompt(server)` — **без** аргумента `client`: промпты не вызывают `TeamStormClient`, а лишь возвращают текст-инструкцию, называющую нужные `teamstorm_*` инструменты по порядку.
+- `argsSchema` — «сырая» Zod-форма `{ key: z.string() }` (не `z.object().strict()`); все поля `z.string()`, т.к. аргументы промптов передаются по протоколу только строками.
+- `index.ts` — barrel + `registerAllPrompts(server)`.
+
+### Ресурсы (`src/resources/`)
+
+3 MCP-ресурса — read-path для тех же данных, что отдают `get_*` инструменты, с адресацией по URI схемы `teamstorm://`:
+
+- `teamstorm://{workspace}/tasks/{taskId}` — `client.getTask` + `formatTaskMarkdown`
+- `teamstorm://{workspace}/documents/{documentId}` — `client.getDocument` + `formatDocumentMarkdown`
+- `teamstorm://{workspace}/folders/{folderId}/tree` — `client.listFolders` + `buildTree`/`renderTree` из `tools/folders/get-tree.ts`, отдаёт поддерево от `folderId`
+
+Паттерн:
+
+- Каждый файл экспортирует `register<Имя>Resource(server, client)` — как инструменты, ресурсы получают session-scoped клиент.
+- Переменные URI берутся из аргумента `variables` SDK (не парсим `uri.pathname` вручную).
+- У `ReadResourceResult` **нет** поля `isError` — при ошибке обработчик **бросает** `McpError` (см. `resources/to-mcp-error.ts`), а не возвращает результат. Существующие инструменты `get_*` при этом не меняются.
+- `index.ts` — barrel + `registerAllResources(server, client)`.
 
 ### Типы (`src/client/types.ts`)
 

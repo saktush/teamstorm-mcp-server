@@ -17,11 +17,11 @@ export const getFolderTreeSchema = z
   })
   .strict();
 
-interface FolderTreeNode extends TeamStormFolderModel {
+export interface FolderTreeNode extends TeamStormFolderModel {
   children: FolderTreeNode[];
 }
 
-function buildTree(folders: TeamStormFolderModel[]): FolderTreeNode[] {
+export function buildTree(folders: TeamStormFolderModel[]): FolderTreeNode[] {
   const map = new Map<string, FolderTreeNode>();
   for (const f of folders) {
     map.set(f.id, { ...f, children: [] });
@@ -38,7 +38,7 @@ function buildTree(folders: TeamStormFolderModel[]): FolderTreeNode[] {
   return roots;
 }
 
-function renderTree(nodes: FolderTreeNode[], indent = 0): string[] {
+export function renderTree(nodes: FolderTreeNode[], indent = 0): string[] {
   const lines: string[] = [];
   const prefix = '  '.repeat(indent);
   for (const node of nodes) {
