@@ -19,6 +19,8 @@ const ConfigSchema = z.object({
     return val;
   }, z.string().min(1).optional()),
   TEAMSTORM_WORKSPACE: z.string().optional(),
+  // Comma-separated toolset selection or a keyword: "tasks,documents" | "default" | "all".
+  TEAMSTORM_TOOLSETS: z.string().optional(),
 
   // Server configuration
   PORT: z.coerce.number().int().positive().default(3001),
@@ -79,6 +81,7 @@ export const getConfig = (): Config => {
 export const getApiToken = (): string | undefined => getConfig().TEAMSTORM_API_TOKEN;
 export const getApiUrl = (): string | undefined => getConfig().TEAMSTORM_API_URL;
 export const getWorkspace = (): string | undefined => getConfig().TEAMSTORM_WORKSPACE;
+export const getToolsets = (): string | undefined => getConfig().TEAMSTORM_TOOLSETS;
 export const getPort = (): number => getConfig().PORT;
 export const getNodeEnv = (): string => getConfig().NODE_ENV;
 export const getTrustProxy = (): boolean => getConfig().TRUST_PROXY;

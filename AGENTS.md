@@ -106,12 +106,24 @@ npm run typecheck        # tsc --noEmit
 - `TEAMSTORM_API_URL` — базовый URL API (опционально, можно передать через `apiUrl` в каждом инструменте)
 - `TEAMSTORM_API_TOKEN` — PrivateToken (опциональный: в HTTP режиме токен берётся из заголовка `Authorization` каждого запроса; переменная нужна только для single-user деплоя или как fallback)
 - `TEAMSTORM_WORKSPACE` — необязательный, workspace по умолчанию
+- `TEAMSTORM_TOOLSETS` — какие наборы инструментов грузить в сессию (`all` по умолчанию; см. «Наборы инструментов» ниже)
 - `PORT` — порт MCP-сервера (3001)
 - `LISTEN_HOST` — адрес привязки сервера. Если не задан: `127.0.0.1` когда установлен `TEAMSTORM_API_TOKEN` (защита от анонимных сессий по сети), иначе `0.0.0.0`. Задайте `0.0.0.0` явно для сетевого доступа при заданном токене (контейнеры, reverse-proxy).
 - `NODE_ENV` — `development` | `production` | `test` (по умолчанию `production`)
 - `TRUST_PROXY` — доверять `X-Forwarded-For` для rate limiter (только за reverse-proxy, по умолчанию `false`)
 
-Accessors: `getApiToken()`, `getApiUrl()`, `getWorkspace()`, `getPort()`, `getListenHost()`, `getNodeEnv()`, `getTrustProxy()`
+Accessors: `getApiToken()`, `getApiUrl()`, `getWorkspace()`, `getToolsets()`, `getPort()`, `getListenHost()`, `getNodeEnv()`, `getTrustProxy()`
+
+### Наборы инструментов (toolsets)
+
+26 доменных папок сгруппированы в 6 наборов в `src/tools/toolsets.ts` — единственном месте, где живёт группировка (реестр `TOOLSETS: Record<ToolsetName, ToolRegistrar[]>`, сумма — 80 инструментов):
+
+- `tasks` (27), `documents` (18), `portfolios` (11), `planning` (7), `structure` (8), `reference` (9).
+- `reference` — `ALWAYS_ON` (справочники для разрешения имён → ID, отключить нельзя); `DEFAULT_SET` = `tasks` + `structure` + `reference`.
+- `resolveToolsets(raw?)` разбирает выбор: `undefined`/пусто → все наборы (обратная совместимость), ключевые слова `all`/`default`, список через запятую; неизвестные имена отбрасываются с `logger.warn` (не бросает); полностью некорректный ввод → `DEFAULT_SET`.
+- `registerToolsets(server, client, enabled)` регистрирует инструменты только включённых наборов; `registerAllTools` остался тонкой обёрткой над `resolveToolsets('all')`.
+- Выбор читается в блоке создания сессии `mcpHandler` (`src/index.ts`), приоритет: query `?toolsets=` > заголовок `X-TeamStorm-Toolsets` > env `TEAMSTORM_TOOLSETS` > `all`. Фильтрация естественно скоупится на сессию, т.к. инструменты регистрируются в собственный `McpServer` каждой сессии — транспорт/сессии/auth не меняются.
+- Партиционный тест (`src/__tests__/toolsets.test.ts`) гарантирует, что все 80 регистраторов присутствуют в `TOOLSETS` ровно один раз — ловит новый инструмент, забытый в карте.
 
 ## Загрузка и скачивание файлов (Out-of-Band)
 

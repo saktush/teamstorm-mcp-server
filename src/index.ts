@@ -7,6 +7,7 @@ import { promises as fsPromises } from 'fs';
 import {
   getApiUrl,
   getWorkspace,
+  getToolsets,
   getPort,
   getListenHost,
   getNodeEnv,
@@ -27,88 +28,7 @@ import {
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
-import {
-  registerListFoldersTool,
-  registerGetFolderTool,
-  registerGetFolderTreeTool,
-  registerFindFolderTool,
-  registerCreateFolderTool,
-  registerUpdateFolderTool,
-  registerListWorkspacesTool,
-  registerGetWorkspaceTool,
-  registerCreateTimeEntryTool,
-  registerListTimeEntriesTool,
-  registerListTasksTool,
-  registerGetTaskTool,
-  registerCreateTaskTool,
-  registerUpdateTaskTool,
-  registerGetTaskCountTool,
-  registerListTasksByParentTool,
-  registerListUpdatedTasksTool,
-  registerListUsersTool,
-  registerGetUserTool,
-  registerListAllUsersTool,
-  registerListSprintsTool,
-  registerGetSprintTool,
-  registerGetBacklogTool,
-  registerCreateSprintTool,
-  registerListAgileBoardsTool,
-  registerGetAgileBoardTool,
-  registerCreateAgileBoardTool,
-  registerListWorkflowsTool,
-  registerListTaskTypesTool,
-  registerListTaskCommentsTool,
-  registerCreateTaskCommentTool,
-  registerGetCommentVisibilityTool,
-  registerGetTaskAttributesTool,
-  registerListAttributesTool,
-  registerCreateAttributeTool,
-  registerUpdateAttributeTool,
-  registerAddAttributeOptionTool,
-  registerUpdateAttributeOptionTool,
-  registerListTaskAttachmentsTool,
-  registerGetTaskAttachmentTool,
-  registerListAttachmentVersionsTool,
-  registerGetAttachmentVersionTool,
-  registerAttachUploadedFileTool,
-  registerGetTaskAttachmentFileTool,
-  registerGetTaskPermissionsTool,
-  registerGetTaskLinksTool,
-  registerCreateTaskLinkTool,
-  registerListLinkTypesTool,
-  registerListStatusCategoriesTool,
-  registerListWorkspaceStatusesTool,
-  registerGetWorkspaceStatusTool,
-  registerListDocumentsTool,
-  registerGetDocumentTool,
-  registerCreateDocumentTool,
-  registerUpdateDocumentTool,
-  registerBlockDocumentTool,
-  registerUnblockDocumentTool,
-  registerListDocumentPermissionsTool,
-  registerShareDocumentTool,
-  registerUpdateDocumentPermissionTool,
-  registerListDocumentStatusesTool,
-  registerGetDocumentStatusTool,
-  registerGetDocumentTaskLinksTool,
-  registerLinkDocumentToTaskTool,
-  registerGetTaskDocumentLinksTool,
-  registerListDocumentCommentsTool,
-  registerCreateDocumentCommentTool,
-  registerListDocumentAttachmentsTool,
-  registerGetDocumentAttachmentFileTool,
-  registerListPortfoliosTool,
-  registerGetPortfolioTool,
-  registerCreatePortfolioTool,
-  registerUpdatePortfolioTool,
-  registerListPortfolioElementsTool,
-  registerGetPortfolioElementTool,
-  registerCreatePortfolioElementTool,
-  registerUpdatePortfolioElementTool,
-  registerSetTaskPortfolioElementTool,
-  registerRemoveTaskPortfolioElementTool,
-  registerGetTasksByPortfolioElementNameTool,
-} from './tools/index.js';
+import { resolveToolsets, registerToolsets } from './tools/toolsets.js';
 import { registerAllPrompts } from './prompts/index.js';
 import { registerAllResources } from './resources/index.js';
 
@@ -271,89 +191,6 @@ setInterval(
   },
   30 * 60 * 1000
 );
-
-function registerAllTools(server: McpServer, client: TeamStormClient) {
-  registerListFoldersTool(server, client);
-  registerGetFolderTool(server, client);
-  registerGetFolderTreeTool(server, client);
-  registerFindFolderTool(server, client);
-  registerCreateFolderTool(server, client);
-  registerUpdateFolderTool(server, client);
-  registerListWorkspacesTool(server, client);
-  registerGetWorkspaceTool(server, client);
-  registerCreateTimeEntryTool(server, client);
-  registerListTimeEntriesTool(server, client);
-  registerListTasksTool(server, client);
-  registerGetTaskTool(server, client);
-  registerCreateTaskTool(server, client);
-  registerUpdateTaskTool(server, client);
-  registerGetTaskCountTool(server, client);
-  registerListTasksByParentTool(server, client);
-  registerListUpdatedTasksTool(server, client);
-  registerListUsersTool(server, client);
-  registerGetUserTool(server, client);
-  registerListAllUsersTool(server, client);
-  registerListSprintsTool(server, client);
-  registerGetSprintTool(server, client);
-  registerGetBacklogTool(server, client);
-  registerCreateSprintTool(server, client);
-  registerListAgileBoardsTool(server, client);
-  registerGetAgileBoardTool(server, client);
-  registerCreateAgileBoardTool(server, client);
-  registerListWorkflowsTool(server, client);
-  registerListTaskTypesTool(server, client);
-  registerListTaskCommentsTool(server, client);
-  registerCreateTaskCommentTool(server, client);
-  registerGetCommentVisibilityTool(server, client);
-  registerGetTaskAttributesTool(server, client);
-  registerListAttributesTool(server, client);
-  registerCreateAttributeTool(server, client);
-  registerUpdateAttributeTool(server, client);
-  registerAddAttributeOptionTool(server, client);
-  registerUpdateAttributeOptionTool(server, client);
-  registerListTaskAttachmentsTool(server, client);
-  registerGetTaskAttachmentTool(server, client);
-  registerListAttachmentVersionsTool(server, client);
-  registerGetAttachmentVersionTool(server, client);
-  registerAttachUploadedFileTool(server, client);
-  registerGetTaskAttachmentFileTool(server, client);
-  registerGetTaskPermissionsTool(server, client);
-  registerGetTaskLinksTool(server, client);
-  registerCreateTaskLinkTool(server, client);
-  registerListLinkTypesTool(server, client);
-  registerListStatusCategoriesTool(server, client);
-  registerListWorkspaceStatusesTool(server, client);
-  registerGetWorkspaceStatusTool(server, client);
-  registerListDocumentsTool(server, client);
-  registerGetDocumentTool(server, client);
-  registerCreateDocumentTool(server, client);
-  registerUpdateDocumentTool(server, client);
-  registerBlockDocumentTool(server, client);
-  registerUnblockDocumentTool(server, client);
-  registerListDocumentPermissionsTool(server, client);
-  registerShareDocumentTool(server, client);
-  registerUpdateDocumentPermissionTool(server, client);
-  registerListDocumentStatusesTool(server, client);
-  registerGetDocumentStatusTool(server, client);
-  registerGetDocumentTaskLinksTool(server, client);
-  registerLinkDocumentToTaskTool(server, client);
-  registerGetTaskDocumentLinksTool(server, client);
-  registerListDocumentCommentsTool(server, client);
-  registerCreateDocumentCommentTool(server, client);
-  registerListDocumentAttachmentsTool(server, client);
-  registerGetDocumentAttachmentFileTool(server, client);
-  registerListPortfoliosTool(server, client);
-  registerGetPortfolioTool(server, client);
-  registerCreatePortfolioTool(server, client);
-  registerUpdatePortfolioTool(server, client);
-  registerListPortfolioElementsTool(server, client);
-  registerGetPortfolioElementTool(server, client);
-  registerCreatePortfolioElementTool(server, client);
-  registerUpdatePortfolioElementTool(server, client);
-  registerSetTaskPortfolioElementTool(server, client);
-  registerRemoveTaskPortfolioElementTool(server, client);
-  registerGetTasksByPortfolioElementNameTool(server, client);
-}
 
 // ---------------------------------------------------------------------------
 // HTTP mode — multi-user, per-request client from Authorization header
@@ -527,6 +364,13 @@ async function runHttp() {
 
       delete (req.headers as Record<string, unknown>)['mcp-session-id'];
 
+      // Per-session toolset selection: query param > header > env var > built-in "all".
+      const rawToolsets =
+        (req.query.toolsets as string | undefined) ??
+        (req.headers['x-teamstorm-toolsets'] as string | undefined) ??
+        getToolsets();
+      const enabledToolsets = resolveToolsets(rawToolsets);
+
       const requestClient = new TeamStormClient(token, getApiUrl(), getWorkspace());
       const mcpServer = new McpServer(
         { name: 'teamstorm-mcp-server', version: '1.0.0' },
@@ -556,7 +400,8 @@ async function runHttp() {
 Ограничения: max 50 MB, файл живёт на сервере 1 час, rate limit 10 скачиваний в минуту.`,
         }
       );
-      registerAllTools(mcpServer, requestClient);
+      registerToolsets(mcpServer, requestClient, enabledToolsets);
+      logger.info({ toolsets: [...enabledToolsets] }, 'Registering toolsets for session');
       registerAllPrompts(mcpServer);
       registerAllResources(mcpServer, requestClient);
 
