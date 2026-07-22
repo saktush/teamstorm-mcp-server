@@ -373,191 +373,191 @@ teamstorm-mcp-server/
 
 | Инструмент                       | Описание                                                                    |
 | -------------------------------- | --------------------------------------------------------------------------- |
-| `teamstorm_list_folders`         | Список папок с фильтрацией по названию и родительской папке                 |
-| `teamstorm_get_folder`           | Информация о папке по UUID                                                  |
-| `teamstorm_get_folder_tree`      | Полное дерево папок за один запрос (автоматическая пагинация)               |
-| `teamstorm_find_folder`          | Поиск папки по названию (подстрока, любой уровень) или ID с путём до корня  |
-| `teamstorm_create_folder`        | Создание папки (название, описание, родительская папка)                     |
-| `teamstorm_update_folder`        | Изменение названия/описания папки, перемещение в другую папку               |
+| `teamstorm_folders_list`         | Список папок с фильтрацией по названию и родительской папке                 |
+| `teamstorm_folders_get`           | Информация о папке по UUID                                                  |
+| `teamstorm_folders_tree`      | Полное дерево папок за один запрос (автоматическая пагинация)               |
+| `teamstorm_folders_find`          | Поиск папки по названию (подстрока, любой уровень) или ID с путём до корня  |
+| `teamstorm_folders_create`        | Создание папки (название, описание, родительская папка)                     |
+| `teamstorm_folders_update`        | Изменение названия/описания папки, перемещение в другую папку               |
 
 ### Задачи
 
 | Инструмент                       | Описание                                                      |
 | -------------------------------- | ------------------------------------------------------------- |
-| `teamstorm_list_tasks`           | Список задач с фильтрацией и пагинацией                       |
-| `teamstorm_get_task`             | Полная информация о задаче по ID, включая портфели (с закреплёнными элементами) и данные спринта (даты, цель) |
-| `teamstorm_create_task`          | Создание задачи с указанием типа, исполнителя, папки, спринта |
-| `teamstorm_update_task`          | Обновление параметров задачи                                  |
-| `teamstorm_get_task_count`       | Общее количество задач в пространстве                         |
-| `teamstorm_list_tasks_by_parent` | Задачи по родительскому элементу (папка или задача)           |
-| `teamstorm_list_updated_tasks`   | Задачи, изменённые за указанный период                        |
+| `teamstorm_tasks_list`           | Список задач с фильтрацией и пагинацией                       |
+| `teamstorm_tasks_get`             | Полная информация о задаче по ID, включая портфели (с закреплёнными элементами) и данные спринта (даты, цель) |
+| `teamstorm_tasks_create`          | Создание задачи с указанием типа, исполнителя, папки, спринта |
+| `teamstorm_tasks_update`          | Обновление параметров задачи                                  |
+| `teamstorm_tasks_count`       | Общее количество задач в пространстве                         |
+| `teamstorm_tasks_list_by_parent` | Задачи по родительскому элементу (папка или задача)           |
+| `teamstorm_tasks_list_updated`   | Задачи, изменённые за указанный период                        |
 
 ### Комментарии
 
 | Инструмент                         | Описание                                         |
 | ---------------------------------- | ------------------------------------------------ |
-| `teamstorm_list_task_comments`     | Все комментарии к задаче                         |
-| `teamstorm_create_task_comment`    | Добавление комментария к задаче                  |
-| `teamstorm_get_comment_visibility` | Уровень доступа к комментарию (кто может видеть) |
+| `teamstorm_comments_list`     | Все комментарии к задаче                         |
+| `teamstorm_comments_create`    | Добавление комментария к задаче                  |
+| `teamstorm_comments_get_visibility` | Уровень доступа к комментарию (кто может видеть) |
 
 ### Атрибуты
 
 | Инструмент                          | Описание                                                            |
 | ----------------------------------- | ------------------------------------------------------------------ |
-| `teamstorm_get_task_attributes`     | Значения атрибутов конкретной задачи                               |
-| `teamstorm_list_attributes`         | Список пользовательских атрибутов пространства                     |
-| `teamstorm_create_attribute`        | Создание атрибута (name, type, description, опции для UniSelect/Tag) |
-| `teamstorm_update_attribute`        | Изменение названия/описания и набора опций атрибута                |
-| `teamstorm_add_attribute_option`    | Добавление опции к атрибуту UniSelect/Tag                          |
-| `teamstorm_update_attribute_option` | Переименование опции атрибута по её UUID                           |
+| `teamstorm_attributes_get`     | Значения атрибутов конкретной задачи                               |
+| `teamstorm_attributes_list`         | Список пользовательских атрибутов пространства                     |
+| `teamstorm_attributes_create`        | Создание атрибута (name, type, description, опции для UniSelect/Tag) |
+| `teamstorm_attributes_update`        | Изменение названия/описания и набора опций атрибута                |
+| `teamstorm_attributes_add_option`    | Добавление опции к атрибуту UniSelect/Tag                          |
+| `teamstorm_attributes_update_option` | Переименование опции атрибута по её UUID                           |
 
 ### Вложения
 
 | Инструмент                           | Описание                                                        |
 | ------------------------------------ | --------------------------------------------------------------- |
-| `teamstorm_list_task_attachments`    | Список вложений задачи                                          |
-| `teamstorm_get_task_attachment`      | Метаданные конкретного вложения                                 |
-| `teamstorm_list_attachment_versions` | Все версии вложений задачи                                      |
-| `teamstorm_get_attachment_version`   | Метаданные конкретной версии вложения                           |
-| `teamstorm_attach_uploaded`          | Прикрепление загруженного файла к задаче (после `POST /upload`) |
-| `teamstorm_get_task_attachment_file` | Скачивание файла вложения (готовит `GET /download/:id`)         |
+| `teamstorm_attachments_list`    | Список вложений задачи                                          |
+| `teamstorm_attachments_get`      | Метаданные конкретного вложения                                 |
+| `teamstorm_attachments_list_versions` | Все версии вложений задачи                                      |
+| `teamstorm_attachments_get_version`   | Метаданные конкретной версии вложения                           |
+| `teamstorm_attachments_attach_uploaded`          | Прикрепление загруженного файла к задаче (после `POST /upload`) |
+| `teamstorm_attachments_download` | Скачивание файла вложения (готовит `GET /download/:id`)         |
 
 ### Управление доступом
 
 | Инструмент                       | Описание                 |
 | -------------------------------- | ------------------------ |
-| `teamstorm_get_task_permissions` | Правила доступа к задаче |
+| `teamstorm_task_permissions_get` | Правила доступа к задаче |
 
 ### Связи
 
 | Инструмент                  | Описание                                                                |
 | ---------------------------- | ------------------------------------------------------------------------ |
-| `teamstorm_get_task_links`   | Связи задачи (связанные задачи, включая полную модель linked workitem) |
-| `teamstorm_create_task_link` | Создание связи (тип по ID или по названию/ключу)                        |
+| `teamstorm_task_links_list`   | Связи задачи (связанные задачи, включая полную модель linked workitem) |
+| `teamstorm_task_links_create` | Создание связи (тип по ID или по названию/ключу)                        |
 
 ### Типы связей и статусы (справочники)
 
 | Инструмент                          | Описание                                                   |
 | ------------------------------------- | ------------------------------------------------------------- |
-| `teamstorm_list_link_types`         | Список доступных типов связей                              |
-| `teamstorm_list_status_categories`  | Категории статусов (глобальный справочник, без workspace)  |
-| `teamstorm_list_workspace_statuses` | Статусы задач пространства                                 |
-| `teamstorm_get_workspace_status`    | Статус задачи по ID                                        |
+| `teamstorm_link_types_list`         | Список доступных типов связей                              |
+| `teamstorm_status_categories_list`  | Категории статусов (глобальный справочник, без workspace)  |
+| `teamstorm_workspace_statuses_list` | Статусы задач пространства                                 |
+| `teamstorm_workspace_statuses_get`    | Статус задачи по ID                                        |
 
 ### Документы
 
 | Инструмент                   | Описание                                                                     |
 | ---------------------------- | ---------------------------------------------------------------------------- |
-| `teamstorm_list_documents`   | Список документов пространства с пагинацией                                  |
-| `teamstorm_get_document`     | Документ по ID, включая содержимое                                           |
-| `teamstorm_create_document`  | Создание документа (название, содержимое, родитель, метки)                   |
-| `teamstorm_update_document`  | Изменение статуса документа (публичный API поддерживает только поле status)  |
-| `teamstorm_block_document`   | Блокировка документа от редактирования                                       |
-| `teamstorm_unblock_document` | Снятие блокировки с документа                                                |
+| `teamstorm_documents_list`   | Список документов пространства с пагинацией                                  |
+| `teamstorm_documents_get`     | Документ по ID, включая содержимое                                           |
+| `teamstorm_documents_create`  | Создание документа (название, содержимое, родитель, метки)                   |
+| `teamstorm_documents_update`  | Изменение статуса документа (публичный API поддерживает только поле status)  |
+| `teamstorm_documents_block`   | Блокировка документа от редактирования                                       |
+| `teamstorm_documents_unblock` | Снятие блокировки с документа                                                |
 
 ### Доступ к документам
 
 | Инструмент                             | Описание                                                       |
 | -------------------------------------- | -------------------------------------------------------------- |
-| `teamstorm_list_document_permissions`  | Список разрешений на документ (пользователи и группы)          |
-| `teamstorm_share_document`             | Выдача доступа пользователю/группе (Read, Edit, Comment)       |
-| `teamstorm_update_document_permission` | Изменение уровня доступа существующего разрешения              |
+| `teamstorm_document_permissions_list`  | Список разрешений на документ (пользователи и группы)          |
+| `teamstorm_document_permissions_create`             | Выдача доступа пользователю/группе (Read, Edit, Comment)       |
+| `teamstorm_document_permissions_update` | Изменение уровня доступа существующего разрешения              |
 
 ### Статусы документов
 
 | Инструмент                         | Описание                                    |
 | ---------------------------------- | ------------------------------------------- |
-| `teamstorm_list_document_statuses` | Список доступных статусов документов        |
-| `teamstorm_get_document_status`    | Статус документа по ID                      |
+| `teamstorm_document_statuses_list` | Список доступных статусов документов        |
+| `teamstorm_document_statuses_get`    | Статус документа по ID                      |
 
 ### Связи документов
 
 | Инструмент                          | Описание                                          |
 | ----------------------------------- | ------------------------------------------------- |
-| `teamstorm_get_document_task_links` | Задачи, связанные с документом                    |
-| `teamstorm_link_document_to_task`   | Связывание документа с задачей                    |
-| `teamstorm_get_task_document_links` | Документы, связанные с задачей                    |
+| `teamstorm_document_links_list_by_document` | Задачи, связанные с документом                    |
+| `teamstorm_document_links_create`   | Связывание документа с задачей                    |
+| `teamstorm_document_links_list_by_task` | Документы, связанные с задачей                    |
 
 ### Комментарии к документам
 
 | Инструмент                          | Описание                            |
 | ----------------------------------- | ----------------------------------- |
-| `teamstorm_list_document_comments`  | Все комментарии к документу         |
-| `teamstorm_create_document_comment` | Добавление комментария к документу  |
+| `teamstorm_document_comments_list`  | Все комментарии к документу         |
+| `teamstorm_document_comments_create` | Добавление комментария к документу  |
 
 ### Вложения документов
 
 | Инструмент                           | Описание                                                         |
 | -------------------------------------- | ------------------------------------------------------------------- |
-| `teamstorm_list_document_attachments`  | Список вложений документа                                        |
-| `teamstorm_get_document_attachment_file` | Скачивание файла вложения документа (готовит `GET /download/:id`) |
+| `teamstorm_document_attachments_list`  | Список вложений документа                                        |
+| `teamstorm_document_attachments_download` | Скачивание файла вложения документа (готовит `GET /download/:id`) |
 
 ### Портфели
 
 | Инструмент                  | Описание                                                        |
 | ---------------------------- | ---------------------------------------------------------------- |
-| `teamstorm_list_portfolios`  | Список портфелей с фильтром по названию и папке (без пагинации) |
-| `teamstorm_get_portfolio`    | Портфель по ID вместе со списком его элементов                  |
-| `teamstorm_create_portfolio` | Создание портфеля в указанной папке (`name`, `folderId`)         |
-| `teamstorm_update_portfolio` | Переименование портфеля (`name` обязателен для PATCH)            |
+| `teamstorm_portfolios_list`  | Список портфелей с фильтром по названию и папке (без пагинации) |
+| `teamstorm_portfolios_get`    | Портфель по ID вместе со списком его элементов                  |
+| `teamstorm_portfolios_create` | Создание портфеля в указанной папке (`name`, `folderId`)         |
+| `teamstorm_portfolios_update` | Переименование портфеля (`name` обязателен для PATCH)            |
 
 ### Элементы портфелей
 
 | Инструмент                          | Описание                                                                  |
 | ------------------------------------ | -------------------------------------------------------------------------- |
-| `teamstorm_list_portfolio_elements`  | Список элементов портфеля с фильтром по названию/папке/портфелю/статусу (без пагинации) |
-| `teamstorm_get_portfolio_element`    | Элемент портфеля по ID                                                    |
-| `teamstorm_create_portfolio_element` | Создание элемента в портфеле (`portfolioId`, `name`, даты, ответственные) |
-| `teamstorm_update_portfolio_element` | Изменение названия/описания/дат/статуса/ответственных элемента портфеля  |
+| `teamstorm_portfolio_elements_list`  | Список элементов портфеля с фильтром по названию/папке/портфелю/статусу (без пагинации) |
+| `teamstorm_portfolio_elements_get`    | Элемент портфеля по ID                                                    |
+| `teamstorm_portfolio_elements_create` | Создание элемента в портфеле (`portfolioId`, `name`, даты, ответственные) |
+| `teamstorm_portfolio_elements_update` | Изменение названия/описания/дат/статуса/ответственных элемента портфеля  |
 
 ### Закрепление задач за элементами портфеля
 
 | Инструмент                                   | Описание                                                                              |
 | ---------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `teamstorm_set_task_portfolio_element`         | Закрепить задачу за элементом портфеля (по ID или по названию элемента)                |
-| `teamstorm_remove_task_portfolio_element`      | Открепить задачу от элемента портфеля (по ID или по названию элемента)                 |
-| `teamstorm_get_tasks_by_portfolio_element_name` | Найти элемент(ы) портфеля по названию и получить задачи, закреплённые за каждым из них |
+| `teamstorm_portfolio_links_set`         | Закрепить задачу за элементом портфеля (по ID или по названию элемента)                |
+| `teamstorm_portfolio_links_remove`      | Открепить задачу от элемента портфеля (по ID или по названию элемента)                 |
+| `teamstorm_portfolio_links_list_tasks_by_name` | Найти элемент(ы) портфеля по названию и получить задачи, закреплённые за каждым из них |
 
 ### Пользователи
 
 | Инструмент                | Описание                                                                          |
 | --------------------------- | ------------------------------------------------------------------------------------ |
-| `teamstorm_list_users`     | Пользователи пространства (с поиском)                                             |
-| `teamstorm_get_user`       | Профиль пользователя по ID/username (глобально, без привязки к workspace)        |
-| `teamstorm_list_all_users` | Поиск пользователей по всему инстансу (displayName/email/username/providerId)     |
+| `teamstorm_users_list`     | Пользователи пространства (с поиском)                                             |
+| `teamstorm_users_get`       | Профиль пользователя по ID/username (глобально, без привязки к workspace)        |
+| `teamstorm_users_list_all` | Поиск пользователей по всему инстансу (displayName/email/username/providerId)     |
 
 ### Спринты
 
 | Инструмент                | Описание                                                          |
 | --------------------------- | ---------------------------------------------------------------------- |
-| `teamstorm_list_sprints`   | Спринты пространства с фильтром по папке/названию                 |
-| `teamstorm_get_sprint`     | Спринт по ID, с вычисленным капасити команды                      |
-| `teamstorm_get_backlog`    | Беклог-спринт папки (`isBacklog: true`)                           |
-| `teamstorm_create_sprint`  | Создание спринта (по `folderId` или `agileId`)                    |
+| `teamstorm_sprints_list`   | Спринты пространства с фильтром по папке/названию                 |
+| `teamstorm_sprints_get`     | Спринт по ID, с вычисленным капасити команды                      |
+| `teamstorm_sprints_get_backlog`    | Беклог-спринт папки (`isBacklog: true`)                           |
+| `teamstorm_sprints_create`  | Создание спринта (по `folderId` или `agileId`)                    |
 
 ### Agile-борды
 
 | Инструмент                     | Описание                                             |
 | --------------------------------- | --------------------------------------------------------- |
-| `teamstorm_list_agile_boards`   | Список Agile-бордов пространства                     |
-| `teamstorm_get_agile_board`     | Agile-борд по ID                                      |
-| `teamstorm_create_agile_board`  | Создание Agile-борда для папки                        |
+| `teamstorm_agile_boards_list`   | Список Agile-бордов пространства                     |
+| `teamstorm_agile_boards_get`     | Agile-борд по ID                                      |
+| `teamstorm_agile_boards_create`  | Создание Agile-борда для папки                        |
 
 ### Справочники
 
 | Инструмент                  | Описание                                                |
 | --------------------------- | ------------------------------------------------------- |
-| `teamstorm_list_workflows`  | Доступные процессы (workflows)                          |
-| `teamstorm_list_task_types` | Типы задач                                              |
-| `teamstorm_list_workspaces` | Все доступные пространства (workspaces), все страницы   |
-| `teamstorm_get_workspace`   | Пространство по ключу/ID                                |
+| `teamstorm_workflows_list`  | Доступные процессы (workflows)                          |
+| `teamstorm_task_types_list` | Типы задач                                              |
+| `teamstorm_workspaces_list` | Все доступные пространства (workspaces), все страницы   |
+| `teamstorm_workspaces_get`   | Пространство по ключу/ID                                |
 
 ### Время
 
 | Инструмент                    | Описание                                   |
 | ----------------------------- | ------------------------------------------ |
-| `teamstorm_create_time_entry` | Добавление списания времени (трудозатраты) |
-| `teamstorm_list_time_entries` | История списаний времени по задаче         |
+| `teamstorm_time_entries_create` | Добавление списания времени (трудозатраты) |
+| `teamstorm_time_entries_list` | История списаний времени по задаче         |
 
 ---
 

@@ -383,7 +383,7 @@ async function runHttp() {
 
 1. HTTP POST на http://<mcp-server-host>:<port>/upload с multipart/form-data (поле "file"),
    заголовок Authorization: PrivateToken <TEAMSTORM_API_TOKEN>. Получите uploadId из ответа (JSON {uploadId, fileName, size}).
-2. Вызовите инструмент teamstorm_attach_uploaded с полученным uploadId.
+2. Вызовите инструмент teamstorm_attachments_attach_uploaded с полученным uploadId.
 
 Ограничения: max 50 MB, файл живёт на сервере 1 час, rate limit 10 загрузок в минуту.
 Если mcp-server-host не указан — сервер доступен на localhost:PORT из конфигурации.
@@ -392,7 +392,7 @@ async function runHttp() {
 
 Чтобы скачать вложение задачи или документа, выполните два шага:
 
-1. Вызовите инструмент teamstorm_get_task_attachment_file (или teamstorm_get_document_attachment_file)
+1. Вызовите инструмент teamstorm_attachments_download (или teamstorm_document_attachments_download)
    с workspace/taskId(или documentId)/attachmentId. Инструмент вернёт downloadId и точную команду curl.
 2. HTTP GET на http://<mcp-server-host>:<port>/download/<downloadId>,
    заголовок Authorization: PrivateToken <TEAMSTORM_API_TOKEN>. Тело ответа — сырые байты файла.

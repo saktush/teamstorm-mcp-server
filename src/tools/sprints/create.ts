@@ -85,7 +85,7 @@ export async function createSprint(
   }
 
   try {
-    logRequest('teamstorm_create_sprint', { workspace, folderId, agileId, name });
+    logRequest('teamstorm_sprints_create', { workspace, folderId, agileId, name });
     const resolvedAgileId = await resolveAgileId(client, { workspace, folderId, agileId });
 
     const sprint = await client.createSprint(
@@ -103,7 +103,7 @@ export async function createSprint(
       workspace
     );
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_create_sprint', true, duration);
+    logResponse('teamstorm_sprints_create', true, duration);
 
     return {
       content: [
@@ -130,11 +130,11 @@ export async function createSprint(
 
 export function registerCreateSprintTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_create_sprint',
+    'teamstorm_sprints_create',
     {
       title: 'Создать спринт',
       description:
-        'Создать спринт в TeamStorm. Требуется Agile-борд для папки — укажите folderId (борд найдётся автоматически) либо agileId напрямую. Если у папки ещё нет Agile-борда, вернётся ошибка с указанием создать его через teamstorm_create_agile_board.',
+        'Создать спринт в TeamStorm. Требуется Agile-борд для папки — укажите folderId (борд найдётся автоматически) либо agileId напрямую. Если у папки ещё нет Agile-борда, вернётся ошибка с указанием создать его через teamstorm_agile_boards_create.',
       inputSchema: createSprintSchema,
       annotations: {
         readOnlyHint: false,

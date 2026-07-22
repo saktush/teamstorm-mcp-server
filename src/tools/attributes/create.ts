@@ -46,10 +46,10 @@ export async function createAttribute(
   }
 
   try {
-    logRequest('teamstorm_create_attribute', { workspace, name: body.name, type: body.type });
+    logRequest('teamstorm_attributes_create', { workspace, name: body.name, type: body.type });
     const attribute = await client.createAttribute(body, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_create_attribute', true, duration);
+    logResponse('teamstorm_attributes_create', true, duration);
 
     return {
       content: [{ type: 'text', text: `✅ Атрибут создан\n\n${formatAttributeModel(attribute)}` }],
@@ -71,7 +71,7 @@ export async function createAttribute(
 
 export function registerCreateAttributeTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_create_attribute',
+    'teamstorm_attributes_create',
     {
       title: 'Создать атрибут',
       description:

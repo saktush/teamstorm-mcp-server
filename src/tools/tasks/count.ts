@@ -25,7 +25,7 @@ export async function getTaskCount(
   isError?: boolean;
 }> {
   try {
-    logRequest('teamstorm_get_task_count', params);
+    logRequest('teamstorm_tasks_count', params);
     const { workspace, apiUrl } = params;
 
     if (apiUrl) {
@@ -34,7 +34,7 @@ export async function getTaskCount(
 
     const count = await client.getTaskCount(workspace);
 
-    logResponse('teamstorm_get_task_count', true);
+    logResponse('teamstorm_tasks_count', true);
     logger.info({ count }, 'Task count retrieved');
 
     return {
@@ -67,7 +67,7 @@ export { GetTaskCountSchema as getTaskCountSchema };
 
 export function registerGetTaskCountTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_task_count',
+    'teamstorm_tasks_count',
     {
       title: 'Получить количество задач',
       description:

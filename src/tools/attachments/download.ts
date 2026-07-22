@@ -44,7 +44,7 @@ export async function getTaskAttachmentFile(
   }
 
   try {
-    logRequest('teamstorm_get_task_attachment_file', { workspace, taskId, attachmentId });
+    logRequest('teamstorm_attachments_download', { workspace, taskId, attachmentId });
     const file = await client.downloadTaskAttachmentBuffer(taskId, attachmentId, workspace);
     const fileName = file.fileName ?? `attachment-${attachmentId}`;
     const contentType = file.contentType ?? 'application/octet-stream';
@@ -56,7 +56,7 @@ export async function getTaskAttachmentFile(
     });
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_get_task_attachment_file', true, duration);
+    logResponse('teamstorm_attachments_download', true, duration);
 
     const text =
       `✅ Файл готов к скачиванию: **${fileName}** (${formatBytes(file.buffer.length)})\n\n` +
@@ -87,7 +87,7 @@ export async function getTaskAttachmentFile(
 
 export function registerGetTaskAttachmentFileTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_task_attachment_file',
+    'teamstorm_attachments_download',
     {
       title: 'Скачать файл вложения задачи',
       description:

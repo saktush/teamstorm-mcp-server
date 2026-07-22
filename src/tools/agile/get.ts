@@ -49,10 +49,10 @@ export async function getAgileBoard(
   }
 
   try {
-    logRequest('teamstorm_get_agile_board', { workspace, agileId });
+    logRequest('teamstorm_agile_boards_get', { workspace, agileId });
     const board = await client.getAgile(agileId, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_get_agile_board', true, duration);
+    logResponse('teamstorm_agile_boards_get', true, duration);
 
     return {
       content: [{ type: 'text', text: formatAgileBoardMarkdown(board) }],
@@ -74,7 +74,7 @@ export async function getAgileBoard(
 
 export function registerGetAgileBoardTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_agile_board',
+    'teamstorm_agile_boards_get',
     {
       title: 'Получить Agile-борд',
       description: 'Получить Agile-борд TeamStorm по UUID: название, папка, тип оценки задач.',

@@ -34,10 +34,10 @@ export async function unblockDocument(
   }
 
   try {
-    logRequest('teamstorm_unblock_document', { workspace, documentId });
+    logRequest('teamstorm_documents_unblock', { workspace, documentId });
     const doc = await client.unblockDocument(documentId, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_unblock_document', true, duration);
+    logResponse('teamstorm_documents_unblock', true, duration);
 
     const text = `🔓 Документ разблокирован\n\n${formatDocumentMarkdown(doc)}`;
 
@@ -61,7 +61,7 @@ export async function unblockDocument(
 
 export function registerUnblockDocumentTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_unblock_document',
+    'teamstorm_documents_unblock',
     {
       title: 'Разблокировать документ',
       description: 'Снять блокировку редактирования с документа TeamStorm.',

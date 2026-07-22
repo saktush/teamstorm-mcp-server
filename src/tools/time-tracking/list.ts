@@ -20,7 +20,7 @@ export const listTimeEntriesSchema = z
 
 export function registerListTimeEntriesTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_time_entries',
+    'teamstorm_time_entries_list',
     {
       title: 'Получить списания времени задачи',
       description:
@@ -48,14 +48,14 @@ export async function listTimeEntries(
   }
 
   try {
-    logRequest('teamstorm_list_time_entries', { workspace, taskId });
+    logRequest('teamstorm_time_entries_list', { workspace, taskId });
     const result = await client.listTimeEntries({
       taskId,
       workspace,
     });
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_list_time_entries', true, duration);
+    logResponse('teamstorm_time_entries_list', true, duration);
 
     logger.info({ taskId: args.taskId, count: result.length, durationMs: duration }, 'Time entries retrieved');
 

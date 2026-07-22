@@ -34,10 +34,10 @@ export async function blockDocument(
   }
 
   try {
-    logRequest('teamstorm_block_document', { workspace, documentId });
+    logRequest('teamstorm_documents_block', { workspace, documentId });
     const doc = await client.blockDocument(documentId, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_block_document', true, duration);
+    logResponse('teamstorm_documents_block', true, duration);
 
     const text = `🔒 Документ заблокирован для редактирования\n\n${formatDocumentMarkdown(doc)}`;
 
@@ -61,11 +61,11 @@ export async function blockDocument(
 
 export function registerBlockDocumentTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_block_document',
+    'teamstorm_documents_block',
     {
       title: 'Заблокировать документ',
       description:
-        'Заблокировать документ TeamStorm от редактирования. Разблокировка — teamstorm_unblock_document.',
+        'Заблокировать документ TeamStorm от редактирования. Разблокировка — teamstorm_documents_unblock.',
       inputSchema: blockDocumentSchema,
       annotations: {
         readOnlyHint: false,

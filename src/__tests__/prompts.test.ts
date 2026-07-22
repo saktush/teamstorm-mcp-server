@@ -45,9 +45,9 @@ describe('teamstorm_analyze_folder_comments prompt', () => {
     expect(result.messages[0].role).toBe('user');
     const text = result.messages[0].content.text;
     for (const tool of [
-      'teamstorm_find_folder',
-      'teamstorm_list_tasks_by_parent',
-      'teamstorm_list_task_comments',
+      'teamstorm_folders_find',
+      'teamstorm_tasks_list_by_parent',
+      'teamstorm_comments_list',
     ]) {
       expect(text).toContain(tool);
     }
@@ -68,9 +68,9 @@ describe('teamstorm_sprint_standup_digest prompt', () => {
     const result = prompt.cb({ workspace: 'TS', sprintId: 'sp-42' }, {});
     const text = result.messages[0].content.text;
     for (const tool of [
-      'teamstorm_get_sprint',
-      'teamstorm_list_tasks',
-      'teamstorm_list_updated_tasks',
+      'teamstorm_sprints_get',
+      'teamstorm_tasks_list',
+      'teamstorm_tasks_list_updated',
     ]) {
       expect(text).toContain(tool);
     }
@@ -91,9 +91,9 @@ describe('teamstorm_document_review_package prompt', () => {
     const result = prompt.cb({ workspace: 'TS', documentId: 'doc-7' }, {});
     const text = result.messages[0].content.text;
     for (const tool of [
-      'teamstorm_get_document',
-      'teamstorm_get_document_task_links',
-      'teamstorm_list_document_comments',
+      'teamstorm_documents_get',
+      'teamstorm_document_links_list_by_document',
+      'teamstorm_document_comments_list',
     ]) {
       expect(text).toContain(tool);
     }
@@ -117,7 +117,7 @@ describe('teamstorm_task_triage prompt', () => {
   it('names the tool sequence and interpolates provided filters', () => {
     const result = prompt.cb({ workspace: 'TS', status: 'Open', assignee: 'jane' }, {});
     const text = result.messages[0].content.text;
-    for (const tool of ['teamstorm_list_tasks', 'teamstorm_get_task_attributes']) {
+    for (const tool of ['teamstorm_tasks_list', 'teamstorm_attributes_get']) {
       expect(text).toContain(tool);
     }
     expect(text).toContain('TS');

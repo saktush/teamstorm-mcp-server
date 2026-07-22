@@ -42,14 +42,14 @@ export async function createPortfolioElement(
   }
 
   try {
-    logRequest('teamstorm_create_portfolio_element', {
+    logRequest('teamstorm_portfolio_elements_create', {
       workspace,
       portfolioId: body.portfolioId,
       name: body.name,
     });
     const element = await client.createPortfolioElement(body, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_create_portfolio_element', true, duration);
+    logResponse('teamstorm_portfolio_elements_create', true, duration);
 
     return {
       content: [
@@ -73,7 +73,7 @@ export async function createPortfolioElement(
 
 export function registerCreatePortfolioElementTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_create_portfolio_element',
+    'teamstorm_portfolio_elements_create',
     {
       title: 'Создать элемент портфеля',
       description: 'Создать новый элемент в указанном портфеле TeamStorm.',

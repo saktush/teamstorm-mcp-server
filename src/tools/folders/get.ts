@@ -33,10 +33,10 @@ export async function getFolder(
   }
 
   try {
-    logRequest('teamstorm_get_folder', { workspace, folderId });
+    logRequest('teamstorm_folders_get', { workspace, folderId });
     const folder = await client.getFolder(folderId, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_get_folder', true, duration);
+    logResponse('teamstorm_folders_get', true, duration);
 
     const lines: string[] = [];
     lines.push(`# Папка: ${folder.name}\n`);
@@ -45,7 +45,7 @@ export async function getFolder(
     if (folder.description) lines.push(`- **Описание:** ${folder.description}`);
     lines.push('');
     lines.push(
-      `💡 Используйте \`teamstorm_list_tasks\` с параметром \`parent=${folder.id}\` чтобы получить задачи в этой папке.`
+      `💡 Используйте \`teamstorm_tasks_list\` с параметром \`parent=${folder.id}\` чтобы получить задачи в этой папке.`
     );
 
     return {
@@ -68,7 +68,7 @@ export async function getFolder(
 
 export function registerGetFolderTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_folder',
+    'teamstorm_folders_get',
     {
       title: 'Получить папку по ID',
       description: 'Получить информацию о папке TeamStorm по её UUID.',

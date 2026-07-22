@@ -39,10 +39,10 @@ export async function createAgileBoard(
   }
 
   try {
-    logRequest('teamstorm_create_agile_board', { workspace, folderId, estimatesType });
+    logRequest('teamstorm_agile_boards_create', { workspace, folderId, estimatesType });
     const board = await client.createAgile({ folderId, estimatesType }, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_create_agile_board', true, duration);
+    logResponse('teamstorm_agile_boards_create', true, duration);
 
     return {
       content: [
@@ -69,7 +69,7 @@ export async function createAgileBoard(
 
 export function registerCreateAgileBoardTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_create_agile_board',
+    'teamstorm_agile_boards_create',
     {
       title: 'Создать Agile-борд',
       description:

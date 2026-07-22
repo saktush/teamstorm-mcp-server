@@ -52,10 +52,10 @@ export async function updateAttribute(
   }
 
   try {
-    logRequest('teamstorm_update_attribute', { workspace, attributeId, ...body });
+    logRequest('teamstorm_attributes_update', { workspace, attributeId, ...body });
     const attribute = await client.patchAttribute(attributeId, body, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_update_attribute', true, duration);
+    logResponse('teamstorm_attributes_update', true, duration);
 
     return {
       content: [
@@ -79,11 +79,11 @@ export async function updateAttribute(
 
 export function registerUpdateAttributeTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_update_attribute',
+    'teamstorm_attributes_update',
     {
       title: 'Обновить атрибут',
       description:
-        'Изменить название, описание или набор опций существующего атрибута TeamStorm. Передавайте только изменяемые поля. Для точечного добавления/переименования одной опции используйте teamstorm_add_attribute_option / teamstorm_update_attribute_option.',
+        'Изменить название, описание или набор опций существующего атрибута TeamStorm. Передавайте только изменяемые поля. Для точечного добавления/переименования одной опции используйте teamstorm_attributes_add_option / teamstorm_attributes_update_option.',
       inputSchema: updateAttributeSchema,
       annotations: {
         readOnlyHint: false,

@@ -60,7 +60,7 @@ describe('TeamStormClient Document Attachments Integration Tests', () => {
     });
   });
 
-  describe('teamstorm_list_document_attachments tool', () => {
+  describe('teamstorm_document_attachments_list tool', () => {
     it('returns attachments as structuredContent', async () => {
       nock(baseUrl)
         .get(`/workspaces/${workspace}/documents/${documentId}/attachments`)
@@ -95,7 +95,7 @@ describe('TeamStormClient Document Attachments Integration Tests', () => {
     });
   });
 
-  describe('teamstorm_get_document_attachment_file tool', () => {
+  describe('teamstorm_document_attachments_download tool', () => {
     let downloadDir: string;
     const attachmentId = mockAttachment.attachmentId;
     const fileBytes = Buffer.from('%PDF-1.4 fake pdf content');

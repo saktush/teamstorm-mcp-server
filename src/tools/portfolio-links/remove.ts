@@ -71,7 +71,7 @@ export async function removeTaskPortfolioElement(
   }
 
   try {
-    logRequest('teamstorm_remove_task_portfolio_element', {
+    logRequest('teamstorm_portfolio_links_remove', {
       workspace,
       taskId,
       portfolioElementId,
@@ -86,7 +86,7 @@ export async function removeTaskPortfolioElement(
     });
     await client.unassignWorkitemFromPortfolioElement(resolvedId, taskId, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_remove_task_portfolio_element', true, duration);
+    logResponse('teamstorm_portfolio_links_remove', true, duration);
 
     return {
       content: [
@@ -113,7 +113,7 @@ export async function removeTaskPortfolioElement(
 
 export function registerRemoveTaskPortfolioElementTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_remove_task_portfolio_element',
+    'teamstorm_portfolio_links_remove',
     {
       title: 'Открепить задачу от элемента портфеля',
       description:

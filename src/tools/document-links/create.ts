@@ -40,14 +40,14 @@ export async function linkDocumentToTask(
   }
 
   try {
-    logRequest('teamstorm_link_document_to_task', { workspace, documentId, taskId });
+    logRequest('teamstorm_document_links_create', { workspace, documentId, taskId });
     await client.createDocumentWorkitemLink(
       documentId,
       { workitemWorkspace: taskWorkspace ?? workspace, workitem: taskId },
       workspace
     );
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_link_document_to_task', true, duration);
+    logResponse('teamstorm_document_links_create', true, duration);
 
     return {
       content: [
@@ -74,7 +74,7 @@ export async function linkDocumentToTask(
 
 export function registerLinkDocumentToTaskTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_link_document_to_task',
+    'teamstorm_document_links_create',
     {
       title: 'Связать документ с задачей',
       description:

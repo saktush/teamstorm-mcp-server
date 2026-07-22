@@ -39,10 +39,10 @@ export async function updateFolder(
   }
 
   try {
-    logRequest('teamstorm_update_folder', { workspace, folderId, ...body });
+    logRequest('teamstorm_folders_update', { workspace, folderId, ...body });
     const folder = await client.patchFolder(folderId, body, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_update_folder', true, duration);
+    logResponse('teamstorm_folders_update', true, duration);
 
     const lines: string[] = [];
     lines.push(`✅ Папка обновлена\n`);
@@ -71,7 +71,7 @@ export async function updateFolder(
 
 export function registerUpdateFolderTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_update_folder',
+    'teamstorm_folders_update',
     {
       title: 'Обновить папку',
       description:

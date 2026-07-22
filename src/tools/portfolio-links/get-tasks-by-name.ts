@@ -46,7 +46,7 @@ export async function getTasksByPortfolioElementName(
   }
 
   try {
-    logRequest('teamstorm_get_tasks_by_portfolio_element_name', {
+    logRequest('teamstorm_portfolio_links_list_tasks_by_name', {
       workspace,
       portfolioElementName,
       portfolioId,
@@ -65,7 +65,7 @@ export async function getTasksByPortfolioElementName(
 
     if (matches.length === 0) {
       const duration = Date.now() - startTime;
-      logResponse('teamstorm_get_tasks_by_portfolio_element_name', true, duration);
+      logResponse('teamstorm_portfolio_links_list_tasks_by_name', true, duration);
       return {
         content: [
           {
@@ -89,7 +89,7 @@ export async function getTasksByPortfolioElementName(
     );
 
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_get_tasks_by_portfolio_element_name', true, duration);
+    logResponse('teamstorm_portfolio_links_list_tasks_by_name', true, duration);
 
     const lines: string[] = [];
     lines.push(
@@ -137,7 +137,7 @@ export function registerGetTasksByPortfolioElementNameTool(
   client: TeamStormClient
 ) {
   server.registerTool(
-    'teamstorm_get_tasks_by_portfolio_element_name',
+    'teamstorm_portfolio_links_list_tasks_by_name',
     {
       title: 'Получить задачи по названию элемента портфеля',
       description:

@@ -47,11 +47,11 @@ export async function updateTask(
   }
 
   try {
-    logRequest('teamstorm_update_task', { workspace, taskId, ...updateData });
+    logRequest('teamstorm_tasks_update', { workspace, taskId, ...updateData });
     const result = await client.updateTask(taskId, { ...updateData, workspace: params.workspace });
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_update_task', true, duration);
+    logResponse('teamstorm_tasks_update', true, duration);
     logger.info({ taskId, durationMs: duration }, 'Task updated');
 
     const markdown = formatTaskMarkdown(result);
@@ -82,7 +82,7 @@ export { UpdateTaskSchema as updateTaskSchema };
 
 export function registerUpdateTaskTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_update_task',
+    'teamstorm_tasks_update',
     {
       title: 'Обновить задачу',
       description:

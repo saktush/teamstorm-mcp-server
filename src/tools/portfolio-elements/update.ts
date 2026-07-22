@@ -43,10 +43,10 @@ export async function updatePortfolioElement(
   }
 
   try {
-    logRequest('teamstorm_update_portfolio_element', { workspace, portfolioElementId, ...body });
+    logRequest('teamstorm_portfolio_elements_update', { workspace, portfolioElementId, ...body });
     const element = await client.patchPortfolioElement(portfolioElementId, body, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_update_portfolio_element', true, duration);
+    logResponse('teamstorm_portfolio_elements_update', true, duration);
 
     return {
       content: [
@@ -73,7 +73,7 @@ export async function updatePortfolioElement(
 
 export function registerUpdatePortfolioElementTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_update_portfolio_element',
+    'teamstorm_portfolio_elements_update',
     {
       title: 'Обновить элемент портфеля',
       description:

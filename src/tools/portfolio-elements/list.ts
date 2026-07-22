@@ -36,10 +36,10 @@ export async function listPortfolioElements(
   }
 
   try {
-    logRequest('teamstorm_list_portfolio_elements', { workspace, ...filters });
+    logRequest('teamstorm_portfolio_elements_list', { workspace, ...filters });
     const result = await client.listPortfolioElements({ ...filters, workspace });
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_list_portfolio_elements', true, duration);
+    logResponse('teamstorm_portfolio_elements_list', true, duration);
 
     const lines: string[] = [];
     lines.push(`# Список элементов портфеля (${result.items.length})\n`);
@@ -73,7 +73,7 @@ export async function listPortfolioElements(
 
 export function registerListPortfolioElementsTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_portfolio_elements',
+    'teamstorm_portfolio_elements_list',
     {
       title: 'Получить список элементов портфеля',
       description:

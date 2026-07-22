@@ -24,7 +24,7 @@ export const listAttachmentVersionsSchema = z
 
 export function registerListAttachmentVersionsTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_attachment_versions',
+    'teamstorm_attachments_list_versions',
     {
       title: 'Получить версии вложений',
       description:
@@ -53,14 +53,14 @@ export async function listAttachmentVersions(
   }
 
   try {
-    logRequest('teamstorm_list_attachment_versions', { workspace, taskId });
+    logRequest('teamstorm_attachments_list_versions', { workspace, taskId });
     const response: TeamStormAttachmentVersionListResponse = await client.listAttachmentVersions(
       args.taskId,
       args.workspace
     );
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_list_attachment_versions', true, duration);
+    logResponse('teamstorm_attachments_list_versions', true, duration);
 
     if (response.items.length === 0) {
       return {

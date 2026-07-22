@@ -22,7 +22,7 @@ export const getTaskAttachmentSchema = z
 
 export function registerGetTaskAttachmentTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_task_attachment',
+    'teamstorm_attachments_get',
     {
       title: 'Получить информацию о вложении',
       description:
@@ -50,7 +50,7 @@ export async function getTaskAttachment(
   }
 
   try {
-    logRequest('teamstorm_get_task_attachment', { workspace, taskId, attachmentId });
+    logRequest('teamstorm_attachments_get', { workspace, taskId, attachmentId });
     const attachment: TeamStormAttachment = await client.getTaskAttachment(
       args.taskId,
       args.attachmentId,
@@ -58,7 +58,7 @@ export async function getTaskAttachment(
     );
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_get_task_attachment', true, duration);
+    logResponse('teamstorm_attachments_get', true, duration);
 
     const text =
       `📄 **${attachment.name}**\n\n` +

@@ -25,9 +25,9 @@ export function registerDocumentReviewPackagePrompt(server: McpServer) {
       const text = `Собери пакет для ревью документа ${documentId} в пространстве ${workspace} и оцени готовность к согласованию.
 
 Выполни шаги строго по порядку:
-1. Вызови teamstorm_get_document (workspace="${workspace}", documentId="${documentId}"), чтобы получить содержимое и текущий статус документа.
-2. Вызови teamstorm_get_document_task_links (workspace="${workspace}", documentId="${documentId}"), чтобы получить связанные задачи.
-3. Вызови teamstorm_list_document_comments (workspace="${workspace}", documentId="${documentId}"), чтобы получить комментарии.
+1. Вызови teamstorm_documents_get (workspace="${workspace}", documentId="${documentId}"), чтобы получить содержимое и текущий статус документа.
+2. Вызови teamstorm_document_links_list_by_document (workspace="${workspace}", documentId="${documentId}"), чтобы получить связанные задачи.
+3. Вызови teamstorm_document_comments_list (workspace="${workspace}", documentId="${documentId}"), чтобы получить комментарии.
 
 Оформи результат как чек-лист готовности к согласованию:
 - 💬 Открытые комментарии — нерешённые обсуждения, требующие ответа.

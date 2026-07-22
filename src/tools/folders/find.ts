@@ -66,7 +66,7 @@ export async function findFolder(
   }
 
   try {
-    logRequest('teamstorm_find_folder', { workspace, name, id });
+    logRequest('teamstorm_folders_find', { workspace, name, id });
 
     let matches: TeamStormFolderModel[] = [];
 
@@ -79,7 +79,7 @@ export async function findFolder(
     }
 
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_find_folder', true, duration);
+    logResponse('teamstorm_folders_find', true, duration);
 
     if (matches.length === 0) {
       return {
@@ -104,7 +104,7 @@ export async function findFolder(
       if (folder.description) lines.push(`- Описание: ${folder.description}`);
       lines.push('');
       lines.push(
-        `  💡 Задачи в папке: \`teamstorm_list_tasks\` с \`parent=${folder.id}\``
+        `  💡 Задачи в папке: \`teamstorm_tasks_list\` с \`parent=${folder.id}\``
       );
       lines.push('');
     }
@@ -129,7 +129,7 @@ export async function findFolder(
 
 export function registerFindFolderTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_find_folder',
+    'teamstorm_folders_find',
     {
       title: 'Найти папку по названию или ID',
       description:

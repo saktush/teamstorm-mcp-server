@@ -58,10 +58,10 @@ export async function shareDocument(
   }
 
   try {
-    logRequest('teamstorm_share_document', { workspace, documentId, ...body });
+    logRequest('teamstorm_document_permissions_create', { workspace, documentId, ...body });
     const permission = await client.createDocumentPermission(documentId, body, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_share_document', true, duration);
+    logResponse('teamstorm_document_permissions_create', true, duration);
 
     const subject = body.type === 'User' ? `пользователю ${body.userId}` : `группе ${body.groupId}`;
     const text =
@@ -89,7 +89,7 @@ export async function shareDocument(
 
 export function registerShareDocumentTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_share_document',
+    'teamstorm_document_permissions_create',
     {
       title: 'Выдать доступ к документу',
       description:

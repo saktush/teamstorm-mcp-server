@@ -37,10 +37,10 @@ export async function createDocument(
   }
 
   try {
-    logRequest('teamstorm_create_document', { workspace, name: body.name });
+    logRequest('teamstorm_documents_create', { workspace, name: body.name });
     const doc = await client.createDocument(body, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_create_document', true, duration);
+    logResponse('teamstorm_documents_create', true, duration);
 
     const text = `✅ Документ создан\n\n${formatDocumentMarkdown(doc)}`;
 
@@ -64,7 +64,7 @@ export async function createDocument(
 
 export function registerCreateDocumentTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_create_document',
+    'teamstorm_documents_create',
     {
       title: 'Создать документ',
       description:

@@ -34,10 +34,10 @@ export async function listPortfolios(
   }
 
   try {
-    logRequest('teamstorm_list_portfolios', { workspace, ...filters });
+    logRequest('teamstorm_portfolios_list', { workspace, ...filters });
     const result = await client.listPortfolios({ ...filters, workspace });
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_list_portfolios', true, duration);
+    logResponse('teamstorm_portfolios_list', true, duration);
 
     const lines: string[] = [];
     lines.push(`# Список портфелей (${result.items.length})\n`);
@@ -69,7 +69,7 @@ export async function listPortfolios(
 
 export function registerListPortfoliosTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_portfolios',
+    'teamstorm_portfolios_list',
     {
       title: 'Получить список портфелей',
       description:

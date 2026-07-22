@@ -39,7 +39,7 @@ export async function getDocumentAttachmentFile(
   }
 
   try {
-    logRequest('teamstorm_get_document_attachment_file', { workspace, documentId, attachmentId });
+    logRequest('teamstorm_document_attachments_download', { workspace, documentId, attachmentId });
     const file = await client.downloadDocumentAttachmentBuffer(documentId, attachmentId, workspace);
     const fileName = file.fileName ?? `attachment-${attachmentId}`;
     const contentType = file.contentType ?? 'application/octet-stream';
@@ -51,7 +51,7 @@ export async function getDocumentAttachmentFile(
     });
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_get_document_attachment_file', true, duration);
+    logResponse('teamstorm_document_attachments_download', true, duration);
 
     const text =
       `✅ Файл готов к скачиванию: **${fileName}** (${formatBytes(file.buffer.length)})\n\n` +
@@ -82,7 +82,7 @@ export async function getDocumentAttachmentFile(
 
 export function registerGetDocumentAttachmentFileTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_document_attachment_file',
+    'teamstorm_document_attachments_download',
     {
       title: 'Скачать файл вложения документа',
       description:

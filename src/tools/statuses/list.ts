@@ -32,10 +32,10 @@ export async function listWorkspaceStatuses(
   }
 
   try {
-    logRequest('teamstorm_list_workspace_statuses', { workspace });
+    logRequest('teamstorm_workspace_statuses_list', { workspace });
     const result = await client.listWorkspaceStatuses(workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_list_workspace_statuses', true, duration);
+    logResponse('teamstorm_workspace_statuses_list', true, duration);
 
     if (result.items.length === 0) {
       return {
@@ -70,11 +70,11 @@ export async function listWorkspaceStatuses(
 
 export function registerListWorkspaceStatusesTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_workspace_statuses',
+    'teamstorm_workspace_statuses_list',
     {
       title: 'Статусы задач пространства',
       description:
-        'Получить список статусов задач (workitem), доступных в пространстве TeamStorm, вместе с их категориями. Не путать с teamstorm_list_document_statuses (статусы документов).',
+        'Получить список статусов задач (workitem), доступных в пространстве TeamStorm, вместе с их категориями. Не путать с teamstorm_document_statuses_list (статусы документов).',
       inputSchema: listWorkspaceStatusesSchema,
       annotations: { readOnlyHint: true, openWorldHint: false },
     },

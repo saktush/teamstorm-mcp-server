@@ -23,7 +23,7 @@ export const getTaskAttributesSchema = z
 
 export function registerGetTaskAttributesTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_task_attributes',
+    'teamstorm_attributes_get',
     {
       title: 'Получить атрибуты задачи',
       description:
@@ -51,14 +51,14 @@ export async function getTaskAttributes(
   }
 
   try {
-    logRequest('teamstorm_get_task_attributes', { workspace, taskId });
+    logRequest('teamstorm_attributes_get', { workspace, taskId });
     const response: TeamStormAttributeListResponse = await client.getTaskAttributes(
       args.taskId,
       args.workspace
     );
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_get_task_attributes', true, duration);
+    logResponse('teamstorm_attributes_get', true, duration);
 
     if (response.items.length === 0) {
       return {

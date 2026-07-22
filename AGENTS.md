@@ -38,7 +38,7 @@ npm run typecheck        # tsc --noEmit
   - `POST /mcp`, `GET /mcp` — основной MCP endpoint
   - `POST /sse`, `GET /sse` — SSE-совместимый MCP endpoint (тот же handler)
   - `POST /upload` — загрузка файлов (auth + rate limit)
-  - `GET /download/:id` — скачивание файлов, ранее подготовленных инструментами `teamstorm_get_task_attachment_file`/`teamstorm_get_document_attachment_file` (тот же auth + rate limit механизм, отдельный лимитер)
+  - `GET /download/:id` — скачивание файлов, ранее подготовленных инструментами `teamstorm_attachments_download`/`teamstorm_document_attachments_download` (тот же auth + rate limit механизм, отдельный лимитер)
 - Middleware инжектирует `Accept: application/json, text/event-stream` для MCP-клиентов (Claude Code, Cursor), которые не передают его
 - Конфигурация загружается через Zod-валидацию из `.env` (ленивая, без `process.exit()` на импорте)
 
@@ -64,6 +64,14 @@ npm run typecheck        # tsc --noEmit
 - Каждая схема имеет опциональный `apiUrl` параметр для переопределения URL API
 - В `execute`: `if (apiUrl) client.setBaseUrl(apiUrl)` → вызов клиента → форматирование через `utils/formatters.ts`
 - Все инструменты используют `logRequest`/`logResponse`/`logError` из `utils/logger.ts`
+
+**Соглашение об именовании (resource-first):** `teamstorm_<resource>_<verb>[_<qualifier>]`, где `<resource>` — *кратчайшее однозначное* существительное в пространстве инструментов (принцип «shortest unambiguous noun»):
+
+- Подресурс задачи без коллизий — голое существительное: `attachments`, `comments`, `attributes` (напр. `teamstorm_attachments_list`).
+- Если голое имя расплывчато или сталкивается с другим доменом — уточняется: `task_links` (vs `document_links`), `task_permissions`, `workspace_statuses` (vs `document_statuses`), `agile_boards`, `document_permissions`.
+- Подресурсы документов всегда с префиксом `document_*`.
+- `<verb>` — действие (`list`/`get`/`create`/`update`/…), перенесённое в конец; `get` сворачивается там, где производное существительное само выражает операцию (`tasks_count`, `folders_tree`).
+- Это **не** строгое зеркало имён папок 1:1 — сознательный выбор в пользу кратчайших однозначных имён. Гард в `src/__tests__/tool-naming.test.ts` следит, что verb-first имён не остаётся.
 
 ### Промпты (`src/prompts/`)
 
@@ -127,9 +135,9 @@ Accessors: `getApiToken()`, `getApiUrl()`, `getWorkspace()`, `getToolsets()`, `g
 
 ## Загрузка и скачивание файлов (Out-of-Band)
 
-**Загрузка**: файлы загружаются через `POST /upload` → сохраняются в tmp (`teamstorm-uploads`, TTL 1 час) → прикрепляются инструментом `teamstorm_attach_uploaded`. Имена файлов декодируются из CP1251/UTF-8.
+**Загрузка**: файлы загружаются через `POST /upload` → сохраняются в tmp (`teamstorm-uploads`, TTL 1 час) → прикрепляются инструментом `teamstorm_attachments_attach_uploaded`. Имена файлов декодируются из CP1251/UTF-8.
 
-**Скачивание** (зеркальный поток, `src/utils/download-store.ts` + `GET /download/:id`): инструмент (`teamstorm_get_task_attachment_file` или `teamstorm_get_document_attachment_file`) скачивает файл из TeamStorm через `TeamStormClient.download{Task,Document}AttachmentBuffer()`, сохраняет его в tmp (`teamstorm-downloads`, TTL 1 час, `saveDownloadFile()`) и возвращает `downloadId` + готовую команду `curl`. Второй шаг — обычный `GET /download/:id`, тело ответа — сырые байты файла с корректными `Content-Type`/`Content-Disposition`. Очистка — по TTL (не при первом скачивании), чтобы неудачный `curl` можно было повторить без повторного похода в TeamStorm.
+**Скачивание** (зеркальный поток, `src/utils/download-store.ts` + `GET /download/:id`): инструмент (`teamstorm_attachments_download` или `teamstorm_document_attachments_download`) скачивает файл из TeamStorm через `TeamStormClient.download{Task,Document}AttachmentBuffer()`, сохраняет его в tmp (`teamstorm-downloads`, TTL 1 час, `saveDownloadFile()`) и возвращает `downloadId` + готовую команду `curl`. Второй шаг — обычный `GET /download/:id`, тело ответа — сырые байты файла с корректными `Content-Type`/`Content-Disposition`. Очистка — по TTL (не при первом скачивании), чтобы неудачный `curl` можно было повторить без повторного похода в TeamStorm.
 
 Безопасность upload/download endpoints:
 
@@ -145,12 +153,12 @@ Accessors: `getApiToken()`, `getApiUrl()`, `getWorkspace()`, `getToolsets()`, `g
 
 | Инструмент                  | Файл           | Тип      | Описание                                                               |
 | --------------------------- | -------------- | -------- | ---------------------------------------------------------------------- |
-| `teamstorm_list_folders`    | `list.ts`      | прямой   | `GET /folders` с фильтром `name`/`parentId`, пагинация                 |
-| `teamstorm_get_folder`      | `get.ts`       | прямой   | `GET /folders/{id}`                                                    |
-| `teamstorm_get_folder_tree` | `get-tree.ts`  | составной | Обходит все страницы `listFolders`, строит дерево на клиенте           |
-| `teamstorm_find_folder`     | `find.ts`      | составной | По `name` → `listFolders?name=…`; по `id` → `getFolder(id)`; резолвит цепочку родителей для breadcrumb-пути |
-| `teamstorm_create_folder`   | `create.ts`    | прямой   | `POST /folders` — `name` (обязательно), `description`, `parentId`      |
-| `teamstorm_update_folder`   | `update.ts`    | прямой   | `PATCH /folders/{id}` — переименование, описание, перемещение (`parentId`) |
+| `teamstorm_folders_list`    | `list.ts`      | прямой   | `GET /folders` с фильтром `name`/`parentId`, пагинация                 |
+| `teamstorm_folders_get`      | `get.ts`       | прямой   | `GET /folders/{id}`                                                    |
+| `teamstorm_folders_tree` | `get-tree.ts`  | составной | Обходит все страницы `listFolders`, строит дерево на клиенте           |
+| `teamstorm_folders_find`     | `find.ts`      | составной | По `name` → `listFolders?name=…`; по `id` → `getFolder(id)`; резолвит цепочку родителей для breadcrumb-пути |
+| `teamstorm_folders_create`   | `create.ts`    | прямой   | `POST /folders` — `name` (обязательно), `description`, `parentId`      |
+| `teamstorm_folders_update`   | `update.ts`    | прямой   | `PATCH /folders/{id}` — переименование, описание, перемещение (`parentId`) |
 
 DELETE-эндпоинт папок намеренно не реализован.
 
@@ -158,8 +166,8 @@ DELETE-эндпоинт папок намеренно не реализован.
 Типы в `src/client/types.ts`: `TeamStormFolderModel`, `TeamStormFolderListResponse`, `TeamStormCreateFolderRequest`, `TeamStormPatchFolderRequest`.
 
 **Как найти задачи в папке:**
-1. `teamstorm_find_folder` name="…" → получить `folderId`
-2. `teamstorm_list_tasks` parent=`folderId` → все задачи в папке
+1. `teamstorm_folders_find` name="…" → получить `folderId`
+2. `teamstorm_tasks_list` parent=`folderId` → все задачи в папке
 
 ## Документы
 
@@ -169,16 +177,16 @@ DELETE-эндпоинт папок намеренно не реализован.
 
 Типы: `TeamStormDocument`, `TeamStormDocumentListResponse`, `TeamStormDocumentStatus`, `TeamStormDocumentPermission`, `TeamStormCreateDocumentRequest`.
 
-**`document-attachments/` — только 2 из 9 эндпоинтов тега `DocumentAttachments`** (тег был полностью не реализован): `teamstorm_list_document_attachments` (`GetDocumentAttachments`, нужен чтобы вообще узнать `attachmentId` документа — в отличие от задач, для документов не было ни одного инструмента вложений) и `teamstorm_get_document_attachment_file` (`DownloadDocumentAttachments`, через общую OOB download-инфраструктуру — см. «Загрузка и скачивание файлов» выше). Остальные 7 (одиночный `GetDocumentAttachment`, версии, upload, delete) не реализованы — не запрашивались. `AttachmentModel`/`AttachmentModelList` идентичны между `WorkitemAttachments` и `DocumentAttachments` (сверено по спеке), поэтому переиспользуются типы `TeamStormAttachment`/`TeamStormAttachmentListResponse`, отдельных `TeamStormDocumentAttachment*` не заводили.
+**`document-attachments/` — только 2 из 9 эндпоинтов тега `DocumentAttachments`** (тег был полностью не реализован): `teamstorm_document_attachments_list` (`GetDocumentAttachments`, нужен чтобы вообще узнать `attachmentId` документа — в отличие от задач, для документов не было ни одного инструмента вложений) и `teamstorm_document_attachments_download` (`DownloadDocumentAttachments`, через общую OOB download-инфраструктуру — см. «Загрузка и скачивание файлов» выше). Остальные 7 (одиночный `GetDocumentAttachment`, версии, upload, delete) не реализованы — не запрашивались. `AttachmentModel`/`AttachmentModelList` идентичны между `WorkitemAttachments` и `DocumentAttachments` (сверено по спеке), поэтому переиспользуются типы `TeamStormAttachment`/`TeamStormAttachmentListResponse`, отдельных `TeamStormDocumentAttachment*` не заводили.
 
 ## Атрибуты
 
 Инструменты в `src/tools/attributes/`: `get` (значения атрибутов задачи), `list` (список атрибутов пространства), `create`, `update`, `add-option`, `update-option`. Общий форматтер `AttributeModel` — `format.ts`. DELETE-эндпоинты (DeleteAttribute, DeleteAttributeOption) намеренно не реализованы.
 
-- `teamstorm_create_attribute` — `POST /attributes` — `name`, `type` (UniString/Number/Date/UniSelect/Tag/User/TimeDuration) обязательны; `description`, `options` (только для UniSelect/Tag).
-- `teamstorm_update_attribute` — `PATCH /attributes/{id}` — `name`, `description`, полный список `options` (без `id` — создать, с `id` — обновить, отсутствующие — удалить).
-- `teamstorm_add_attribute_option` — `POST /attributes/{id}/options` — добавить одну опцию (`name`; `id` опционален, генерируется сервером). Возвращает весь `AttributeModel`.
-- `teamstorm_update_attribute_option` — `PATCH /attributes/{id}/options` — переименовать опцию по `id`. Возвращает весь `AttributeModel`.
+- `teamstorm_attributes_create` — `POST /attributes` — `name`, `type` (UniString/Number/Date/UniSelect/Tag/User/TimeDuration) обязательны; `description`, `options` (только для UniSelect/Tag).
+- `teamstorm_attributes_update` — `PATCH /attributes/{id}` — `name`, `description`, полный список `options` (без `id` — создать, с `id` — обновить, отсутствующие — удалить).
+- `teamstorm_attributes_add_option` — `POST /attributes/{id}/options` — добавить одну опцию (`name`; `id` опционален, генерируется сервером). Возвращает весь `AttributeModel`.
+- `teamstorm_attributes_update_option` — `PATCH /attributes/{id}/options` — переименовать опцию по `id`. Возвращает весь `AttributeModel`.
 
 Все три write-эндпоинта возвращают `AttributeModel` (200). Клиентские методы: `createAttribute()`, `patchAttribute()`, `addAttributeOption()`, `patchAttributeOption()`. Типы: `TeamStormAttributeModel`, `TeamStormAttributeOption`, `TeamStormAttributeType`, `TeamStormCreateAttributeRequest`, `TeamStormPatchAttributeRequest`, `TeamStormCreateAttributeOptionRequest`, `TeamStormPatchAttributeOptionRequest`.
 
@@ -186,8 +194,8 @@ DELETE-эндпоинт папок намеренно не реализован.
 
 Два независимых API-тега с разным охватом:
 
-- **Глобальные `Users`** (`GET /users`, `GET /users/{user}` — без `{workspace}` в пути): видят пользователей по всему инстансу, независимо от членства в конкретном пространстве. Реализованы как `teamstorm_list_all_users` (поиск по `displayName`/`email`/`username`/`providerId`, фильтрация на стороне сервера, без пагинации — `UsersModelList` не имеет `fromToken`) и `teamstorm_get_user` (профиль по ID/username — удобно резолвить голый UUID из чужого поля вроде `createdBy`, не зная в каком пространстве состоит пользователь).
-- **`WorkspaceUsers`** (`GET /workspaces/{workspace}/users`): только участники конкретного пространства — уже реализовано как `teamstorm_list_users` (клиентская фильтрация по подстроке).
+- **Глобальные `Users`** (`GET /users`, `GET /users/{user}` — без `{workspace}` в пути): видят пользователей по всему инстансу, независимо от членства в конкретном пространстве. Реализованы как `teamstorm_users_list_all` (поиск по `displayName`/`email`/`username`/`providerId`, фильтрация на стороне сервера, без пагинации — `UsersModelList` не имеет `fromToken`) и `teamstorm_users_get` (профиль по ID/username — удобно резолвить голый UUID из чужого поля вроде `createdBy`, не зная в каком пространстве состоит пользователь).
+- **`WorkspaceUsers`** (`GET /workspaces/{workspace}/users`): только участники конкретного пространства — уже реализовано как `teamstorm_users_list` (клиентская фильтрация по подстроке).
 - **`BlockUser`/`UnblockUser`, `AddWorkspaceUser`/`RemoveWorkspaceUser`, управление ролями** — административные/деструктивные операции, намеренно не реализованы (не запрашивались).
 - **`get_current_user` невозможен на уровне API** — в спеке нет ни одного эндпоинта `/me`/`current` в любом теге, аутентификация — непрозрачный `PrivateToken` (не JWT, не декодируется), ни один ответ не содержит идентифицирующего пользователя заголовка. Инструмент не реализован (не заглушка, а осознанное отсутствие) — резолвить личность вызывающего через публичный API нельзя.
 
@@ -199,12 +207,12 @@ DELETE-эндпоинт папок намеренно не реализован.
 
 Инструменты в `src/tools/portfolios/`: `list`, `get`, `create`, `update`. Инструменты в `src/tools/portfolio-elements/`: `list`, `get`, `create`, `update`. Инструменты в `src/tools/portfolio-links/` (кросс-сущностные, по аналогии с `document-links/`): `set` (закрепить задачу за элементом), `remove` (открепить), `get-tasks-by-name` (найти задачи по названию элемента портфеля). Общие форматтеры — `portfolios/format.ts` (`PortfolioModel`) и `portfolio-elements/format.ts` (`PortfolioElementModel`). DELETE-эндпоинты сущностей (DeletePortfolio, DeletePortfolioElement) намеренно не реализованы.
 
-- `teamstorm_create_portfolio` — `POST /portfolios` — `name`, `folderId` обязательны.
-- `teamstorm_update_portfolio` — `PATCH /portfolios/{id}` — `name` обязателен (API позволяет менять через PATCH только название).
-- `teamstorm_create_portfolio_element` — `POST /portfolio-elements` — `portfolioId`, `name` обязательны; `description`, `startDate`, `endDate`, `responsibles` опциональны.
-- `teamstorm_update_portfolio_element` — `PATCH /portfolio-elements/{id}` — все поля опциональны, включая `status` и полный список `responsibles` (заменяет текущий).
-- `teamstorm_set_task_portfolio_element` / `teamstorm_remove_task_portfolio_element` — `POST`/`DELETE /portfolio-elements/{id}/workitems/{workitem}` — закрепляют/открепляют одну задачу за одним элементом, не затрагивая остальные закрепления задачи. Принимают `portfolioElementId` напрямую ИЛИ `portfolioElementName` (с автоматическим резолвом через `listPortfolioElements`; при неоднозначности — ошибка со списком кандидатов, уточняется через `portfolioId`/`folderId`).
-- `teamstorm_get_tasks_by_portfolio_element_name` — составной инструмент (не имеет прямого соответствия в OpenAPI): находит элемент(ы) портфеля по названию через `listPortfolioElements`, затем для каждого найденного элемента получает задачи через `listTasks({ portfolioElementId })`; результаты группируются по каждому найденному элементу.
+- `teamstorm_portfolios_create` — `POST /portfolios` — `name`, `folderId` обязательны.
+- `teamstorm_portfolios_update` — `PATCH /portfolios/{id}` — `name` обязателен (API позволяет менять через PATCH только название).
+- `teamstorm_portfolio_elements_create` — `POST /portfolio-elements` — `portfolioId`, `name` обязательны; `description`, `startDate`, `endDate`, `responsibles` опциональны.
+- `teamstorm_portfolio_elements_update` — `PATCH /portfolio-elements/{id}` — все поля опциональны, включая `status` и полный список `responsibles` (заменяет текущий).
+- `teamstorm_portfolio_links_set` / `teamstorm_portfolio_links_remove` — `POST`/`DELETE /portfolio-elements/{id}/workitems/{workitem}` — закрепляют/открепляют одну задачу за одним элементом, не затрагивая остальные закрепления задачи. Принимают `portfolioElementId` напрямую ИЛИ `portfolioElementName` (с автоматическим резолвом через `listPortfolioElements`; при неоднозначности — ошибка со списком кандидатов, уточняется через `portfolioId`/`folderId`).
+- `teamstorm_portfolio_links_list_tasks_by_name` — составной инструмент (не имеет прямого соответствия в OpenAPI): находит элемент(ы) портфеля по названию через `listPortfolioElements`, затем для каждого найденного элемента получает задачи через `listTasks({ portfolioElementId })`; результаты группируются по каждому найденному элементу.
 
 Клиентские методы: `listPortfolios()`, `getPortfolio()`, `createPortfolio()`, `patchPortfolio()`, `listPortfolioElements()`, `getPortfolioElement()`, `createPortfolioElement()`, `patchPortfolioElement()`, `assignWorkitemToPortfolioElement()`, `unassignWorkitemFromPortfolioElement()`. Типы: `TeamStormPortfolioModel`, `TeamStormPortfolioModelList`, `TeamStormCreatePortfolioRequest`, `TeamStormPatchPortfolioRequest`, `TeamStormPortfolioElementModel`, `TeamStormPortfolioElementModelList`, `TeamStormCreatePortfolioElementRequest`, `TeamStormPatchPortfolioElementRequest`.
 
@@ -212,10 +220,10 @@ DELETE-эндпоинт папок намеренно не реализован.
 
 Инструменты в `src/tools/links/`: `get` (связи задачи), `create` (создать связь). Инструменты в `src/tools/link-types/`: `list`. Инструменты в `src/tools/status-categories/`: `list` (глобальный, без workspace). Инструменты в `src/tools/statuses/`: `list`, `get` (статусы задач — не путать с `document-statuses/`, это разные сущности с разными эндпоинтами).
 
-- **`GET /workspaces/{ws}/workitems/{id}/links` возвращает "широкий" ответ** — `WorkitemLinkModel[]` (голый массив, без обёртки `items`), каждый элемент — `{id, type: LinkTypeModel, linkedWorkitem: WorkitemModel}`, где `linkedWorkitem` — это **полная** модель связанной задачи (статус, исполнитель, папка, спринт, атрибуты и т.д.), а не облегчённый thumb. До 2026-07-17 клиентский тип `TeamStormLink`/`TeamStormLinkListResponse` не соответствовал этой форме (ожидал `{items: [{id, linkType, source, target}]}` с урезанными source/target) — расхождение обнаружено сверкой с реальным ответом API (спека даёт только "Has not description.", не проверяй по ней вслепую) и исправлено; `teamstorm_get_task_links` теперь и есть "широкий" инструмент получения связанных задач — отдельного `get_linked_workitems` не заводили.
-- `teamstorm_create_task_link` — `POST /workspaces/{ws}/workitems/{id}/links` — принимает `linkedWorkitem` (ключ/ID второй задачи) и тип связи либо напрямую (`linkTypeId`, UUID), либо по названию/ключу (`linkTypeName`, например «Связана»/«Relates» — резолвится через `listLinkTypes()`, ошибка со списком кандидатов при неоднозначности/отсутствии). Не идемпотентно: повторный вызов создаёт вторую связь (см. `409 Conflict` в спеке для дублей, которые бэкенд всё же отклоняет).
+- **`GET /workspaces/{ws}/workitems/{id}/links` возвращает "широкий" ответ** — `WorkitemLinkModel[]` (голый массив, без обёртки `items`), каждый элемент — `{id, type: LinkTypeModel, linkedWorkitem: WorkitemModel}`, где `linkedWorkitem` — это **полная** модель связанной задачи (статус, исполнитель, папка, спринт, атрибуты и т.д.), а не облегчённый thumb. До 2026-07-17 клиентский тип `TeamStormLink`/`TeamStormLinkListResponse` не соответствовал этой форме (ожидал `{items: [{id, linkType, source, target}]}` с урезанными source/target) — расхождение обнаружено сверкой с реальным ответом API (спека даёт только "Has not description.", не проверяй по ней вслепую) и исправлено; `teamstorm_task_links_list` теперь и есть "широкий" инструмент получения связанных задач — отдельного `get_linked_workitems` не заводили.
+- `teamstorm_task_links_create` — `POST /workspaces/{ws}/workitems/{id}/links` — принимает `linkedWorkitem` (ключ/ID второй задачи) и тип связи либо напрямую (`linkTypeId`, UUID), либо по названию/ключу (`linkTypeName`, например «Связана»/«Relates» — резолвится через `listLinkTypes()`, ошибка со списком кандидатов при неоднозначности/отсутствии). Не идемпотентно: повторный вызов создаёт вторую связь (см. `409 Conflict` в спеке для дублей, которые бэкенд всё же отклоняет).
 - **`DeleteWorkitemLink` намеренно не реализован** — как и все DELETE-эндпоинты в этом проекте (см. `TODO.log`, раздел «Deletes»).
-- `teamstorm_list_status_categories` — единственный по-настоящему глобальный справочник в клиенте: `GET /status-categories` не имеет `{workspace}` в пути и не принимает `workspace` в схеме инструмента — не добавляй `resolveWorkspace()` в `listStatusCategories()`.
+- `teamstorm_status_categories_list` — единственный по-настоящему глобальный справочник в клиенте: `GET /status-categories` не имеет `{workspace}` в пути и не принимает `workspace` в схеме инструмента — не добавляй `resolveWorkspace()` в `listStatusCategories()`.
 
 Клиентские методы: `getTaskLinks()`, `createTaskLink()`, `listLinkTypes()`, `listStatusCategories()`, `listWorkspaceStatuses()`, `getWorkspaceStatus()`. Типы: `TeamStormLink`, `TeamStormLinkListResponse`, `TeamStormLinkType`, `TeamStormLinkTypeListResponse`, `TeamStormCreateTaskLinkRequest`, `TeamStormStatusCategory`, `TeamStormStatusCategoryListResponse`, `TeamStormWorkspaceStatusListResponse` (переиспользует существующий `TeamStormStatus`).
 
@@ -225,11 +233,11 @@ DELETE-эндпоинт папок намеренно не реализован.
 
 Инструменты в `src/tools/sprints/`: `list` (все спринты пространства), `get` (один спринт по `sprintId`, с вычисленным капасити команды), `get-backlog` (беклог-спринт папки), `create` (создание спринта). Инструменты в `src/tools/agile/`: `list`, `get`, `create` — управление Agile-бордами. Инструменты в `src/tools/workspaces/`: `list`, `get`.
 
-- **«Капасити» спринта — не поле API**, а вычисляемая на клиенте величина: для каждого участника команды `(workdays спринта − daysOff участника) × hoursPerDay участника`, сумма по всем участникам даёт общее капасити в часах. Формула реализована в `src/tools/sprints/get.ts` (`computeSprintCapacity`) и переиспользуется в `get-backlog.ts`. `teamstorm_get_sprint`/`teamstorm_get_backlog` возвращают вычисленное значение отдельным полем `capacity` в `structuredContent`, не подменяя сырые `team`/`workdays` данные API.
-- **`teamstorm_get_backlog`** реализован как фильтр по `ListSprints({folderId})` (`isBacklog === true`), а не обёртка над `GetAgile` — беклог семантически является спринтом, а не отдельной сущностью борда. `listSprints()` в клиенте теперь принимает опциональные `folderId`/`name` (раньше игнорировались, хотя публичный API их поддерживает).
-- **`teamstorm_create_sprint`** требует `agileId`, которого обычно нет под рукой — инструмент принимает `folderId` ИЛИ `agileId` и резолвит первое во второе через `resolveAgileId()` (`src/tools/sprints/resolve-agile.ts`, `listAgile(workspace, folderId)`), по аналогии с `resolveLinkTypeId()`. Если у папки ещё нет Agile-борда — явная ошибка с указанием создать его через `teamstorm_create_agile_board` (инструмент **не** создаёт борд автоматически как побочный эффект).
-- **`CreateAgileRequestBody` не принимает `name`** (`additionalProperties: false` — только `folderId` и `estimatesType`), хотя `AgileModel` в ответе `name` требует — сервер выводит его сам (предположительно из имени папки). Не добавляйте `name` в схему `teamstorm_create_agile_board`.
-- **`GetWorkspace`, вероятно, подвержен той же нестабильности**, что и bare `GET /workspaces` (см. ниже про `UserNotFoundException`) — оба возвращают `author: UserModel`. Не проверено вживую на момент реализации (нет токена в `.env` этого окружения) — проверьте на реальном workspace перед тем, как полагаться на `teamstorm_get_workspace` в проде.
+- **«Капасити» спринта — не поле API**, а вычисляемая на клиенте величина: для каждого участника команды `(workdays спринта − daysOff участника) × hoursPerDay участника`, сумма по всем участникам даёт общее капасити в часах. Формула реализована в `src/tools/sprints/get.ts` (`computeSprintCapacity`) и переиспользуется в `get-backlog.ts`. `teamstorm_sprints_get`/`teamstorm_sprints_get_backlog` возвращают вычисленное значение отдельным полем `capacity` в `structuredContent`, не подменяя сырые `team`/`workdays` данные API.
+- **`teamstorm_sprints_get_backlog`** реализован как фильтр по `ListSprints({folderId})` (`isBacklog === true`), а не обёртка над `GetAgile` — беклог семантически является спринтом, а не отдельной сущностью борда. `listSprints()` в клиенте теперь принимает опциональные `folderId`/`name` (раньше игнорировались, хотя публичный API их поддерживает).
+- **`teamstorm_sprints_create`** требует `agileId`, которого обычно нет под рукой — инструмент принимает `folderId` ИЛИ `agileId` и резолвит первое во второе через `resolveAgileId()` (`src/tools/sprints/resolve-agile.ts`, `listAgile(workspace, folderId)`), по аналогии с `resolveLinkTypeId()`. Если у папки ещё нет Agile-борда — явная ошибка с указанием создать его через `teamstorm_agile_boards_create` (инструмент **не** создаёт борд автоматически как побочный эффект).
+- **`CreateAgileRequestBody` не принимает `name`** (`additionalProperties: false` — только `folderId` и `estimatesType`), хотя `AgileModel` в ответе `name` требует — сервер выводит его сам (предположительно из имени папки). Не добавляйте `name` в схему `teamstorm_agile_boards_create`.
+- **`GetWorkspace`, вероятно, подвержен той же нестабильности**, что и bare `GET /workspaces` (см. ниже про `UserNotFoundException`) — оба возвращают `author: UserModel`. Не проверено вживую на момент реализации (нет токена в `.env` этого окружения) — проверьте на реальном workspace перед тем, как полагаться на `teamstorm_workspaces_get` в проде.
 
 Клиентские методы: `listSprints()`, `getSprint()`, `createSprint()`, `listAgile()`, `getAgile()`, `createAgile()`, `getWorkspace()`. Типы: `TeamStormSprint` (расширен: `isBacklog`, `state`, `workdays`, `team`), `TeamStormSprintTeamMember`, `TeamStormCreateSprintRequest`, `TeamStormAgile`, `TeamStormCreateAgileRequest`, `TeamStormAgileListResponse`.
 
@@ -247,10 +255,10 @@ DELETE-эндпоинт папок намеренно не реализован.
 
 ### Портфели
 
-- **`ListPortfolios`/`ListPortfolioElements` не поддерживают пагинацию** — в отличие от всех остальных list-эндпоинтов, у них нет `fromToken`/`maxItemsCount`, ответ — просто `{ items }`. Не добавляй эти параметры в `teamstorm_list_portfolios`/`teamstorm_list_portfolio_elements`.
+- **`ListPortfolios`/`ListPortfolioElements` не поддерживают пагинацию** — в отличие от всех остальных list-эндпоинтов, у них нет `fromToken`/`maxItemsCount`, ответ — просто `{ items }`. Не добавляй эти параметры в `teamstorm_portfolios_list`/`teamstorm_portfolio_elements_list`.
 - **`PatchPortfolioRequestBody` требует `name`, даже если это переименование** — единственное поле схемы обязательно; частичный PATCH без `name` невозможен на уровне API.
 - **`POST /portfolio-elements/{id}/workitems/{workitem}` может возвращать пустое тело** — несмотря на задокументированный ответ `200 + PortfolioElementModel`, в проде эндпоинт иногда отвечает без тела. `assignWorkitemToPortfolioElement()` в клиенте это обрабатывает: если `response.data` пустой или без `id`, делается дополнительный `GET /portfolio-elements/{id}` для получения актуальной модели — не убирай этот fallback.
-- **Не используй `.superRefine()` на схеме, передаваемой в `inputSchema` `registerTool()`** — MCP SDK определяет properties инструмента по наличию `.shape` у Zod-схемы; `.superRefine()` оборачивает объект в `ZodEffects` без `.shape`, из-за чего SDK молча отдаёт клиентам пустой `{}` inputSchema (сам инструмент при этом продолжает валидировать аргументы правильно, что маскирует проблему до её появления у стороннего вызывающего). Условную/кросс-полевую валидацию (как в `teamstorm_set_task_portfolio_element`/`teamstorm_remove_task_portfolio_element`/`teamstorm_share_document`) делай внутри `execute`-функции инструмента, а не в `.superRefine()`.
+- **Не используй `.superRefine()` на схеме, передаваемой в `inputSchema` `registerTool()`** — MCP SDK определяет properties инструмента по наличию `.shape` у Zod-схемы; `.superRefine()` оборачивает объект в `ZodEffects` без `.shape`, из-за чего SDK молча отдаёт клиентам пустой `{}` inputSchema (сам инструмент при этом продолжает валидировать аргументы правильно, что маскирует проблему до её появления у стороннего вызывающего). Условную/кросс-полевую валидацию (как в `teamstorm_portfolio_links_set`/`teamstorm_portfolio_links_remove`/`teamstorm_document_permissions_create`) делай внутри `execute`-функции инструмента, а не в `.superRefine()`.
 
 ### Документы
 

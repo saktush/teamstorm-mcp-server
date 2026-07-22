@@ -39,7 +39,7 @@ export async function listTasksByParent(
   }
 
   try {
-    logRequest('teamstorm_list_tasks_by_parent', { workspace, parent });
+    logRequest('teamstorm_tasks_list_by_parent', { workspace, parent });
     const tasks: TeamStormTask[] = await client.listTasksByParent({
       workspace: args.workspace,
       parent: args.parent,
@@ -47,7 +47,7 @@ export async function listTasksByParent(
     });
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_list_tasks_by_parent', true, duration);
+    logResponse('teamstorm_tasks_list_by_parent', true, duration);
 
     if (tasks.length === 0) {
       return {
@@ -96,7 +96,7 @@ export async function listTasksByParent(
 
 export function registerListTasksByParentTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_tasks_by_parent',
+    'teamstorm_tasks_list_by_parent',
     {
       title: 'Получить задачи по родительскому элементу',
       description:

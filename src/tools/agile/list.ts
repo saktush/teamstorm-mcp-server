@@ -57,10 +57,10 @@ export async function listAgileBoards(
   }
 
   try {
-    logRequest('teamstorm_list_agile_boards', { workspace, folderId });
+    logRequest('teamstorm_agile_boards_list', { workspace, folderId });
     const boards = await client.listAgile(workspace, folderId);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_list_agile_boards', true, duration);
+    logResponse('teamstorm_agile_boards_list', true, duration);
 
     return {
       content: [{ type: 'text', text: formatAgileBoardsMarkdown(boards) }],
@@ -82,7 +82,7 @@ export async function listAgileBoards(
 
 export function registerListAgileBoardsTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_agile_boards',
+    'teamstorm_agile_boards_list',
     {
       title: 'Получить список Agile-бордов',
       description:

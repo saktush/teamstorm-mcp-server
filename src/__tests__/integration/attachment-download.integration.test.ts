@@ -102,7 +102,7 @@ describe('TeamStormClient Attachment Download Integration Tests', () => {
     });
   });
 
-  describe('teamstorm_get_task_attachment_file tool', () => {
+  describe('teamstorm_attachments_download tool', () => {
     let downloadDir: string;
 
     beforeEach(() => {

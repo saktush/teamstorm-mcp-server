@@ -21,7 +21,7 @@ export const createTaskCommentSchema = z
 
 export function registerCreateTaskCommentTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_create_task_comment',
+    'teamstorm_comments_create',
     {
       title: 'Добавить комментарий к задаче',
       description:
@@ -54,7 +54,7 @@ export async function createTaskComment(
   }
 
   try {
-    logRequest('teamstorm_create_task_comment', { workspace, taskId });
+    logRequest('teamstorm_comments_create', { workspace, taskId });
     const comment: TeamStormComment = await client.createTaskComment(
       args.taskId,
       args.text,
@@ -62,7 +62,7 @@ export async function createTaskComment(
     );
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_create_task_comment', true, duration);
+    logResponse('teamstorm_comments_create', true, duration);
 
     const text =
       `✅ Комментарий успешно добавлен к задаче ${args.taskId}\n\n` +

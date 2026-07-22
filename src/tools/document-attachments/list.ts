@@ -35,14 +35,14 @@ export async function listDocumentAttachments(
   }
 
   try {
-    logRequest('teamstorm_list_document_attachments', { workspace, documentId });
+    logRequest('teamstorm_document_attachments_list', { workspace, documentId });
     const response: TeamStormAttachmentListResponse = await client.listDocumentAttachments(
       documentId,
       workspace
     );
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_list_document_attachments', true, duration);
+    logResponse('teamstorm_document_attachments_list', true, duration);
 
     if (response.items.length === 0) {
       return {
@@ -88,7 +88,7 @@ export async function listDocumentAttachments(
 
 export function registerListDocumentAttachmentsTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_document_attachments',
+    'teamstorm_document_attachments_list',
     {
       title: 'Получить вложения документа',
       description:

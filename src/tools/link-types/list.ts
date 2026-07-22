@@ -51,11 +51,11 @@ export async function listLinkTypes(
   }
 
   try {
-    logRequest('teamstorm_list_link_types', params);
+    logRequest('teamstorm_link_types_list', params);
     const result = await client.listLinkTypes(params.workspace);
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_list_link_types', true, duration);
+    logResponse('teamstorm_link_types_list', true, duration);
     logger.info({ count: result.items.length, durationMs: duration }, 'Link types retrieved');
 
     return {
@@ -85,11 +85,11 @@ export async function listLinkTypes(
 
 export function registerListLinkTypesTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_link_types',
+    'teamstorm_link_types_list',
     {
       title: 'Получить список типов связей',
       description:
-        'Получить список типов связей между задачами (например, «Связана», «Блокирует») в пространстве TeamStorm. Используется для определения linkTypeId при создании связи через teamstorm_create_task_link. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить список типов связей между задачами (например, «Связана», «Блокирует») в пространстве TeamStorm. Используется для определения linkTypeId при создании связи через teamstorm_task_links_create. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
       inputSchema: listLinkTypesSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

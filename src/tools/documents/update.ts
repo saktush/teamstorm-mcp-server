@@ -19,7 +19,7 @@ export const updateDocumentSchema = z
       .string()
       .nullable()
       .describe(
-        'ID нового статуса документа (см. teamstorm_list_document_statuses). Передайте null, чтобы снять статус.'
+        'ID нового статуса документа (см. teamstorm_document_statuses_list). Передайте null, чтобы снять статус.'
       ),
   })
   .strict();
@@ -40,10 +40,10 @@ export async function updateDocument(
   }
 
   try {
-    logRequest('teamstorm_update_document', { workspace, documentId, status });
+    logRequest('teamstorm_documents_update', { workspace, documentId, status });
     const doc = await client.patchDocument(documentId, { status }, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_update_document', true, duration);
+    logResponse('teamstorm_documents_update', true, duration);
 
     const text = `✅ Документ обновлён\n\n${formatDocumentMarkdown(doc)}`;
 
@@ -67,7 +67,7 @@ export async function updateDocument(
 
 export function registerUpdateDocumentTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_update_document',
+    'teamstorm_documents_update',
     {
       title: 'Обновить статус документа',
       description:

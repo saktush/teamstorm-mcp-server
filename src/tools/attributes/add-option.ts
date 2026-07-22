@@ -40,10 +40,10 @@ export async function addAttributeOption(
   }
 
   try {
-    logRequest('teamstorm_add_attribute_option', { workspace, attributeId, name: body.name });
+    logRequest('teamstorm_attributes_add_option', { workspace, attributeId, name: body.name });
     const attribute = await client.addAttributeOption(attributeId, body, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_add_attribute_option', true, duration);
+    logResponse('teamstorm_attributes_add_option', true, duration);
 
     return {
       content: [{ type: 'text', text: `✅ Опция добавлена\n\n${formatAttributeModel(attribute)}` }],
@@ -65,7 +65,7 @@ export async function addAttributeOption(
 
 export function registerAddAttributeOptionTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_add_attribute_option',
+    'teamstorm_attributes_add_option',
     {
       title: 'Добавить опцию атрибута',
       description:

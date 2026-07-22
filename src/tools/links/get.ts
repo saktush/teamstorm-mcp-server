@@ -20,7 +20,7 @@ export const getTaskLinksSchema = z
 
 export function registerGetTaskLinksTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_task_links',
+    'teamstorm_task_links_list',
     {
       title: 'Получить связанные задачи',
       description:
@@ -48,14 +48,14 @@ export async function getTaskLinks(
   }
 
   try {
-    logRequest('teamstorm_get_task_links', { workspace, taskId });
+    logRequest('teamstorm_task_links_list', { workspace, taskId });
     const links: TeamStormLinkListResponse = await client.getTaskLinks(
       args.taskId,
       args.workspace
     );
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_get_task_links', true, duration);
+    logResponse('teamstorm_task_links_list', true, duration);
 
     if (links.length === 0) {
       return {

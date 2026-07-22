@@ -33,10 +33,10 @@ export async function getWorkspaceStatus(
   }
 
   try {
-    logRequest('teamstorm_get_workspace_status', { workspace, statusId });
+    logRequest('teamstorm_workspace_statuses_get', { workspace, statusId });
     const status = await client.getWorkspaceStatus(statusId, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_get_workspace_status', true, duration);
+    logResponse('teamstorm_workspace_statuses_get', true, duration);
 
     const text =
       `# Статус задачи\n\n` +
@@ -64,7 +64,7 @@ export async function getWorkspaceStatus(
 
 export function registerGetWorkspaceStatusTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_workspace_status',
+    'teamstorm_workspace_statuses_get',
     {
       title: 'Получить статус задачи',
       description: 'Получить статус задачи (workitem) TeamStorm по идентификатору.',

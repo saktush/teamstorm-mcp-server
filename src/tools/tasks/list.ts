@@ -47,11 +47,11 @@ export async function listTasks(
   }
 
   try {
-    logRequest('teamstorm_list_tasks', { workspace, ...filteredParams });
+    logRequest('teamstorm_tasks_list', { workspace, ...filteredParams });
     const result = await client.listTasks({ ...filteredParams, workspace });
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_list_tasks', true, duration);
+    logResponse('teamstorm_tasks_list', true, duration);
     logger.info({ count: result.items.length, durationMs: duration }, 'Tasks retrieved');
 
     const markdown = formatTaskListMarkdown(result);
@@ -91,7 +91,7 @@ export { ListTasksSchema as listTasksSchema };
 
 export function registerListTasksTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_tasks',
+    'teamstorm_tasks_list',
     {
       title: 'Получить список задач',
       description:

@@ -38,10 +38,10 @@ export async function createFolder(
   }
 
   try {
-    logRequest('teamstorm_create_folder', { workspace, name: body.name });
+    logRequest('teamstorm_folders_create', { workspace, name: body.name });
     const folder = await client.createFolder(body, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_create_folder', true, duration);
+    logResponse('teamstorm_folders_create', true, duration);
 
     const lines: string[] = [];
     lines.push(`✅ Папка создана\n`);
@@ -70,7 +70,7 @@ export async function createFolder(
 
 export function registerCreateFolderTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_create_folder',
+    'teamstorm_folders_create',
     {
       title: 'Создать папку',
       description:

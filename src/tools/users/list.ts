@@ -61,11 +61,11 @@ export async function listUsers(
   }
 
   try {
-    logRequest('teamstorm_list_users', params);
+    logRequest('teamstorm_users_list', params);
     const result = await client.listUsers(params.workspace);
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_list_users', true, duration);
+    logResponse('teamstorm_users_list', true, duration);
 
     // Apply client-side search filter if provided
     let filteredUsers = result.items;
@@ -120,7 +120,7 @@ export { ListUsersSchema as listUsersSchema };
 
 export function registerListUsersTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_users',
+    'teamstorm_users_list',
     {
       title: 'Получить список пользователей',
       description:

@@ -34,7 +34,7 @@ export async function getTask(
   }
 
   if (!client.hasBaseUrl()) {
-    logRequest('teamstorm_get_task', params);
+    logRequest('teamstorm_tasks_get', params);
     return {
       content: [
         {
@@ -50,11 +50,11 @@ export async function getTask(
   }
 
   try {
-    logRequest('teamstorm_get_task', params);
+    logRequest('teamstorm_tasks_get', params);
     const task = await client.getTask(params.taskId, params.workspace);
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_get_task', true, duration);
+    logResponse('teamstorm_tasks_get', true, duration);
     logger.info({ taskId: params.taskId, durationMs: duration }, 'Task retrieved');
 
     if (task.sprint?.id) {
@@ -97,7 +97,7 @@ export { GetTaskSchema as getTaskSchema };
 
 export function registerGetTaskTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_task',
+    'teamstorm_tasks_get',
     {
       title: 'Получить задачу по ID',
       description:

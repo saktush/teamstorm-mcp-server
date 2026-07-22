@@ -33,10 +33,10 @@ export async function getDocumentStatus(
   }
 
   try {
-    logRequest('teamstorm_get_document_status', { workspace, statusId });
+    logRequest('teamstorm_document_statuses_get', { workspace, statusId });
     const status = await client.getDocumentStatus(statusId, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_get_document_status', true, duration);
+    logResponse('teamstorm_document_statuses_get', true, duration);
 
     const text = `# Статус документа\n\n- Название: **${status.name}**\n- ID: \`${status.id}\``;
 
@@ -60,7 +60,7 @@ export async function getDocumentStatus(
 
 export function registerGetDocumentStatusTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_document_status',
+    'teamstorm_document_statuses_get',
     {
       title: 'Получить статус документа',
       description: 'Получить статус документа TeamStorm по идентификатору.',

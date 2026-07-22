@@ -36,7 +36,7 @@ export async function updateAttributeOption(
   }
 
   try {
-    logRequest('teamstorm_update_attribute_option', {
+    logRequest('teamstorm_attributes_update_option', {
       workspace,
       attributeId,
       id: body.id,
@@ -44,7 +44,7 @@ export async function updateAttributeOption(
     });
     const attribute = await client.patchAttributeOption(attributeId, body, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_update_attribute_option', true, duration);
+    logResponse('teamstorm_attributes_update_option', true, duration);
 
     return {
       content: [{ type: 'text', text: `✅ Опция обновлена\n\n${formatAttributeModel(attribute)}` }],
@@ -66,7 +66,7 @@ export async function updateAttributeOption(
 
 export function registerUpdateAttributeOptionTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_update_attribute_option',
+    'teamstorm_attributes_update_option',
     {
       title: 'Обновить опцию атрибута',
       description:
