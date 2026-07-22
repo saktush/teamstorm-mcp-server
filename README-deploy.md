@@ -167,7 +167,10 @@ Failed to open SSE stream: Bad Request
 Bad Request: Server not initialized
 ```
 
-Штатный порядок обновления:
+> 🤖 Автоматизация: этот же цикл можно запускать автоматически при пуше в `main` через
+> self-hosted GitHub Actions runner — см. [README-cicd.md](README-cicd.md).
+
+Штатный порядок обновления (вручную):
 
 ```bash
 git pull
