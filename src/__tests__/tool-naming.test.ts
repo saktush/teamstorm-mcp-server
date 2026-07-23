@@ -25,7 +25,8 @@ function allRegisteredNames(): string[] {
 // Verbs that must never lead a tool name (i.e. no verb-first names survive).
 // `link` is intentionally excluded: it is unambiguous with the `link_types`
 // resource (`teamstorm_link_types_list`), whose first token is `link`.
-const VERB_FIRST = /^teamstorm_(get|list|create|update|add|set|remove|share|block|unblock|find|attach)_/;
+const VERB_FIRST =
+  /^teamstorm_(get|list|create|update|add|set|remove|share|block|unblock|find|attach)_/;
 const SHAPE = /^teamstorm_[a-z0-9]+(_[a-z0-9]+)+$/;
 
 describe('resource-first tool naming (Feature D)', () => {
