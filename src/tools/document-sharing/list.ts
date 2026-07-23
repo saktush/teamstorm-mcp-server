@@ -46,10 +46,10 @@ export async function listDocumentPermissions(
   }
 
   try {
-    logRequest('teamstorm_list_document_permissions', { workspace, documentId });
+    logRequest('teamstorm_document_permissions_list', { workspace, documentId });
     const permissions = await client.listDocumentPermissions(documentId, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_list_document_permissions', true, duration);
+    logResponse('teamstorm_document_permissions_list', true, duration);
 
     if (permissions.length === 0) {
       return {
@@ -84,7 +84,7 @@ export async function listDocumentPermissions(
 
 export function registerListDocumentPermissionsTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_document_permissions',
+    'teamstorm_document_permissions_list',
     {
       title: 'Разрешения на документ',
       description:

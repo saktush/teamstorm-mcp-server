@@ -5,7 +5,7 @@ import type { TeamStormUser } from '../../client/types.js';
 import { logRequest, logResponse, logError } from '../../utils/logger.js';
 
 // GET /users/{user} has no {workspace} segment — this is a genuinely global lookup
-// (same reasoning as teamstorm_list_status_categories), do not add a workspace param here.
+// (same reasoning as teamstorm_status_categories_list), do not add a workspace param here.
 export const getUserSchema = z
   .object({
     apiUrl: z
@@ -36,11 +36,11 @@ export async function getUser(
   }
 
   try {
-    logRequest('teamstorm_get_user', { user, providerId });
+    logRequest('teamstorm_users_get', { user, providerId });
     const result: TeamStormUser = await client.getUser(user, providerId);
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_get_user', true, duration);
+    logResponse('teamstorm_users_get', true, duration);
 
     const text =
       `👤 **${result.displayName}** (@${result.username})\n\n` +
@@ -68,7 +68,7 @@ export async function getUser(
 
 export function registerGetUserTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_user',
+    'teamstorm_users_get',
     {
       title: 'Получить пользователя (глобально)',
       description:

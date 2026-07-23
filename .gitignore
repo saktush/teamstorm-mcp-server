@@ -10,6 +10,9 @@ dist/
 !.env.example
 swagger.json
 
+# Local per-server Docker override (see docker-compose.override.yml.example)
+docker-compose.override.yml
+
 # Secrets and credentials
 *.key
 *.pem

@@ -34,10 +34,10 @@ export async function getDocument(
   }
 
   try {
-    logRequest('teamstorm_get_document', { workspace, documentId });
+    logRequest('teamstorm_documents_get', { workspace, documentId });
     const doc = await client.getDocument(documentId, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_get_document', true, duration);
+    logResponse('teamstorm_documents_get', true, duration);
 
     return {
       content: [{ type: 'text', text: formatDocumentMarkdown(doc, true) }],
@@ -59,7 +59,7 @@ export async function getDocument(
 
 export function registerGetDocumentTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_document',
+    'teamstorm_documents_get',
     {
       title: 'Получить документ',
       description:

@@ -5,7 +5,7 @@ import { TeamStormClient } from '../../client/teamstorm.js';
  * (поиск через listAgile, отфильтрованный по папке на бэкенде). Бросает Error
  * с понятным сообщением, если у папки ещё нет Agile-борда — не создаёт его
  * автоматически, так как это отдельное, явно запрашиваемое действие
- * (teamstorm_create_agile_board).
+ * (teamstorm_agile_boards_create).
  */
 export async function resolveAgileId(
   client: TeamStormClient,
@@ -27,7 +27,7 @@ export async function resolveAgileId(
 
   if (boards.length === 0) {
     throw new Error(
-      `У папки ${params.folderId} нет Agile-борда. Создайте его через teamstorm_create_agile_board, ` +
+      `У папки ${params.folderId} нет Agile-борда. Создайте его через teamstorm_agile_boards_create, ` +
         `затем повторите создание спринта.`
     );
   }

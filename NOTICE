@@ -1,0 +1,28 @@
+TeamStorm MCP Server
+====================
+
+This project is distributed under the MIT License. See the LICENSE file for
+the full license text and copyright notices.
+
+Origin and history
+------------------
+This software was originally created by Ruslan Yakhin (@madebyearth) and
+released under the MIT License. The original repository is:
+
+    https://github.com/madebyearth/teamstorm-mcp-server
+
+In June 2026 the project was forked by Sergei Blashkevich (@saktush). For a period the
+fork was kept in sync with the upstream repository through pull requests.
+As the upstream repository became inactive, the fork was detached and is now
+developed and maintained independently at:
+
+    https://github.com/saktush/teamstorm-mcp-server
+
+All copyright and permission notices from the original work have been retained
+in the LICENSE file, as required by the MIT License. Modifications and
+additions made after the fork are copyright their respective contributors and
+are likewise released under the MIT License.
+
+This NOTICE file is provided for attribution and historical transparency. It
+is informational only; the MIT License in the LICENSE file governs your rights
+to use, modify, and distribute this software.

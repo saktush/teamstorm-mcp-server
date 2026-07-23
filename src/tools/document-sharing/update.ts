@@ -16,7 +16,7 @@ export const updateDocumentPermissionSchema = z
     documentId: z.string().describe('Ключ или идентификатор документа (UUID)'),
     permissionId: z
       .string()
-      .describe('ID разрешения (см. teamstorm_list_document_permissions)'),
+      .describe('ID разрешения (см. teamstorm_document_permissions_list)'),
     accessLevel: z
       .enum(['Read', 'Edit', 'Comment'])
       .describe('Новый уровень доступа: Read, Edit или Comment'),
@@ -39,7 +39,7 @@ export async function updateDocumentPermission(
   }
 
   try {
-    logRequest('teamstorm_update_document_permission', {
+    logRequest('teamstorm_document_permissions_update', {
       workspace,
       documentId,
       permissionId,
@@ -52,7 +52,7 @@ export async function updateDocumentPermission(
       workspace
     );
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_update_document_permission', true, duration);
+    logResponse('teamstorm_document_permissions_update', true, duration);
 
     const text =
       `✅ Разрешение обновлено\n\n` +
@@ -79,7 +79,7 @@ export async function updateDocumentPermission(
 
 export function registerUpdateDocumentPermissionTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_update_document_permission',
+    'teamstorm_document_permissions_update',
     {
       title: 'Изменить уровень доступа к документу',
       description:

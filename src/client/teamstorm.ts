@@ -194,7 +194,7 @@ export class TeamStormClient {
       throw new Error(
         'Workspace не указан.\n' +
           '💡 Укажите workspace в параметрах инструмента или установите TEAMSTORM_WORKSPACE в .env файле.\n' +
-          '   Для получения списка доступных пространств используйте teamstorm_list_workspaces'
+          '   Для получения списка доступных пространств используйте teamstorm_workspaces_list'
       );
     }
     return ws;
@@ -217,7 +217,7 @@ export class TeamStormClient {
           break;
         case 404:
           hint =
-            '💡 Проверьте workspace ID и ID задачи. Для получения списка доступных пространств используйте teamstorm_list_workspaces';
+            '💡 Проверьте workspace ID и ID задачи. Для получения списка доступных пространств используйте teamstorm_workspaces_list';
           break;
         case 422:
           hint = '💡 Проверьте обязательные поля и форматы данных';

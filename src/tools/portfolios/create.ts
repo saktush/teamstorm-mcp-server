@@ -35,10 +35,10 @@ export async function createPortfolio(
   }
 
   try {
-    logRequest('teamstorm_create_portfolio', { workspace, name: body.name, folderId: body.folderId });
+    logRequest('teamstorm_portfolios_create', { workspace, name: body.name, folderId: body.folderId });
     const portfolio = await client.createPortfolio(body, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_create_portfolio', true, duration);
+    logResponse('teamstorm_portfolios_create', true, duration);
 
     return {
       content: [{ type: 'text', text: `✅ Портфель создан\n\n${formatPortfolioModel(portfolio)}` }],
@@ -60,7 +60,7 @@ export async function createPortfolio(
 
 export function registerCreatePortfolioTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_create_portfolio',
+    'teamstorm_portfolios_create',
     {
       title: 'Создать портфель',
       description: 'Создать новый портфель в указанной папке пространства TeamStorm.',

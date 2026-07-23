@@ -38,10 +38,10 @@ export async function listDocuments(
   }
 
   try {
-    logRequest('teamstorm_list_documents', { workspace, ...rest });
+    logRequest('teamstorm_documents_list', { workspace, ...rest });
     const result = await client.listDocuments({ workspace, ...rest });
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_list_documents', true, duration);
+    logResponse('teamstorm_documents_list', true, duration);
     logger.info({ count: result.items.length, durationMs: duration }, 'Documents retrieved');
 
     if (result.items.length === 0) {
@@ -91,7 +91,7 @@ export async function listDocuments(
 
 export function registerListDocumentsTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_documents',
+    'teamstorm_documents_list',
     {
       title: 'Список документов пространства',
       description:

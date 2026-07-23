@@ -66,7 +66,7 @@ export async function getFolderTree(
   }
 
   try {
-    logRequest('teamstorm_get_folder_tree', { workspace });
+    logRequest('teamstorm_folders_tree', { workspace });
 
     const allFolders: TeamStormFolderModel[] = [];
     let nextToken: string | null | undefined = undefined;
@@ -82,7 +82,7 @@ export async function getFolderTree(
     } while (nextToken);
 
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_get_folder_tree', true, duration);
+    logResponse('teamstorm_folders_tree', true, duration);
     logger.info({ total: allFolders.length, durationMs: duration }, 'Folder tree fetched');
 
     if (allFolders.length === 0) {
@@ -117,7 +117,7 @@ export async function getFolderTree(
 
 export function registerGetFolderTreeTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_folder_tree',
+    'teamstorm_folders_tree',
     {
       title: 'Дерево папок пространства',
       description:

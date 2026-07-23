@@ -201,12 +201,12 @@ export async function createTask(
       }
     }
 
-    logRequest('teamstorm_create_task', { ...createPayload });
+    logRequest('teamstorm_tasks_create', { ...createPayload });
 
     const result = await client.createTask(createPayload);
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_create_task', true, duration);
+    logResponse('teamstorm_tasks_create', true, duration);
     logger.info({ taskKey: result.key, durationMs: duration }, 'Task created');
 
     const markdown = formatTaskMarkdown(result);
@@ -241,7 +241,7 @@ export { CreateTaskSchema as createTaskSchema };
 
 export function registerCreateTaskTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_create_task',
+    'teamstorm_tasks_create',
     {
       title: 'Создать новую задачу',
       description:

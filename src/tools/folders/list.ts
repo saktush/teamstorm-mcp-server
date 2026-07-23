@@ -43,10 +43,10 @@ export async function listFolders(
   }
 
   try {
-    logRequest('teamstorm_list_folders', { workspace, ...rest });
+    logRequest('teamstorm_folders_list', { workspace, ...rest });
     const result = await client.listFolders({ workspace, ...rest });
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_list_folders', true, duration);
+    logResponse('teamstorm_folders_list', true, duration);
     logger.info({ count: result.items.length, durationMs: duration }, 'Folders retrieved');
 
     if (result.items.length === 0) {
@@ -95,7 +95,7 @@ export async function listFolders(
 
 export function registerListFoldersTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_folders',
+    'teamstorm_folders_list',
     {
       title: 'Список папок пространства',
       description:

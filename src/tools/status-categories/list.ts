@@ -52,11 +52,11 @@ export async function listStatusCategories(
   }
 
   try {
-    logRequest('teamstorm_list_status_categories', params);
+    logRequest('teamstorm_status_categories_list', params);
     const result = await client.listStatusCategories();
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_list_status_categories', true, duration);
+    logResponse('teamstorm_status_categories_list', true, duration);
     logger.info(
       { count: result.items.length, durationMs: duration },
       'Status categories retrieved'
@@ -89,7 +89,7 @@ export async function listStatusCategories(
 
 export function registerListStatusCategoriesTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_status_categories',
+    'teamstorm_status_categories_list',
     {
       title: 'Получить список категорий статусов',
       description:

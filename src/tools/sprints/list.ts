@@ -71,11 +71,11 @@ export async function listSprints(
   }
 
   try {
-    logRequest('teamstorm_list_sprints', params);
+    logRequest('teamstorm_sprints_list', params);
     const result = await client.listSprints(params.workspace);
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_list_sprints', true, duration);
+    logResponse('teamstorm_sprints_list', true, duration);
 
     // Apply status filter if provided
     let filteredSprints = result.items;
@@ -134,7 +134,7 @@ export { ListSprintsSchema as listSprintsSchema };
 
 export function registerListSprintsTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_sprints',
+    'teamstorm_sprints_list',
     {
       title: 'Получить список спринтов',
       description:

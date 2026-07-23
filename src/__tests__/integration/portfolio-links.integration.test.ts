@@ -94,7 +94,7 @@ describe('TeamStormClient Portfolio Links Integration Tests', () => {
     });
   });
 
-  describe('teamstorm_set_task_portfolio_element', () => {
+  describe('teamstorm_portfolio_links_set', () => {
     it('assigns directly when portfolioElementId is given (skips name lookup)', async () => {
       nock(baseUrl)
         .post(`/workspaces/${workspace}/portfolio-elements/${elementIdA}/workitems/${taskId}`)
@@ -185,7 +185,7 @@ describe('TeamStormClient Portfolio Links Integration Tests', () => {
     });
   });
 
-  describe('teamstorm_remove_task_portfolio_element', () => {
+  describe('teamstorm_portfolio_links_remove', () => {
     it('unassigns directly when portfolioElementId is given (skips name lookup)', async () => {
       nock(baseUrl)
         .delete(`/workspaces/${workspace}/portfolio-elements/${elementIdA}/workitems/${taskId}`)
@@ -254,7 +254,7 @@ describe('TeamStormClient Portfolio Links Integration Tests', () => {
     });
   });
 
-  describe('teamstorm_get_tasks_by_portfolio_element_name', () => {
+  describe('teamstorm_portfolio_links_list_tasks_by_name', () => {
     it('returns tasks for a single matched element', async () => {
       nock(baseUrl)
         .get(`/workspaces/${workspace}/portfolio-elements`)

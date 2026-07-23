@@ -17,7 +17,7 @@ export const listWorkspacesSchema = z
 
 export function registerListWorkspacesTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_workspaces',
+    'teamstorm_workspaces_list',
     {
       title: 'Получить список пространств',
       description:
@@ -46,7 +46,7 @@ export async function listWorkspaces(
   const startTime = Date.now();
 
   try {
-    logRequest('teamstorm_list_workspaces', {});
+    logRequest('teamstorm_workspaces_list', {});
 
     const allWorkspaces: Array<{ id: string; key: string; name: string }> = [];
     let nextToken: string | null | undefined = undefined;
@@ -62,7 +62,7 @@ export async function listWorkspaces(
 
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_list_workspaces', true, duration);
+    logResponse('teamstorm_workspaces_list', true, duration);
 
     logger.info(`Retrieved ${allWorkspaces.length} workspaces in ${duration}ms`);
 

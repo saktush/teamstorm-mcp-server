@@ -59,11 +59,11 @@ export async function listTaskTypes(
   }
 
   try {
-    logRequest('teamstorm_list_task_types', params);
+    logRequest('teamstorm_task_types_list', params);
     const result = await client.listTaskTypes(params.workspace);
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_list_task_types', true, duration);
+    logResponse('teamstorm_task_types_list', true, duration);
     logger.info({ count: result.items.length, durationMs: duration }, 'Task types retrieved');
 
     const markdown = formatTaskTypesMarkdown(result);
@@ -97,7 +97,7 @@ export { ListTaskTypesSchema as listTaskTypesSchema };
 
 export function registerListTaskTypesTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_task_types',
+    'teamstorm_task_types_list',
     {
       title: 'Получить список типов задач',
       description:

@@ -20,7 +20,7 @@ export const listTaskCommentsSchema = z
 
 export function registerListTaskCommentsTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_task_comments',
+    'teamstorm_comments_list',
     {
       title: 'Получить комментарии задачи',
       description:
@@ -48,14 +48,14 @@ export async function listTaskComments(
   }
 
   try {
-    logRequest('teamstorm_list_task_comments', { workspace, taskId });
+    logRequest('teamstorm_comments_list', { workspace, taskId });
     const response: TeamStormCommentListResponse = await client.listTaskComments(
       args.taskId,
       args.workspace
     );
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_list_task_comments', true, duration);
+    logResponse('teamstorm_comments_list', true, duration);
 
     if (response.items.length === 0) {
       return {

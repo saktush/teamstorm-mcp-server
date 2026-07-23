@@ -27,9 +27,9 @@ export function registerAnalyzeFolderCommentsPrompt(server: McpServer) {
       const text = `Проанализируй комментарии ко всем задачам в папке "${folderName}" пространства ${workspace} и составь сводку по темам и action items.
 
 Выполни шаги строго по порядку:
-1. Вызови teamstorm_find_folder с workspace="${workspace}" и запросом "${folderName}", чтобы определить ID папки.
-2. Вызови teamstorm_list_tasks_by_parent для найденной папки (workspace="${workspace}"), чтобы получить список всех её задач.
-3. Для КАЖДОЙ задачи из полученного списка вызови teamstorm_list_task_comments (workspace="${workspace}", taskId=<ID задачи>). Не ограничивайся первой задачей — обойди все задачи из шага 2.
+1. Вызови teamstorm_folders_find с workspace="${workspace}" и запросом "${folderName}", чтобы определить ID папки.
+2. Вызови teamstorm_tasks_list_by_parent для найденной папки (workspace="${workspace}"), чтобы получить список всех её задач.
+3. Для КАЖДОЙ задачи из полученного списка вызови teamstorm_comments_list (workspace="${workspace}", taskId=<ID задачи>). Не ограничивайся первой задачей — обойди все задачи из шага 2.
 
 По итогам собери единую сводку по комментариям всех задач:
 - Основные темы обсуждений.

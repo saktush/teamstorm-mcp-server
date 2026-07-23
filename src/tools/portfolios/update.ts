@@ -40,10 +40,10 @@ export async function updatePortfolio(
   }
 
   try {
-    logRequest('teamstorm_update_portfolio', { workspace, portfolioId, ...body });
+    logRequest('teamstorm_portfolios_update', { workspace, portfolioId, ...body });
     const portfolio = await client.patchPortfolio(portfolioId, body, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_update_portfolio', true, duration);
+    logResponse('teamstorm_portfolios_update', true, duration);
 
     return {
       content: [
@@ -67,7 +67,7 @@ export async function updatePortfolio(
 
 export function registerUpdatePortfolioTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_update_portfolio',
+    'teamstorm_portfolios_update',
     {
       title: 'Переименовать портфель',
       description:

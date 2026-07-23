@@ -48,10 +48,10 @@ export async function getWorkspace(
   }
 
   try {
-    logRequest('teamstorm_get_workspace', { workspace });
+    logRequest('teamstorm_workspaces_get', { workspace });
     const result = await client.getWorkspace(workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_get_workspace', true, duration);
+    logResponse('teamstorm_workspaces_get', true, duration);
 
     return {
       content: [{ type: 'text', text: formatWorkspaceMarkdown(result) }],
@@ -73,7 +73,7 @@ export async function getWorkspace(
 
 export function registerGetWorkspaceTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_workspace',
+    'teamstorm_workspaces_get',
     {
       title: 'Получить пространство',
       description:

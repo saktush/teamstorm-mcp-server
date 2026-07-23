@@ -72,7 +72,7 @@ export async function setTaskPortfolioElement(
   }
 
   try {
-    logRequest('teamstorm_set_task_portfolio_element', {
+    logRequest('teamstorm_portfolio_links_set', {
       workspace,
       taskId,
       portfolioElementId,
@@ -87,7 +87,7 @@ export async function setTaskPortfolioElement(
     });
     const element = await client.assignWorkitemToPortfolioElement(resolvedId, taskId, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_set_task_portfolio_element', true, duration);
+    logResponse('teamstorm_portfolio_links_set', true, duration);
 
     return {
       content: [
@@ -114,7 +114,7 @@ export async function setTaskPortfolioElement(
 
 export function registerSetTaskPortfolioElementTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_set_task_portfolio_element',
+    'teamstorm_portfolio_links_set',
     {
       title: 'Закрепить задачу за элементом портфеля',
       description:

@@ -21,7 +21,7 @@ export const ListTaskAttachmentsSchema = z
 
 export function registerListTaskAttachmentsTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_task_attachments',
+    'teamstorm_attachments_list',
     {
       title: 'Получить вложения задачи',
       description:
@@ -49,14 +49,14 @@ export async function listTaskAttachments(
   }
 
   try {
-    logRequest('teamstorm_list_task_attachments', { workspace, taskId });
+    logRequest('teamstorm_attachments_list', { workspace, taskId });
     const response: TeamStormAttachmentListResponse = await client.listTaskAttachments(
       args.taskId,
       args.workspace
     );
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_list_task_attachments', true, duration);
+    logResponse('teamstorm_attachments_list', true, duration);
 
     if (response.items.length === 0) {
       return {

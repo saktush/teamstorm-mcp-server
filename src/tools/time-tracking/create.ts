@@ -33,7 +33,7 @@ export const createTimeEntrySchema = z
 
 export function registerCreateTimeEntryTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_create_time_entry',
+    'teamstorm_time_entries_create',
     {
       title: 'Добавить списание времени',
       description:
@@ -66,7 +66,7 @@ export async function createTimeEntry(
   }
 
   try {
-    logRequest('teamstorm_create_time_entry', { workspace, taskId, ...restArgs });
+    logRequest('teamstorm_time_entries_create', { workspace, taskId, ...restArgs });
     const result = await client.createTimeEntry({
       taskId,
       duration: args.duration,
@@ -77,7 +77,7 @@ export async function createTimeEntry(
     });
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_create_time_entry', true, duration);
+    logResponse('teamstorm_time_entries_create', true, duration);
 
     logger.info({ taskId, durationMs: duration }, 'Time entry created');
 

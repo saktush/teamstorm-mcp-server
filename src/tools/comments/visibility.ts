@@ -21,7 +21,7 @@ export const getCommentVisibilitySchema = z
 
 export function registerGetCommentVisibilityTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_comment_visibility',
+    'teamstorm_comments_get_visibility',
     {
       title: 'Получить видимость комментария',
       description:
@@ -50,7 +50,7 @@ export async function getCommentVisibility(
   }
 
   try {
-    logRequest('teamstorm_get_comment_visibility', { workspace, taskId, commentId });
+    logRequest('teamstorm_comments_get_visibility', { workspace, taskId, commentId });
     const visibility: TeamStormCommentVisibility = await client.getCommentVisibility(
       args.taskId,
       args.commentId,
@@ -58,7 +58,7 @@ export async function getCommentVisibility(
     );
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_get_comment_visibility', true, duration);
+    logResponse('teamstorm_comments_get_visibility', true, duration);
 
     const visibilityTypeMap: Record<string, string> = {
       All: '🌍 Доступен всем',

@@ -33,10 +33,10 @@ export async function listDocumentComments(
   }
 
   try {
-    logRequest('teamstorm_list_document_comments', { workspace, documentId });
+    logRequest('teamstorm_document_comments_list', { workspace, documentId });
     const result = await client.listDocumentComments(documentId, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_list_document_comments', true, duration);
+    logResponse('teamstorm_document_comments_list', true, duration);
 
     if (result.items.length === 0) {
       return {
@@ -76,7 +76,7 @@ export async function listDocumentComments(
 
 export function registerListDocumentCommentsTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_document_comments',
+    'teamstorm_document_comments_list',
     {
       title: 'Комментарии к документу',
       description: 'Получить список комментариев к документу TeamStorm.',

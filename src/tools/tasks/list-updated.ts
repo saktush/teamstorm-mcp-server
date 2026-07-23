@@ -32,7 +32,7 @@ export const listUpdatedTasksSchema = z
 
 export function registerListUpdatedTasksTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_updated_tasks',
+    'teamstorm_tasks_list_updated',
     {
       title: 'Получить изменённые задачи',
       description:
@@ -54,7 +54,7 @@ export async function listUpdatedTasks(
 }> {
   const startTime = Date.now();
   try {
-    logRequest('teamstorm_list_updated_tasks', args);
+    logRequest('teamstorm_tasks_list_updated', args);
     const { workspace, apiUrl } = args;
 
     if (apiUrl) {
@@ -69,7 +69,7 @@ export async function listUpdatedTasks(
       workspace: args.workspace,
     });
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_list_updated_tasks', true, duration);
+    logResponse('teamstorm_tasks_list_updated', true, duration);
 
     if (response.items.length === 0) {
       return {

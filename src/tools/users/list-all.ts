@@ -5,7 +5,7 @@ import { logRequest, logResponse, logError } from '../../utils/logger.js';
 import { formatUsersMarkdown } from './list.js';
 
 // GET /users has no {workspace} segment and no pagination tokens (UsersModelList = { items }) —
-// instance-wide, server-side filtered search, unlike teamstorm_list_users (workspace-scoped,
+// instance-wide, server-side filtered search, unlike teamstorm_users_list (workspace-scoped,
 // fetches everything then filters client-side).
 export const listAllUsersSchema = z
   .object({
@@ -39,11 +39,11 @@ export async function listAllUsers(
   }
 
   try {
-    logRequest('teamstorm_list_all_users', params);
+    logRequest('teamstorm_users_list_all', params);
     const result = await client.listAllUsers(params);
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_list_all_users', true, duration);
+    logResponse('teamstorm_users_list_all', true, duration);
 
     const markdown = formatUsersMarkdown(result);
 
@@ -70,11 +70,11 @@ export async function listAllUsers(
 
 export function registerListAllUsersTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_all_users',
+    'teamstorm_users_list_all',
     {
       title: 'Поиск пользователей (глобально)',
       description:
-        'Найти пользователей по всему инстансу TeamStorm (не ограничено одним workspace). Фильтрация происходит на стороне сервера. Для списка участников конкретного пространства используйте teamstorm_list_users.',
+        'Найти пользователей по всему инстансу TeamStorm (не ограничено одним workspace). Фильтрация происходит на стороне сервера. Для списка участников конкретного пространства используйте teamstorm_users_list.',
       inputSchema: listAllUsersSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

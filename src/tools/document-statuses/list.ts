@@ -32,10 +32,10 @@ export async function listDocumentStatuses(
   }
 
   try {
-    logRequest('teamstorm_list_document_statuses', { workspace });
+    logRequest('teamstorm_document_statuses_list', { workspace });
     const result = await client.listDocumentStatuses(workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_list_document_statuses', true, duration);
+    logResponse('teamstorm_document_statuses_list', true, duration);
 
     if (result.items.length === 0) {
       return {
@@ -70,11 +70,11 @@ export async function listDocumentStatuses(
 
 export function registerListDocumentStatusesTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_document_statuses',
+    'teamstorm_document_statuses_list',
     {
       title: 'Статусы документов',
       description:
-        'Получить список доступных статусов документов в пространстве TeamStorm. ID статуса используется в teamstorm_update_document.',
+        'Получить список доступных статусов документов в пространстве TeamStorm. ID статуса используется в teamstorm_documents_update.',
       inputSchema: listDocumentStatusesSchema,
       annotations: { readOnlyHint: true, openWorldHint: false },
     },

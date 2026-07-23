@@ -34,7 +34,7 @@ export const attachUploadedFileSchema = z
 
 export function registerAttachUploadedFileTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_attach_uploaded',
+    'teamstorm_attachments_attach_uploaded',
     {
       title: 'Загрузить файл и прикрепить к задаче',
       description: `Загрузить файл и прикрепить его к задаче TeamStorm.
@@ -119,7 +119,7 @@ export async function attachUploadedFile(
     const buffer = await fsPromises.readFile(filePath);
     const name = params.fileName ?? meta.fileName;
 
-    logRequest('teamstorm_attach_uploaded', {
+    logRequest('teamstorm_attachments_attach_uploaded', {
       workspace,
       taskId,
       uploadId,
@@ -130,7 +130,7 @@ export async function attachUploadedFile(
     const result = await client.uploadTaskAttachmentBuffer(taskId, workspace, buffer, name);
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_attach_uploaded', true, duration);
+    logResponse('teamstorm_attachments_attach_uploaded', true, duration);
     fs.unlinkSync(filePath);
     fs.unlinkSync(metaPath);
 

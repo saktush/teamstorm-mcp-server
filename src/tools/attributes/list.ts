@@ -33,7 +33,7 @@ export const listAttributesSchema = z
 
 export function registerListAttributesTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_attributes',
+    'teamstorm_attributes_list',
     {
       title: 'Получить список атрибутов пространства',
       description:
@@ -61,7 +61,7 @@ export async function listAttributes(
   }
 
   try {
-    logRequest('teamstorm_list_attributes', {
+    logRequest('teamstorm_attributes_list', {
       workspace: args.workspace,
       name: args.name,
       type: args.type,
@@ -77,7 +77,7 @@ export async function listAttributes(
     });
 
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_list_attributes', true, duration);
+    logResponse('teamstorm_attributes_list', true, duration);
 
     if (!response.items || response.items.length === 0) {
       return {

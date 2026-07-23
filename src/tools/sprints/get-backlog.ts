@@ -34,10 +34,10 @@ export async function getBacklog(
   }
 
   try {
-    logRequest('teamstorm_get_backlog', { workspace, folderId });
+    logRequest('teamstorm_sprints_get_backlog', { workspace, folderId });
     const result = await client.listSprints(workspace, { folderId });
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_get_backlog', true, duration);
+    logResponse('teamstorm_sprints_get_backlog', true, duration);
 
     const matches = result.items.filter((s) => s.isBacklog);
 
@@ -48,7 +48,7 @@ export async function getBacklog(
             type: 'text',
             text:
               `❌ Беклог для папки ${folderId} не найден. У папки нет Agile-борда — ` +
-              `создайте его через teamstorm_create_agile_board.`,
+              `создайте его через teamstorm_agile_boards_create.`,
           },
         ],
         isError: true,
@@ -94,11 +94,11 @@ export async function getBacklog(
 
 export function registerGetBacklogTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_backlog',
+    'teamstorm_sprints_get_backlog',
     {
       title: 'Получить беклог папки',
       description:
-        'Получить беклог TeamStorm для папки (folderId) — специальный спринт с флагом isBacklog=true. В API нет отдельного REST-ресурса «беклог»: инструмент фильтрует список спринтов папки. Если у папки ещё нет Agile-борда, вернёт ошибку с указанием создать его через teamstorm_create_agile_board.',
+        'Получить беклог TeamStorm для папки (folderId) — специальный спринт с флагом isBacklog=true. В API нет отдельного REST-ресурса «беклог»: инструмент фильтрует список спринтов папки. Если у папки ещё нет Agile-борда, вернёт ошибку с указанием создать его через teamstorm_agile_boards_create.',
       inputSchema: getBacklogSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

@@ -33,10 +33,10 @@ export async function getDocumentTaskLinks(
   }
 
   try {
-    logRequest('teamstorm_get_document_task_links', { workspace, documentId });
+    logRequest('teamstorm_document_links_list_by_document', { workspace, documentId });
     const tasks = await client.getDocumentWorkitemLinks(documentId, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_get_document_task_links', true, duration);
+    logResponse('teamstorm_document_links_list_by_document', true, duration);
 
     if (tasks.length === 0) {
       return {
@@ -71,7 +71,7 @@ export async function getDocumentTaskLinks(
 
 export function registerGetDocumentTaskLinksTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_document_task_links',
+    'teamstorm_document_links_list_by_document',
     {
       title: 'Задачи, связанные с документом',
       description: 'Получить список задач (workitems), связанных с документом TeamStorm.',

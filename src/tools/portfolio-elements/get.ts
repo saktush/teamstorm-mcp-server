@@ -34,10 +34,10 @@ export async function getPortfolioElement(
   }
 
   try {
-    logRequest('teamstorm_get_portfolio_element', { workspace, portfolioElementId });
+    logRequest('teamstorm_portfolio_elements_get', { workspace, portfolioElementId });
     const element = await client.getPortfolioElement(portfolioElementId, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_get_portfolio_element', true, duration);
+    logResponse('teamstorm_portfolio_elements_get', true, duration);
 
     return {
       content: [{ type: 'text', text: formatPortfolioElementModel(element) }],
@@ -59,7 +59,7 @@ export async function getPortfolioElement(
 
 export function registerGetPortfolioElementTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_portfolio_element',
+    'teamstorm_portfolio_elements_get',
     {
       title: 'Получить элемент портфеля по ID',
       description: 'Получить элемент портфеля TeamStorm по его UUID.',

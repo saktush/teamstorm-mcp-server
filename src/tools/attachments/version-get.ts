@@ -23,7 +23,7 @@ export const getAttachmentVersionSchema = z
 
 export function registerGetAttachmentVersionTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_attachment_version',
+    'teamstorm_attachments_get_version',
     {
       title: 'Получить версию вложения',
       description:
@@ -52,7 +52,7 @@ export async function getAttachmentVersion(
   }
 
   try {
-    logRequest('teamstorm_get_attachment_version', {
+    logRequest('teamstorm_attachments_get_version', {
       workspace,
       taskId,
       attachmentId,
@@ -66,7 +66,7 @@ export async function getAttachmentVersion(
     );
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_get_attachment_version', true, duration);
+    logResponse('teamstorm_attachments_get_version', true, duration);
 
     const text =
       `📄 **${version.name}** (версия ${version.version})\n\n` +

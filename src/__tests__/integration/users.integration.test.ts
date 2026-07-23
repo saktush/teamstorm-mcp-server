@@ -80,7 +80,7 @@ describe('TeamStormClient Global Users Integration Tests', () => {
     });
   });
 
-  describe('teamstorm_get_user tool', () => {
+  describe('teamstorm_users_get tool', () => {
     it('returns the user as structuredContent', async () => {
       nock(baseUrl).get(`/users/${mockUser.id}`).reply(200, mockUser);
 
@@ -101,7 +101,7 @@ describe('TeamStormClient Global Users Integration Tests', () => {
     });
   });
 
-  describe('teamstorm_list_all_users tool', () => {
+  describe('teamstorm_users_list_all tool', () => {
     it('lists users and reports the total in structuredContent', async () => {
       nock(baseUrl).get('/users').reply(200, { items: [mockUser] });
 

@@ -1,0 +1,64 @@
+name: Deploy to Home Lab
+
+# Триггеры:
+#  - push в main (мерж PR из dev) → полный цикл: проверки + деплой
+#  - workflow_dispatch → ручной запуск из вкладки Actions
+#
+# Деплой идёт на self-hosted runner дома. НЕ запускается на pull_request,
+# поэтому форк-PR не могут выполнить код на домашнем раннере.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Не даём деплоям наезжать друг на друга; текущий деплой не прерываем.
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Lint, typecheck & tests
+    # Бесплатный GitHub-hosted раннер (публичный репозиторий).
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tests
+        run: npm run test:run
+
+  deploy:
+    name: Redeploy on home server
+    needs: test
+    # Домашний раннер с меткой home-lab (см. README-cicd.md).
+    runs-on: [self-hosted, home-lab]
+    steps:
+      # Без actions/checkout: работаем в постоянном каталоге на сервере,
+      # смонтированном в контейнер-раннер по совпадающему пути.
+      # Там же лежат локальные .env и docker-compose.override.yml (вне гита).
+      - name: Pull latest main & redeploy
+        run: |
+          set -euo pipefail
+          cd /opt/teamstorm-mcp-server
+          git fetch --all --prune
+          # reset --hard надёжнее git pull: не ловит merge-конфликты.
+          # Игнорируемые файлы (.env, docker-compose.override.yml) не трогаются.
+          git reset --hard origin/main
+          docker compose up -d --build
+          docker image prune -f

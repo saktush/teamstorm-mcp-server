@@ -26,7 +26,7 @@ export const createTaskLinkSchema = z
       .string()
       .optional()
       .describe(
-        'Название или ключ типа связи (например, «Связана» или «Relates») — будет найден автоматически через teamstorm_list_link_types. Укажите это ИЛИ linkTypeId.'
+        'Название или ключ типа связи (например, «Связана» или «Relates») — будет найден автоматически через teamstorm_link_types_list. Укажите это ИЛИ linkTypeId.'
       ),
   })
   .strict();
@@ -62,7 +62,7 @@ export async function createTaskLink(
   }
 
   try {
-    logRequest('teamstorm_create_task_link', {
+    logRequest('teamstorm_task_links_create', {
       workspace,
       taskId,
       linkedWorkitem,
@@ -76,7 +76,7 @@ export async function createTaskLink(
       workspace
     );
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_create_task_link', true, duration);
+    logResponse('teamstorm_task_links_create', true, duration);
 
     return {
       content: [
@@ -105,7 +105,7 @@ export async function createTaskLink(
 
 export function registerCreateTaskLinkTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_create_task_link',
+    'teamstorm_task_links_create',
     {
       title: 'Создать связь между задачами',
       description:

@@ -20,7 +20,7 @@ export const getTaskPermissionsSchema = z
 
 export function registerGetTaskPermissionsTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_task_permissions',
+    'teamstorm_task_permissions_get',
     {
       title: 'Получить правила доступа к задаче',
       description:
@@ -48,14 +48,14 @@ export async function getTaskPermissions(
   }
 
   try {
-    logRequest('teamstorm_get_task_permissions', { workspace, taskId });
+    logRequest('teamstorm_task_permissions_get', { workspace, taskId });
     const response: TeamStormPermissionListResponse = await client.getTaskPermissions(
       args.taskId,
       args.workspace
     );
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_get_task_permissions', true, duration);
+    logResponse('teamstorm_task_permissions_get', true, duration);
 
     if (response.items.length === 0) {
       return {

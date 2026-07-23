@@ -103,10 +103,10 @@ export async function getSprint(
   }
 
   try {
-    logRequest('teamstorm_get_sprint', { workspace, sprintId });
+    logRequest('teamstorm_sprints_get', { workspace, sprintId });
     const sprint = await client.getSprint(sprintId, workspace);
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_get_sprint', true, duration);
+    logResponse('teamstorm_sprints_get', true, duration);
 
     const { totalHours, perMember } = computeSprintCapacity(sprint);
 
@@ -133,7 +133,7 @@ export async function getSprint(
 
 export function registerGetSprintTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_get_sprint',
+    'teamstorm_sprints_get',
     {
       title: 'Получить спринт',
       description:

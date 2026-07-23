@@ -38,14 +38,14 @@ export async function createDocumentComment(
   }
 
   try {
-    logRequest('teamstorm_create_document_comment', { workspace, documentId });
+    logRequest('teamstorm_document_comments_create', { workspace, documentId });
     const comment: TeamStormComment = await client.createDocumentComment(
       documentId,
       text,
       workspace
     );
     const duration = Date.now() - startTime;
-    logResponse('teamstorm_create_document_comment', true, duration);
+    logResponse('teamstorm_document_comments_create', true, duration);
 
     const message =
       `✅ Комментарий добавлен к документу \`${documentId}\`\n\n` +
@@ -73,7 +73,7 @@ export async function createDocumentComment(
 
 export function registerCreateDocumentCommentTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_create_document_comment',
+    'teamstorm_document_comments_create',
     {
       title: 'Добавить комментарий к документу',
       description: 'Добавить новый комментарий к документу TeamStorm.',

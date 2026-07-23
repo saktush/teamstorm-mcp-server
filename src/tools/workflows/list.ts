@@ -59,11 +59,11 @@ export async function listWorkflows(
   }
 
   try {
-    logRequest('teamstorm_list_workflows', params);
+    logRequest('teamstorm_workflows_list', params);
     const result = await client.listWorkflows(params.workspace);
     const duration = Date.now() - startTime;
 
-    logResponse('teamstorm_list_workflows', true, duration);
+    logResponse('teamstorm_workflows_list', true, duration);
     logger.info({ count: result.items.length, durationMs: duration }, 'Workflows retrieved');
 
     const markdown = formatWorkflowsMarkdown(result);
@@ -97,7 +97,7 @@ export { ListWorkflowsSchema as listWorkflowsSchema };
 
 export function registerListWorkflowsTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
-    'teamstorm_list_workflows',
+    'teamstorm_workflows_list',
     {
       title: 'Получить список процессов',
       description:
