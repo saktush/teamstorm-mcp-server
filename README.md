@@ -563,8 +563,17 @@ teamstorm-mcp-server/
 
 ## Благодарности
 
-Проект основан на оригинальной работе Ruslan Yakhin ([madebyearth](https://github.com/madebyearth)).
+Проект основан на оригинальной работе Ruslan Yakhin ([madebyearth](https://github.com/madebyearth)),
+опубликованной под лицензией MIT ([оригинальный репозиторий](https://github.com/madebyearth/teamstorm-mcp-server)).
+Изначально форк синхронизировался с оригинальным репозиторием через pull request'ы; после того как
+upstream перестал активно развиваться, форк был отделён и далее развивается независимо.
 
 ## Лицензия
 
-MIT
+Проект распространяется под лицензией **MIT** — см. файл [LICENSE](LICENSE).
+Историю происхождения и атрибуцию см. в файле [NOTICE](NOTICE).
+
+Авторские права:
+
+- © 2026 Ruslan Yakhin ([@madebyearth](https://github.com/madebyearth)) — оригинальная работа
+- © 2026 Sergei Blashkevich ([@saktush](https://github.com/saktush)) и контрибьюторы — форк и последующая разработка
