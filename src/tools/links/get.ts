@@ -3,8 +3,28 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import { logRequest, logResponse, logError } from '../../utils/logger.js';
 import type { TeamStormLinkListResponse, TeamStormLink } from '../../client/types.js';
+import { OUTPUT_PARAMS_SHAPE, buildListResult } from '../../utils/output.js';
+import { projectTask, TASK_FIELD_NAMES } from '../../utils/task-projection.js';
 
-export const getTaskLinksSchema = z
+// Каждая связь несёт ЦЕЛУЮ задачу в linkedWorkitem — то есть по HTML-описанию на связь.
+const LINK_FIELD_NAMES = ['id', 'type', ...TASK_FIELD_NAMES] as const;
+const LINK_DEFAULT_FIELDS = ['id', 'type', 'key', 'name', 'status', 'assignee'] as const;
+const LINK_IDENTITY_FIELDS = ['id', 'type', 'key', 'name'] as const;
+
+function projectLink(
+  link: TeamStormLink,
+  fields: Set<string>,
+  opts: { descriptionMaxChars: number }
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (fields.has('id')) out.id = link.id;
+  if (fields.has('type')) {
+    out.type = link.type ? { id: link.type.id, name: link.type.name, key: link.type.key } : null;
+  }
+  return { ...out, ...projectTask(link.linkedWorkitem, fields, opts) };
+}
+
+const baseGetTaskLinksSchema = z
   .object({
     apiUrl: z
       .string()
@@ -17,6 +37,8 @@ export const getTaskLinksSchema = z
     taskId: z.string().describe('Ключ или идентификатор задачи (например, "TS-671" или UUID)'),
   })
   .strict();
+
+export const getTaskLinksSchema = baseGetTaskLinksSchema.extend(OUTPUT_PARAMS_SHAPE);
 
 export function registerGetTaskLinksTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
@@ -68,32 +90,36 @@ export async function getTaskLinks(
       };
     }
 
-    const linksText = links
-      .map((link: TeamStormLink, index: number) => {
-        const t = link.linkedWorkitem;
-        const status = t.status
-          ? `${t.status.name} (${t.status.category?.name ?? 'Без категории'})`
-          : 'Без статуса';
-        const assignee = t.assignee ? t.assignee.displayName : 'Не назначен';
-        return (
-          `**${index + 1}. ${link.type.name}${link.type.key ? ` (${link.type.key})` : ''}**\n` +
-          `   🔗 ${t.key}: ${t.name}\n` +
-          `   📌 Статус: ${status}\n` +
-          `   👤 Исполнитель: ${assignee}` +
-          (t.folder ? `\n   📁 Папка: ${t.folder.name}` : '')
-        );
-      })
-      .join('\n\n');
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `🔗 Связи задачи ${args.taskId} (${links.length} шт.):\n\n${linksText}`,
-        },
-      ],
-      structuredContent: { items: links } as unknown as Record<string, unknown>,
-    };
+    return buildListResult<TeamStormLink>({
+      items: links,
+      format: args.format,
+      fields: args.fields,
+      maxItems: args.maxItems,
+      descriptionMaxChars: args.descriptionMaxChars,
+      allowedFields: LINK_FIELD_NAMES,
+      defaultFields: LINK_DEFAULT_FIELDS,
+      identityFields: LINK_IDENTITY_FIELDS,
+      project: projectLink,
+      renderMarkdown: (rows, meta) => {
+        const linksText = rows
+          .map((link, index) => {
+            const t = link.linkedWorkitem;
+            const status = t.status
+              ? `${t.status.name} (${t.status.category?.name ?? 'Без категории'})`
+              : 'Без статуса';
+            const assignee = t.assignee ? t.assignee.displayName : 'Не назначен';
+            return (
+              `**${index + 1}. ${link.type.name}${link.type.key ? ` (${link.type.key})` : ''}**\n` +
+              `   🔗 ${t.key}: ${t.name}\n` +
+              `   📌 Статус: ${status}\n` +
+              `   👤 Исполнитель: ${assignee}` +
+              (t.folder ? `\n   📁 Папка: ${t.folder.name}` : '')
+            );
+          })
+          .join('\n\n');
+        return `🔗 Связи задачи ${args.taskId} (${meta.returned} шт.):\n\n${linksText}`;
+      },
+    });
   } catch (error) {
     logError(error as Error, { workspace, taskId: args.taskId });
     return {

@@ -3,8 +3,15 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import { logRequest, logResponse, logError } from '../../utils/logger.js';
 import type { TeamStormTask } from '../../client/types.js';
+import { OUTPUT_PARAMS_SHAPE, buildListResult } from '../../utils/output.js';
+import {
+  projectTask,
+  TASK_FIELD_NAMES,
+  TASK_DEFAULT_FIELDS,
+  TASK_IDENTITY_FIELDS,
+} from '../../utils/task-projection.js';
 
-export const listTasksByParentSchema = z
+const baseListTasksByParentSchema = z
   .object({
     apiUrl: z
       .string()
@@ -22,6 +29,11 @@ export const listTasksByParentSchema = z
       .describe('Включить подзадачи (по умолчанию: false)'),
   })
   .strict();
+
+// Намеренно НЕТ fromToken: эндпоинт `/workitems/by-parent/{id}` возвращает голый
+// массив и молча игнорирует fromToken/maxItemsCount. Объявить их значило бы соврать —
+// поэтому потолок применяется на нашей стороне, а факт обрезки виден в hasMore.
+export const listTasksByParentSchema = baseListTasksByParentSchema.extend(OUTPUT_PARAMS_SHAPE);
 
 export async function listTasksByParent(
   client: TeamStormClient,
@@ -60,26 +72,30 @@ export async function listTasksByParent(
       };
     }
 
-    const tasksText = tasks
-      .map(
-        (task, index) =>
-          `**${index + 1}. ${task.key}: ${task.name}**\n` +
-          `   📊 Статус: ${task.status.name}\n` +
-          `   👤 Исполнитель: ${task.assignee?.displayName || 'Не назначен'}\n` +
-          `   📂 Папка: ${task.folder?.name || '—'}\n` +
-          `   🏷️ Тип: ${task.type.name}`
-      )
-      .join('\n\n');
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `📋 Задачи в элементе ${args.parent} (${tasks.length} шт.):\n\n${tasksText}`,
-        },
-      ],
-      structuredContent: { items: tasks },
-    };
+    return buildListResult<TeamStormTask>({
+      items: tasks,
+      format: args.format,
+      fields: args.fields,
+      maxItems: args.maxItems,
+      descriptionMaxChars: args.descriptionMaxChars,
+      allowedFields: TASK_FIELD_NAMES,
+      defaultFields: TASK_DEFAULT_FIELDS,
+      identityFields: TASK_IDENTITY_FIELDS,
+      project: projectTask,
+      renderMarkdown: (rows, meta) => {
+        const tasksText = rows
+          .map(
+            (task, index) =>
+              `**${index + 1}. ${task.key}: ${task.name}**\n` +
+              `   📊 Статус: ${task.status.name}\n` +
+              `   👤 Исполнитель: ${task.assignee?.displayName || 'Не назначен'}\n` +
+              `   📂 Папка: ${task.folder?.name || '—'}\n` +
+              `   🏷️ Тип: ${task.type.name}`
+          )
+          .join('\n\n');
+        return `📋 Задачи в элементе ${args.parent} (${meta.returned} шт.):\n\n${tasksText}`;
+      },
+    });
   } catch (error) {
     logError(error as Error, { workspace: args.workspace, parent: args.parent });
     return {
@@ -100,7 +116,9 @@ export function registerListTasksByParentTool(server: McpServer, client: TeamSto
     {
       title: 'Получить задачи по родительскому элементу',
       description:
-        'Получить список задач по родительскому элементу (папке или задаче). Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить список задач по родительскому элементу (папке или задаче). Если workspace не указан, используется TEAMSTORM_WORKSPACE. ' +
+        'ВАЖНО: API не поддерживает постраничность для этого метода — он всегда отдаёт весь список, поэтому ограничение применяется на стороне MCP-сервера. ' +
+        'Если в ответе hasMore=true, сузьте выборку (другой parent) или запросите format="json" с нужными fields.',
       inputSchema: listTasksByParentSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

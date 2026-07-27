@@ -48,6 +48,7 @@ describe('listUpdatedTasks handler', () => {
       workspace: 'CS',
       changedFromDate: '2026-07-10',
       maxItemsCount: 50,
+      format: 'markdown',
     });
 
     const text = result.content[0].text;
@@ -64,6 +65,7 @@ describe('listUpdatedTasks handler', () => {
       workspace: 'CS',
       changedFromDate: '2026-07-10',
       maxItemsCount: 50,
+      format: 'markdown',
     });
 
     expect(result.content[0].text).not.toContain('Invalid Date');

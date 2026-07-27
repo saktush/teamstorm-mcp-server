@@ -3,8 +3,16 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import { formatTaskListMarkdown } from '../../utils/formatters.js';
 import { logRequest, logResponse, logError, logger } from '../../utils/logger.js';
+import { OUTPUT_PARAMS_SHAPE, buildListResult } from '../../utils/output.js';
+import {
+  projectTask,
+  TASK_FIELD_NAMES,
+  TASK_DEFAULT_FIELDS,
+  TASK_IDENTITY_FIELDS,
+} from '../../utils/task-projection.js';
+import type { TeamStormTask } from '../../client/types.js';
 
-const ListTasksSchema = z
+const BaseListTasksSchema = z
   .object({
     apiUrl: z
       .string()
@@ -31,6 +39,8 @@ const ListTasksSchema = z
   })
   .strict();
 
+const ListTasksSchema = BaseListTasksSchema.extend(OUTPUT_PARAMS_SHAPE);
+
 export async function listTasks(
   client: TeamStormClient,
   params: z.infer<typeof ListTasksSchema>
@@ -40,7 +50,17 @@ export async function listTasks(
   isError?: boolean;
 }> {
   const startTime = Date.now();
-  const { workspace, apiUrl, ...filteredParams } = params;
+  // format/fields/maxItems/descriptionMaxChars — параметры вывода, а не фильтры API.
+  // Их обязательно нужно снять здесь, иначе они уедут в query-строку запроса.
+  const {
+    workspace,
+    apiUrl,
+    format,
+    fields,
+    maxItems,
+    descriptionMaxChars,
+    ...filteredParams
+  } = params;
 
   if (apiUrl) {
     client.setBaseUrl(apiUrl);
@@ -54,25 +74,20 @@ export async function listTasks(
     logResponse('teamstorm_tasks_list', true, duration);
     logger.info({ count: result.items.length, durationMs: duration }, 'Tasks retrieved');
 
-    const markdown = formatTaskListMarkdown(result);
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: markdown,
-        },
-      ],
-      structuredContent: {
-        tasks: result.items,
-        pagination: {
-          fromToken: result.fromToken,
-          nextToken: result.nextToken,
-          maxItemsCount: result.maxItemsCount,
-          hasMore: !!result.nextToken,
-        },
-      },
-    };
+    return buildListResult<TeamStormTask>({
+      items: result.items,
+      nextToken: result.nextToken,
+      format,
+      fields,
+      maxItems,
+      descriptionMaxChars,
+      allowedFields: TASK_FIELD_NAMES,
+      defaultFields: TASK_DEFAULT_FIELDS,
+      identityFields: TASK_IDENTITY_FIELDS,
+      project: projectTask,
+      renderMarkdown: (rows) =>
+        formatTaskListMarkdown({ ...result, items: rows, nextToken: result.nextToken }),
+    });
   } catch (error) {
     logError(error as Error, { params: { workspace, ...filteredParams } });
     return {
