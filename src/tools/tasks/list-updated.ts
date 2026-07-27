@@ -3,8 +3,16 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import type { TeamStormUpdatedTaskListResponse, TeamStormUpdatedTask } from '../../client/types.js';
 import { logRequest, logResponse, logError } from '../../utils/logger.js';
+import { formatDateTime } from '../../utils/dates.js';
+import { OUTPUT_PARAMS_SHAPE, buildListResult } from '../../utils/output.js';
+import {
+  projectTask,
+  TASK_FIELD_NAMES,
+  TASK_DEFAULT_FIELDS,
+  TASK_IDENTITY_FIELDS,
+} from '../../utils/task-projection.js';
 
-export const listUpdatedTasksSchema = z
+const baseListUpdatedTasksSchema = z
   .object({
     apiUrl: z
       .string()
@@ -29,6 +37,8 @@ export const listUpdatedTasksSchema = z
       .describe('Максимальное количество задач на странице (по умолчанию: 50)'),
   })
   .strict();
+
+export const listUpdatedTasksSchema = baseListUpdatedTasksSchema.extend(OUTPUT_PARAMS_SHAPE);
 
 export function registerListUpdatedTasksTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
@@ -82,29 +92,34 @@ export async function listUpdatedTasks(
       };
     }
 
-    const tasksText = response.items
-      .map(
-        (task: TeamStormUpdatedTask, index: number) =>
-          `**${index + 1}. ${task.key}: ${task.name}**\n` +
-          `   📊 Статус: ${task.status.name}\n` +
-          `   🕐 Дата изменения: ${new Date(task.changedDate).toLocaleString('ru-RU')}`
-      )
-      .join('\n\n');
-
-    let paginationInfo = '';
-    if (response.nextToken) {
-      paginationInfo = `\n\n⚠️ Есть ещё результаты. Используйте параметр fromToken="${response.nextToken}" для загрузки следующей страницы.`;
-    }
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `🔄 Измененные задачи с ${args.changedFromDate}${args.changedToDate ? ` по ${args.changedToDate}` : ''} (${response.items.length} шт.):\n\n${tasksText}${paginationInfo}`,
-        },
-      ],
-      structuredContent: response as unknown as Record<string, unknown>,
-    };
+    return buildListResult<TeamStormUpdatedTask>({
+      items: response.items,
+      nextToken: response.nextToken,
+      format: args.format,
+      fields: args.fields,
+      maxItems: args.maxItems,
+      descriptionMaxChars: args.descriptionMaxChars,
+      allowedFields: TASK_FIELD_NAMES,
+      defaultFields: TASK_DEFAULT_FIELDS,
+      identityFields: TASK_IDENTITY_FIELDS,
+      project: projectTask,
+      renderMarkdown: (rows, meta) => {
+        const tasksText = rows
+          .map((task, index) => {
+            // API отдаёт `changeDate` (без "d"). Терпимо читаем и старое имя на случай,
+            // если инстанс окажется другой версии.
+            const changed = task.changeDate ?? (task as { changedDate?: string }).changedDate;
+            return (
+              `**${index + 1}. ${task.key}: ${task.name}**\n` +
+              `   📊 Статус: ${task.status.name}\n` +
+              `   🕐 Дата изменения: ${formatDateTime(changed)}`
+            );
+          })
+          .join('\n\n');
+        const period = `с ${args.changedFromDate}${args.changedToDate ? ` по ${args.changedToDate}` : ''}`;
+        return `🔄 Измененные задачи ${period} (${meta.returned} шт.):\n\n${tasksText}`;
+      },
+    });
   } catch (error) {
     logError(error as Error, { workspace: args.workspace, changedFromDate: args.changedFromDate });
     return {

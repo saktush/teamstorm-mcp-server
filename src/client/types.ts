@@ -65,12 +65,35 @@ export interface TeamStormFolder {
   nodeType: 'Folder' | 'WorkItem';
 }
 
+/** Ссылка на справочное значение: так API отдаёт `UniSelect` и элементы `Tag`. */
+export interface TeamStormAttributeOptionRef {
+  id: string;
+  name: string;
+}
+
+/**
+ * Формы значений атрибутов, подтверждённые на живом API:
+ *   UniString → string · Number/TimeDuration → number · Date → "2026-09-29T21:00:00" (без Z)
+ *   UniSelect → {id,name} · Tag → Array<{id,name}> · User → TeamStormUser · любой тип → null
+ *
+ * Раньше здесь стояло `string[]` для Tag — из-за этого `value.join(', ')` в форматтере
+ * компилировался и печатал `[object Object], [object Object]`.
+ */
+export type TeamStormAttributeValueData =
+  | string
+  | number
+  | TeamStormAttributeOptionRef
+  | TeamStormAttributeOptionRef[]
+  | TeamStormUser
+  | TeamStormUser[]
+  | null;
+
 export interface TeamStormAttribute {
   type: 'UniString' | 'Number' | 'Date' | 'UniSelect' | 'Tag' | 'User' | 'TimeDuration';
   id: string;
   name: string;
   description: string;
-  value: string | number | string[] | TeamStormUser | { id: string; name: string } | null;
+  value: TeamStormAttributeValueData;
 }
 
 export interface TeamStormPortfolio {
@@ -275,13 +298,8 @@ export interface TeamStormCommentVisibility {
 }
 
 // Attributes
-export interface TeamStormAttributeValue {
-  type: 'UniString' | 'Number' | 'Date' | 'UniSelect' | 'Tag' | 'User' | 'TimeDuration';
-  id: string;
-  name: string;
-  description: string;
-  value: string | number | string[] | TeamStormUser | { id: string; name: string } | null;
-}
+/** Историческое имя `TeamStormAttribute`: определения были байт-в-байт идентичны. */
+export type TeamStormAttributeValue = TeamStormAttribute;
 
 export interface TeamStormAttributeListResponse {
   fromToken: string;
@@ -434,12 +452,15 @@ export interface TeamStormWorkspaceStatusListResponse {
 }
 
 // Updated tasks
-export interface TeamStormUpdatedTask {
-  id: string;
-  key: string;
-  name: string;
-  status: TeamStormStatus;
-  changedDate: string;
+/**
+ * `/workitems/updates` отдаёт полные объекты задач, а не урезанный набор полей.
+ *
+ * ВНИМАНИЕ: поле даты изменения называется `changeDate` — без "d".
+ * Код читал `changedDate`, поле было `undefined`, и `new Date(undefined)`
+ * печатал `Invalid Date` для каждой строки отчёта.
+ */
+export interface TeamStormUpdatedTask extends TeamStormTask {
+  changeDate: string;
 }
 
 export interface TeamStormUpdatedTaskListResponse {

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import { logRequest, logResponse, logError } from '../../utils/logger.js';
+import { formatAttributeValue } from '../../utils/attribute-format.js';
 import type {
   TeamStormAttributeListResponse,
   TeamStormAttributeValue,
@@ -73,17 +74,9 @@ export async function getTaskAttributes(
 
     const attributesText = response.items
       .map((attr: TeamStormAttributeValue, index: number) => {
-        let valueDisplay: string;
-
-        if (attr.value === null || attr.value === undefined) {
-          valueDisplay = '— (не заполнено)';
-        } else if (typeof attr.value === 'object' && 'name' in attr.value) {
-          valueDisplay = String(attr.value.name);
-        } else if (Array.isArray(attr.value)) {
-          valueDisplay = attr.value.join(', ');
-        } else {
-          valueDisplay = String(attr.value);
-        }
+        // Общий форматтер: раньше здесь было ветвление по форме значения,
+        // которое печатало `undefined` для User (проверялся `name`, а не `displayName`).
+        const valueDisplay = formatAttributeValue(attr, { empty: '— (не заполнено)' });
 
         return (
           `**${index + 1}. ${attr.name}**\n` +

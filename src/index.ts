@@ -18,6 +18,7 @@ import {
 import { hashToken, validateSessionToken } from './utils/session-auth.js';
 import { validateUploadAuth } from './utils/upload-auth.js';
 import { logger } from './utils/logger.js';
+import { getInflightSnapshot } from './utils/instrumentation.js';
 import { TeamStormClient } from './client/teamstorm.js';
 import { parseUpload, UploadError } from './utils/upload-handler.js';
 import {
@@ -219,6 +220,9 @@ async function runHttp() {
       timestamp: new Date().toISOString(),
       service: 'teamstorm-mcp-server',
       version: '1.0.0',
+      // Позволяет диагностировать зависший вызов «снаружи», не подключая отладчик:
+      // видно, какой инструмент висит и сколько именно.
+      tools: getInflightSnapshot(),
     });
   });
   const healthServer = healthApp.listen(healthPort, getListenHost(), () => {

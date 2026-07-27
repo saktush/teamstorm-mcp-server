@@ -1,6 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { TeamStormClient } from '../client/teamstorm.js';
 import { logger } from '../utils/logger.js';
+import { instrumentServer } from '../utils/instrumentation.js';
 
 import {
   // Tasks
@@ -314,9 +315,14 @@ export function registerToolsets(
   client: TeamStormClient,
   enabled: Set<ToolsetName>
 ): void {
+  // Единственная точка, через которую регистрируются все инструменты обоих входов
+  // (HTTP-сессия в index.ts и registerAllTools). Оборачиваем здесь — телеметрия
+  // покрывает всё сразу, включая инструменты, которых ещё нет.
+  const target = instrumentServer(server);
+
   for (const name of enabled) {
     for (const register of TOOLSETS[name]) {
-      register(server, client);
+      register(target, client);
     }
   }
 }

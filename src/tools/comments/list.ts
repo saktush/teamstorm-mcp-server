@@ -3,8 +3,35 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import type { TeamStormCommentListResponse, TeamStormComment } from '../../client/types.js';
 import { logRequest, logResponse, logError } from '../../utils/logger.js';
+import { OUTPUT_PARAMS_SHAPE, buildListResult, stripHtml, truncate } from '../../utils/output.js';
+import { formatDateTime } from '../../utils/dates.js';
 
-export const listTaskCommentsSchema = z
+const COMMENT_FIELD_NAMES = ['id', 'text', 'author', 'createdAt', 'updatedAt'] as const;
+const COMMENT_DEFAULT_FIELDS = ['id', 'author', 'createdAt', 'text'] as const;
+const COMMENT_IDENTITY_FIELDS = ['id', 'author', 'createdAt'] as const;
+
+function projectComment(
+  comment: TeamStormComment,
+  fields: Set<string>,
+  opts: { descriptionMaxChars: number }
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (fields.has('id')) out.id = comment.id;
+  if (fields.has('author')) {
+    out.author = comment.author
+      ? { id: comment.author.id, displayName: comment.author.displayName }
+      : null;
+  }
+  if (fields.has('createdAt')) out.createdAt = comment.createdAt;
+  if (fields.has('updatedAt')) out.updatedAt = comment.updatedAt;
+  // Тело комментария — HTML, это основной источник веса ответа.
+  if (fields.has('text')) {
+    out.text = comment.text ? truncate(stripHtml(comment.text), opts.descriptionMaxChars) : '';
+  }
+  return out;
+}
+
+const baseListTaskCommentsSchema = z
   .object({
     apiUrl: z
       .string()
@@ -17,6 +44,8 @@ export const listTaskCommentsSchema = z
     taskId: z.string().describe('Ключ или идентификатор задачи (например, "TS-671" или UUID)'),
   })
   .strict();
+
+export const listTaskCommentsSchema = baseListTaskCommentsSchema.extend(OUTPUT_PARAMS_SHAPE);
 
 export function registerListTaskCommentsTool(server: McpServer, client: TeamStormClient) {
   server.registerTool(
@@ -68,26 +97,30 @@ export async function listTaskComments(
       };
     }
 
-    const commentsText = response.items
-      .map(
-        (comment: TeamStormComment, index: number) =>
-          `**Комментарий #${index + 1}** (ID: ${comment.id})\n` +
-          `👤 Автор: ${comment.author.displayName} (${comment.author.username})\n` +
-          `📅 Создан: ${new Date(comment.createdAt).toLocaleString('ru-RU')}\n` +
-          `✏️ Изменен: ${new Date(comment.updatedAt).toLocaleString('ru-RU')}\n` +
-          `💬 Текст:\n${comment.text}\n`
-      )
-      .join('\n---\n\n');
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `📝 Комментарии к задаче ${args.taskId} (${response.items.length} шт.):\n\n${commentsText}`,
-        },
-      ],
-      structuredContent: response as unknown as Record<string, unknown>,
-    };
+    return buildListResult<TeamStormComment>({
+      items: response.items,
+      format: args.format,
+      fields: args.fields,
+      maxItems: args.maxItems,
+      descriptionMaxChars: args.descriptionMaxChars,
+      allowedFields: COMMENT_FIELD_NAMES,
+      defaultFields: COMMENT_DEFAULT_FIELDS,
+      identityFields: COMMENT_IDENTITY_FIELDS,
+      project: projectComment,
+      renderMarkdown: (rows, meta) => {
+        const commentsText = rows
+          .map(
+            (comment, index) =>
+              `**Комментарий #${index + 1}** (ID: ${comment.id})\n` +
+              `👤 Автор: ${comment.author.displayName} (${comment.author.username})\n` +
+              `📅 Создан: ${formatDateTime(comment.createdAt)}\n` +
+              `✏️ Изменен: ${formatDateTime(comment.updatedAt)}\n` +
+              `💬 Текст:\n${comment.text}\n`
+          )
+          .join('\n---\n\n');
+        return `📝 Комментарии к задаче ${args.taskId} (${meta.returned} шт.):\n\n${commentsText}`;
+      },
+    });
   } catch (error) {
     logError(error as Error, { workspace, taskId: args.taskId });
     return {

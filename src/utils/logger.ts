@@ -87,3 +87,23 @@ export const logResponse = (method: string, success: boolean, duration?: number)
 export const logError = (error: Error, context?: Record<string, unknown>) => {
   redactedLogger.error({ ...context, err: error.message, stack: error.stack }, error.message);
 };
+
+/**
+ * Телеметрия жизненного цикла вызова инструмента (см. utils/instrumentation.ts).
+ * Отдельная функция, а не изменение logRequest/logResponse — у тех ~80 мест вызова.
+ *
+ * Пишется на уровне info (а не debug), потому что ради этих строк всё и делается:
+ * без них зависание выглядит как четыре минуты полной тишины.
+ */
+export type ToolCallEvent = 'start' | 'end' | 'slow' | 'timeout' | 'orphaned' | 'inflight';
+
+export const logToolCall = (event: ToolCallEvent, fields: Record<string, unknown>) => {
+  const payload = { event, ...fields };
+  if (event === 'timeout' || event === 'orphaned' || event === 'slow') {
+    redactedLogger.warn(payload, `tool.${event}`);
+  } else if (event === 'start') {
+    redactedLogger.debug(payload, 'tool.start');
+  } else {
+    redactedLogger.info(payload, `tool.${event}`);
+  }
+};
