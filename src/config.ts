@@ -30,6 +30,11 @@ const ConfigSchema = z.object({
     .boolean()
     .default(false)
     .describe('Trust X-Forwarded-For header for rate limiting'),
+
+  // Tool-call observability (see utils/instrumentation.ts).
+  // Default is 2x the axios timeout (30s), so a single clean round trip can never trip it.
+  TEAMSTORM_TOOL_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
+  TEAMSTORM_SLOW_TOOL_MS: z.coerce.number().int().positive().default(5_000),
 });
 
 // Parse and validate configuration — fatal (exits process)
@@ -85,6 +90,8 @@ export const getToolsets = (): string | undefined => getConfig().TEAMSTORM_TOOLS
 export const getPort = (): number => getConfig().PORT;
 export const getNodeEnv = (): string => getConfig().NODE_ENV;
 export const getTrustProxy = (): boolean => getConfig().TRUST_PROXY;
+export const getToolTimeoutMs = (): number => getConfig().TEAMSTORM_TOOL_TIMEOUT_MS;
+export const getSlowToolMs = (): number => getConfig().TEAMSTORM_SLOW_TOOL_MS;
 
 // When TEAMSTORM_API_TOKEN is set, the server acts as a single-user proxy —
 // restrict to loopback by default to prevent unauthenticated remote session creation.

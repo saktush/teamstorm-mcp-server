@@ -78,10 +78,8 @@ export async function findFolder(
       matches = result.items;
     }
 
-    const duration = Date.now() - startTime;
-    logResponse('teamstorm_folders_find', true, duration);
-
     if (matches.length === 0) {
+      logResponse('teamstorm_folders_find', true, Date.now() - startTime);
       return {
         content: [{ type: 'text', text: `Папки с ${id ? `ID \`${id}\`` : `названием «${name}»`} не найдены.` }],
         structuredContent: { matches: [], count: 0 },
@@ -94,6 +92,12 @@ export async function findFolder(
         path: await resolveParentPath(client, folder, workspace),
       }))
     );
+
+    // logResponse намеренно ПОСЛЕ Promise.all: раньше он вызывался до него и показывал
+    // только длительность дешёвого listFolders, пряча N+1-обход предков — ровно ту часть,
+    // которая и может занимать минуты.
+    const duration = Date.now() - startTime;
+    logResponse('teamstorm_folders_find', true, duration);
 
     const lines: string[] = [];
     lines.push(`# Найдено папок: ${resolved.length}\n`);
