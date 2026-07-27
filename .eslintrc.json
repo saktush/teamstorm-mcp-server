@@ -21,7 +21,37 @@
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/explicit-module-boundary-types": "off",
     "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
-    "no-console": ["warn", { "allow": ["warn", "error"] }]
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "CallExpression[callee.property.name=/^toLocale(Date|Time)?String$/]",
+        "message": "Используйте formatDate/formatDateTime из src/utils/dates.ts — они не могут напечатать 'Invalid Date' и не сдвигают день у наивных дат без Z."
+      }
+    ]
   },
+  "overrides": [
+    {
+      "files": [
+        "src/utils/dates.ts",
+        "src/__tests__/dates.test.ts",
+        "src/tools/attachments/get.ts",
+        "src/tools/attachments/list.ts",
+        "src/tools/attachments/oob-upload.ts",
+        "src/tools/attachments/version-get.ts",
+        "src/tools/attachments/versions-list.ts",
+        "src/tools/comments/create.ts",
+        "src/tools/comments/list.ts",
+        "src/tools/document-attachments/list.ts",
+        "src/tools/document-comments/create.ts",
+        "src/tools/document-comments/list.ts",
+        "src/tools/sprints/get.ts",
+        "src/tools/sprints/list.ts",
+        "src/tools/time-tracking/create.ts",
+        "src/tools/time-tracking/list.ts"
+      ],
+      "rules": { "no-restricted-syntax": "off" }
+    }
+  ],
   "ignorePatterns": ["dist/", "node_modules/", "*.js"]
 }

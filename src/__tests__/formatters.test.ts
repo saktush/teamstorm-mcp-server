@@ -75,4 +75,64 @@ describe('formatTaskMarkdown', () => {
     expect(markdown).toContain('14.02.2024');
     expect(markdown).toContain('Ship the enrichment feature');
   });
+
+  // Регрессия на баг из отчёта: «**Результат**: [object Object], [object Object]».
+  // Формы значений подтверждены на живом API.
+  it('renders every attribute type without [object Object]', () => {
+    const task = buildTask({
+      attributes: [
+        { id: 'a1', name: 'Ссылка на AMO', description: '', type: 'UniString', value: 'https://x' },
+        { id: 'a2', name: 'Оценка', description: '', type: 'Number', value: 42 },
+        {
+          id: 'a3',
+          name: 'Желаемый срок',
+          description: '',
+          type: 'Date',
+          value: '2026-07-08T21:00:00',
+        },
+        {
+          id: 'a4',
+          name: 'Приоритет',
+          description: '',
+          type: 'UniSelect',
+          value: { id: 'o1', name: 'D (3-99)' },
+        },
+        {
+          id: 'a5',
+          name: 'Результат',
+          description: '',
+          type: 'Tag',
+          value: [
+            { id: 't1', name: 'Демо проведено' },
+            { id: 't2', name: 'Нужен POC' },
+          ],
+        },
+        {
+          id: 'a6',
+          name: 'Ответственный',
+          description: '',
+          type: 'User',
+          value: {
+            id: 'u2',
+            displayName: 'Anastasia Ivanova',
+            username: 'anastasia',
+            email: 'a@test.com',
+          },
+        },
+        { id: 'a7', name: 'Затрачено', description: '', type: 'TimeDuration', value: 5400 },
+        { id: 'a8', name: 'Клиент', description: '', type: 'Tag', value: null },
+      ],
+    });
+
+    const markdown = formatTaskMarkdown(task);
+
+    expect(markdown).not.toContain('[object Object]');
+    expect(markdown).not.toContain('Invalid Date');
+    expect(markdown).toContain('- **Результат**: Демо проведено, Нужен POC');
+    expect(markdown).toContain('- **Приоритет**: D (3-99)');
+    expect(markdown).toContain('- **Ответственный**: Anastasia Ivanova');
+    expect(markdown).toContain('- **Желаемый срок**: 08.07.2026');
+    expect(markdown).toContain('- **Затрачено**: 1ч 30м');
+    expect(markdown).toContain('- **Клиент**: Не заполнено');
+  });
 });

@@ -3,6 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import type { TeamStormUpdatedTaskListResponse, TeamStormUpdatedTask } from '../../client/types.js';
 import { logRequest, logResponse, logError } from '../../utils/logger.js';
+import { formatDateTime } from '../../utils/dates.js';
 
 export const listUpdatedTasksSchema = z
   .object({
@@ -83,12 +84,16 @@ export async function listUpdatedTasks(
     }
 
     const tasksText = response.items
-      .map(
-        (task: TeamStormUpdatedTask, index: number) =>
+      .map((task: TeamStormUpdatedTask, index: number) => {
+        // API отдаёт `changeDate` (без "d"). Терпимо читаем и старое имя на случай,
+        // если инстанс окажется другой версии.
+        const changed = task.changeDate ?? (task as { changedDate?: string }).changedDate;
+        return (
           `**${index + 1}. ${task.key}: ${task.name}**\n` +
           `   📊 Статус: ${task.status.name}\n` +
-          `   🕐 Дата изменения: ${new Date(task.changedDate).toLocaleString('ru-RU')}`
-      )
+          `   🕐 Дата изменения: ${formatDateTime(changed)}`
+        );
+      })
       .join('\n\n');
 
     let paginationInfo = '';

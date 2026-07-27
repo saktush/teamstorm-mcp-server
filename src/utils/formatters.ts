@@ -3,6 +3,12 @@ import type {
   TeamStormTaskListResponse,
   TeamStormDocument,
 } from '../client/types.js';
+import { formatDate, formatDateTime } from './dates.js';
+import { formatAttributeValue } from './attribute-format.js';
+
+// `formatDuration` переехала в `dates.ts` (её использует `attribute-format.ts`,
+// импорт из этого файла создал бы цикл). Реэкспорт — для существующих потребителей.
+export { formatDuration } from './dates.js';
 
 export function formatTaskListMarkdown(data: TeamStormTaskListResponse): string {
   const lines: string[] = [];
@@ -36,8 +42,7 @@ export function formatTaskListMarkdown(data: TeamStormTaskListResponse): string 
     }
 
     if (task.dueDate) {
-      const dueDate = new Date(task.dueDate);
-      lines.push(`**Срок**: ${dueDate.toLocaleDateString('ru-RU')}`);
+      lines.push(`**Срок**: ${formatDate(task.dueDate)}`);
     }
 
     if (task.storyPoints > 0) {
@@ -85,8 +90,8 @@ export function formatTaskMarkdown(task: TeamStormTask): string {
   if (task.sprint) {
     lines.push(`**Спринт**: ${task.sprint.name}`);
     if (task.sprint.startDate && task.sprint.endDate) {
-      const start = new Date(task.sprint.startDate).toLocaleDateString('ru-RU');
-      const end = new Date(task.sprint.endDate).toLocaleDateString('ru-RU');
+      const start = formatDate(task.sprint.startDate);
+      const end = formatDate(task.sprint.endDate);
       lines.push(`**Даты спринта**: ${start} – ${end}`);
     }
     if (task.sprint.description) {
@@ -109,14 +114,14 @@ export function formatTaskMarkdown(task: TeamStormTask): string {
   }
 
   lines.push('');
-  lines.push(`**Создана**: ${new Date(task.createdDate).toLocaleString('ru-RU')}`);
+  lines.push(`**Создана**: ${formatDateTime(task.createdDate)}`);
 
   if (task.startDate) {
-    lines.push(`**Начало**: ${new Date(task.startDate).toLocaleString('ru-RU')}`);
+    lines.push(`**Начало**: ${formatDateTime(task.startDate)}`);
   }
 
   if (task.dueDate) {
-    lines.push(`**Срок**: ${new Date(task.dueDate).toLocaleString('ru-RU')}`);
+    lines.push(`**Срок**: ${formatDateTime(task.dueDate)}`);
   }
 
   lines.push('');
@@ -144,25 +149,7 @@ export function formatTaskMarkdown(task: TeamStormTask): string {
     lines.push('');
 
     for (const attr of task.attributes) {
-      let value: string;
-      switch (attr.type) {
-        case 'User': {
-          const userValue = attr.value as TeamStormTask['assignee'] | undefined;
-          value = userValue?.displayName || 'Не заполнено';
-          break;
-        }
-        case 'Tag':
-          value = Array.isArray(attr.value) ? attr.value.join(', ') : 'Не заполнено';
-          break;
-        case 'Date':
-          value = attr.value
-            ? new Date(attr.value as string).toLocaleDateString('ru-RU')
-            : 'Не заполнено';
-          break;
-        default:
-          value = String(attr.value ?? 'Не заполнено');
-      }
-      lines.push(`- **${attr.name}**: ${value}`);
+      lines.push(`- **${attr.name}**: ${formatAttributeValue(attr)}`);
     }
   }
 
@@ -179,12 +166,10 @@ export function formatDocumentMarkdown(doc: TeamStormDocument, includeContent = 
   lines.push(`- Статус: ${doc.status ? doc.status.name : 'Без статуса'}`);
   lines.push(`- Заблокирован: ${doc.isBlocked ? 'да 🔒' : 'нет'}`);
   lines.push(`- Автор: ${doc.author.displayName}`);
-  lines.push(`- Создан: ${new Date(doc.createdAt).toLocaleString('ru-RU')}`);
+  lines.push(`- Создан: ${formatDateTime(doc.createdAt)}`);
 
   if (doc.updatedBy) {
-    lines.push(
-      `- Обновлён: ${new Date(doc.updatedAt).toLocaleString('ru-RU')} (${doc.updatedBy.displayName})`
-    );
+    lines.push(`- Обновлён: ${formatDateTime(doc.updatedAt)} (${doc.updatedBy.displayName})`);
   }
 
   if (doc.parent) {
@@ -219,12 +204,4 @@ export function formatBytes(bytes: number): string {
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-
-export function formatDuration(seconds: number): string {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  if (hours > 0 && minutes > 0) return `${hours}ч ${minutes}м`;
-  if (hours > 0) return `${hours}ч`;
-  return `${minutes}м`;
 }
