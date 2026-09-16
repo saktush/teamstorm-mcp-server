@@ -28,6 +28,12 @@ export const createTaskLinkSchema = z
       .describe(
         'Название или ключ типа связи (например, «Связана» или «Relates») — будет найден автоматически через teamstorm_link_types_list. Укажите это ИЛИ linkTypeId.'
       ),
+    linkedWorkspace: z
+      .string()
+      .optional()
+      .describe(
+        'Ключ или ID пространства, в котором находится связываемая задача (linkedWorkitem) — укажите, если она находится в другом пространстве, а не в том же, где задача-источник.'
+      ),
   })
   .strict();
 // Note: "exactly one of linkTypeId/linkTypeName" is validated at runtime inside
@@ -42,7 +48,8 @@ export async function createTaskLink(
   structuredContent?: Record<string, unknown>;
   isError?: boolean;
 }> {
-  const { apiUrl, workspace, taskId, linkedWorkitem, linkTypeId, linkTypeName } = params;
+  const { apiUrl, workspace, taskId, linkedWorkitem, linkTypeId, linkTypeName, linkedWorkspace } =
+    params;
   const startTime = Date.now();
 
   if (apiUrl) {
@@ -68,11 +75,12 @@ export async function createTaskLink(
       linkedWorkitem,
       linkTypeId,
       linkTypeName,
+      linkedWorkspace,
     });
     const resolvedTypeId = await resolveLinkTypeId(client, { workspace, linkTypeId, linkTypeName });
     const link = await client.createTaskLink(
       taskId,
-      { type: resolvedTypeId, linkedWorkitem },
+      { type: resolvedTypeId, linkedWorkitem, linkedWorkspace },
       workspace
     );
     const duration = Date.now() - startTime;

@@ -453,6 +453,12 @@ export interface TeamStormLinkTypeListResponse {
 export interface TeamStormCreateTaskLinkRequest {
   type: string;
   linkedWorkitem: string;
+  // RULING R2: spec requires this (CreateWorkitemLinkRequestBody), but link creation
+  // demonstrably works today without it, so the server defaults it to the current
+  // workspace. Added as OPTIONAL rather than required — a capability gain
+  // (cross-workspace links become expressible) with no risk of breaking existing
+  // same-workspace callers.
+  linkedWorkspace?: string;
 }
 
 // Statuses (workitem-level, distinct from TeamStormDocumentStatus)
