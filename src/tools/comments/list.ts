@@ -6,7 +6,14 @@ import { logRequest, logResponse, logError } from '../../utils/logger.js';
 import { OUTPUT_PARAMS_SHAPE, buildListResult, stripHtml, truncate } from '../../utils/output.js';
 import { formatDateTime } from '../../utils/dates.js';
 
-const COMMENT_FIELD_NAMES = ['id', 'text', 'author', 'createdAt', 'updatedAt'] as const;
+const COMMENT_FIELD_NAMES = [
+  'id',
+  'text',
+  'author',
+  'createdAt',
+  'updatedAt',
+  'visibilityType',
+] as const;
 const COMMENT_DEFAULT_FIELDS = ['id', 'author', 'createdAt', 'text'] as const;
 const COMMENT_IDENTITY_FIELDS = ['id', 'author', 'createdAt'] as const;
 
@@ -24,6 +31,7 @@ function projectComment(
   }
   if (fields.has('createdAt')) out.createdAt = comment.createdAt;
   if (fields.has('updatedAt')) out.updatedAt = comment.updatedAt;
+  if (fields.has('visibilityType')) out.visibilityType = comment.visibilityType;
   // Тело комментария — HTML, это основной источник веса ответа.
   if (fields.has('text')) {
     out.text = comment.text ? truncate(stripHtml(comment.text), opts.descriptionMaxChars) : '';

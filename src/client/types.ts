@@ -297,6 +297,9 @@ export interface TeamStormComment {
   author: TeamStormUser;
   createdAt: string;
   updatedAt: string;
+  // CommentModel requires this (spec's CommentVisibilityType). Was missing from
+  // the TS type entirely — see F7, task-2a-brief.md.
+  visibilityType: 'All' | 'Workspace' | 'OnlySelected' | 'ExceptSelected';
 }
 
 export interface TeamStormCommentListResponse {
