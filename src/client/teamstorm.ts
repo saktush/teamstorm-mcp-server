@@ -1076,13 +1076,18 @@ export class TeamStormClient {
       );
 
       // `attachmentId` here is the UUID WE generated and POSTed as the upload path's
-      // {attachmentId} — the server round-trips it back as the new record's own
-      // `attachmentId`. That's the correct correlator. `fileId` is a distinct,
-      // server-assigned storage id ("Идентификатор файла в хранилище") that never
-      // equals our locally generated UUID, so `a.fileId === attachmentId` was
-      // always false (dead code). Matching on `a.name` instead risked resolving to
-      // an unrelated PRE-EXISTING attachment with the same filename.
-      const matched = listResponse.data.items.find((a) => a.attachmentId === attachmentId);
+      // {attachmentId}. IF the server round-trips it back as the new record's own
+      // `attachmentId`, that's the strongest possible correlator — it can't
+      // collide with a pre-existing same-name attachment the way `a.name` can.
+      // But nothing in this repo actually confirms the server does that (the old
+      // `a.fileId === attachmentId` branch shows a previous author guessing the
+      // same thing under a different field name, and being wrong — `fileId` is a
+      // distinct, server-assigned storage id that never equals our UUID). So this
+      // is preferred, not assumed: fall back to the name match that has
+      // demonstrably been carrying uploads until now if no attachmentId matches.
+      const matched =
+        listResponse.data.items.find((a) => a.attachmentId === attachmentId) ??
+        listResponse.data.items.find((a) => a.name === uploadFileName);
 
       if (!matched) {
         throw new Error(

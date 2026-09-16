@@ -22,12 +22,19 @@ function attachmentFixture(overrides: Record<string, unknown> = {}) {
 
 // Regression for F5 (task-2a-brief.md): the follow-up list match used to be
 // `a.name === uploadFileName || a.fileId === attachmentId`. `attachmentId` here is
-// the UUID the client generates and POSTs as the upload path's {attachmentId} — the
-// server round-trips it back as the response's own `attachmentId`, never as
-// `fileId` (a distinct, server-assigned storage id). So the `fileId` half of the OR
-// was dead, and for a task that already has an attachment with the same filename,
-// the name-based match could resolve to that OLD record instead of the just-
-// uploaded one.
+// the UUID the client generates and POSTs as the upload path's {attachmentId} —
+// `fileId` is a distinct, server-assigned storage id that never equals our UUID,
+// so that half of the OR was dead, and for a task that already has an attachment
+// with the same filename, the name-based match could resolve to that OLD record
+// instead of the just-uploaded one.
+//
+// Fix-round Important 3: correlating solely on `attachmentId` assumes the server
+// round-trips our posted UUID back as the record's own `attachmentId` — nothing in
+// this repo actually confirms that (the removed `fileId` branch was a *previous*
+// author guessing the same thing under a different field name, and being wrong).
+// So the fix keeps BOTH, ordered: attachmentId wins when present (kills the
+// wrong-record bug below), name survives as a last resort (keeps uploads working
+// if the premise is false and the server assigns its own id).
 describe('TeamStormClient Attachment Upload Integration Tests', () => {
   let client: TeamStormClient;
   const baseUrl = 'http://teamstorm.test';
@@ -93,6 +100,43 @@ describe('TeamStormClient Attachment Upload Integration Tests', () => {
 
       expect(result.attachmentId).toBe(capturedAttachmentId);
       expect(result.version).toBe(2);
+      expect(result.fileId).toBe('new-file-id');
+    });
+
+    it('falls back to name match when the server assigns its own attachmentId', async () => {
+      // The server does NOT round-trip our posted UUID here — it assigns a
+      // completely different attachmentId of its own. The primary correlator
+      // (attachmentId) finds nothing; the fallback (name) must still resolve the
+      // upload instead of failing it.
+      nock(baseUrl)
+        .post(
+          new RegExp(
+            `/workspaces/${workspace}/workitems/${taskId}/attachments/([0-9a-f-]+)/upload`
+          )
+        )
+        .reply(200, {});
+
+      nock(baseUrl)
+        .get(`/workspaces/${workspace}/workitems/${taskId}/attachments`)
+        .reply(200, {
+          items: [
+            attachmentFixture({
+              attachmentId: 'server-assigned-id-unrelated-to-our-uuid',
+              fileId: 'new-file-id',
+              name: 'report.pdf',
+              version: 1,
+            }),
+          ],
+        });
+
+      const result = await client.uploadTaskAttachmentBuffer(
+        taskId,
+        workspace,
+        Buffer.from('%PDF-1.4 fake'),
+        'report.pdf'
+      );
+
+      expect(result.attachmentId).toBe('server-assigned-id-unrelated-to-our-uuid');
       expect(result.fileId).toBe('new-file-id');
     });
 
