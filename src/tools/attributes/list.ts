@@ -3,8 +3,8 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import { logRequest, logResponse, logError } from '../../utils/logger.js';
 import type {
-  TeamStormAttributeListResponse,
-  TeamStormAttributeValue,
+  TeamStormAttributeModelListResponse,
+  TeamStormAttributeModel,
 } from '../../client/types.js';
 
 export const listAttributesSchema = z
@@ -68,7 +68,7 @@ export async function listAttributes(
       fromToken: args.fromToken,
       maxItemsCount: args.maxItemsCount,
     });
-    const response: TeamStormAttributeListResponse = await client.listAttributes({
+    const response: TeamStormAttributeModelListResponse = await client.listAttributes({
       workspace: args.workspace,
       name: args.name,
       type: args.type,
@@ -92,12 +92,12 @@ export async function listAttributes(
 
     const attributesText = response.items
       .map(
-        (attr: TeamStormAttributeValue, index: number) =>
+        (attr: TeamStormAttributeModel, index: number) =>
           `**${index + 1}. ${attr.name}**\n` +
           `   🆔 ID: ${attr.id}\n` +
           `   📝 Описание: ${attr.description || '—'}\n` +
           `   🏷️ Тип: ${attr.type}\n` +
-          `   🔧 Используется в типах задач: ${(attr as TeamStormAttributeValue & { workitemTypes?: Array<{ name: string }> }).workitemTypes?.map((t) => t.name).join(', ') || '—'}`
+          `   🔧 Используется в типах задач: ${attr.workitemTypes.map((t) => t.name).join(', ') || '—'}`
       )
       .join('\n\n');
 

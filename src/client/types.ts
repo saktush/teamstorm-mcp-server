@@ -347,6 +347,17 @@ export interface TeamStormAttributeModel {
   workitemTypes: Array<{ id: string; name: string }>;
 }
 
+// `ListAttributes` (space-level attribute DEFINITIONS, GET /workspaces/{ws}/attributes)
+// returns AttributesModelList { items: AttributeModel[] } — a different schema family
+// from TeamStormAttributeListResponse above, which is task attribute VALUES
+// (GET /workitems/{id}/attributes, has `value`, no `workitemTypes`). Don't conflate them.
+export interface TeamStormAttributeModelListResponse {
+  fromToken?: string | null;
+  maxItemsCount?: number | null;
+  nextToken?: string | null;
+  items: TeamStormAttributeModel[];
+}
+
 export interface TeamStormCreateAttributeRequest {
   name: string;
   type: TeamStormAttributeType;

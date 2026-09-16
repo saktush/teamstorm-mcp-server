@@ -24,6 +24,7 @@ import type {
   TeamStormCommentVisibility,
   TeamStormAttributeListResponse,
   TeamStormAttributeModel,
+  TeamStormAttributeModelListResponse,
   TeamStormCreateAttributeRequest,
   TeamStormPatchAttributeRequest,
   TeamStormCreateAttributeOptionRequest,
@@ -604,18 +605,20 @@ export class TeamStormClient {
     }
   }
 
-  // Space attributes
+  // Space attributes (attribute DEFINITIONS — AttributeModel, has `workitemTypes`,
+  // no `value`. Not to be confused with getTaskAttributes() below, which returns
+  // attribute VALUES on a specific task and correctly uses TeamStormAttributeListResponse.)
   async listAttributes(params: {
     workspace?: string;
     name?: string;
     type?: string;
     fromToken?: string;
     maxItemsCount?: number;
-  }): Promise<TeamStormAttributeListResponse> {
+  }): Promise<TeamStormAttributeModelListResponse> {
     this.requireBaseUrl();
     try {
       const ws = this.resolveWorkspace(params.workspace);
-      const response = await this.client.get<TeamStormAttributeListResponse>(
+      const response = await this.client.get<TeamStormAttributeModelListResponse>(
         `/workspaces/${ws}/attributes`,
         { params: { ...params, workspace: undefined } }
       );
