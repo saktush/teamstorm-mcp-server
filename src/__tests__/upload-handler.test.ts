@@ -105,8 +105,20 @@ describe('parseUpload', () => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'upload-handler-test-'));
   });
 
-  afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+  afterEach(async () => {
+    // formidable tears a rejected upload down asynchronously and detached from
+    // the promise form.parse() settles with: PersistentFile.destroy() destroys
+    // the write stream and unlinks the temp file on a 1 ms timer. The stream's
+    // already-in-flight open() can therefore recreate the entry between rm's
+    // readdir and its closing rmdir, which surfaces as an intermittent
+    // ENOTEMPTY. Retry until the directory is actually gone rather than
+    // sleeping for a guessed interval.
+    await fs.promises.rm(tmpDir, {
+      recursive: true,
+      force: true,
+      maxRetries: 20,
+      retryDelay: 50,
+    });
   });
 
   it('TC1: small file is written to disk intact with correct metadata', async () => {
