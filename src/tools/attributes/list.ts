@@ -97,7 +97,11 @@ export async function listAttributes(
           `   🆔 ID: ${attr.id}\n` +
           `   📝 Описание: ${attr.description || '—'}\n` +
           `   🏷️ Тип: ${attr.type}\n` +
-          `   🔧 Используется в типах задач: ${attr.workitemTypes.map((t) => t.name).join(', ') || '—'}`
+          // `workitemTypes` is required per AttributeModel, but keep the optional
+          // chain as a defensive guard against the API omitting it anyway — F4
+          // deleted the unsafe CAST, not this GUARD. Without it, one attribute
+          // missing the field would throw mid-`.map()` and fail the whole list.
+          `   🔧 Используется в типах задач: ${attr.workitemTypes?.map((t) => t.name).join(', ') || '—'}`
       )
       .join('\n\n');
 
