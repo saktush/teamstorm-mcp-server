@@ -70,14 +70,23 @@ export interface TeamStormCreateSprintRequest {
 export type TeamStormTreeNodeType = 'Folder' | 'Task' | 'WorkItem' | 'Workspace' | 'Document';
 
 /**
- * `TreeNodeThumbModel { id, nodeType }` — без `name`. Раньше `folder` и `parent`
- * у задачи делили один тип `TeamStormFolder { id, name, nodeType }`, хотя спека
- * резолвит их в разные схемы: `folder` → `FolderThumbModel {id,name}` (см.
- * `TeamStormFolderThumb` ниже), `parent` → вот этот тип. У `parent` никогда не
- * было `name` — `doc.parent.name`/`task.parent` печатали `undefined`.
+ * `TreeNodeThumbModel { id, nodeType }` per spec — used for `parent` on both
+ * tasks and documents.
+ *
+ * `name` is kept OPTIONAL rather than dropped: the old document-parent type this
+ * replaced was `{id: string; name: string; nodeType?: string}` — `name` REQUIRED,
+ * `nodeType` OPTIONAL — which is the repo's only observation-based evidence of
+ * what `parent` actually carries on the wire (AGENTS.md «Связи» precedent: the
+ * spec has a documented history of being wrong about live shapes, so an
+ * apparently-hand-written type like that one is evidence, not noise). Dropping
+ * `name` entirely made `formatDocumentMarkdown` hard-read `.nodeType`, which
+ * would resurrect the exact "prints undefined" bug F2 killed if live responses
+ * omit `nodeType` — precisely what that old `nodeType?` encoded. Consumers
+ * should prefer `name` when present and fall back to `nodeType`.
  */
 export interface TeamStormTreeNodeThumb {
   id: string;
+  name?: string;
   nodeType: TeamStormTreeNodeType;
 }
 

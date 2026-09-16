@@ -159,10 +159,9 @@ function buildDocument(overrides: Partial<TeamStormDocument> = {}): TeamStormDoc
 
 describe('formatDocumentMarkdown', () => {
   // Regression for F2 (task-2a-brief.md): `parent` resolves to TreeNodeThumbModel
-  // {id, nodeType} — it has no `name`. The formatter used to read `doc.parent.name`,
-  // which doesn't exist on the real API response, and printed the literal word
-  // "undefined" for every document with a parent.
-  it('renders the parent node type and id, never the literal word "undefined"', () => {
+  // {id, nodeType}. `name` is kept optional on TeamStormTreeNodeThumb as a hedge
+  // (see the type's own comment) — falls back to `nodeType` when the API omits it.
+  it('falls back to nodeType when parent has no name, never the literal word "undefined"', () => {
     const doc = buildDocument({
       parent: { id: 'p1', nodeType: 'Folder' },
     });
@@ -171,6 +170,20 @@ describe('formatDocumentMarkdown', () => {
 
     expect(markdown).not.toContain('undefined');
     expect(markdown).toContain('- Родитель: Folder (`p1`)');
+  });
+
+  // Fix-round Important 1: the old (pre-F2) document-parent type had `name`
+  // REQUIRED — evidence the live API can and does send it. Reading only
+  // `.nodeType` would print "undefined" for exactly this shape.
+  it('prefers name over nodeType when parent carries both', () => {
+    const doc = buildDocument({
+      parent: { id: 'p1', name: 'Meetings', nodeType: 'Folder' },
+    });
+
+    const markdown = formatDocumentMarkdown(doc);
+
+    expect(markdown).not.toContain('undefined');
+    expect(markdown).toContain('- Родитель: Meetings (`p1`)');
   });
 
   it('omits the parent line entirely when there is no parent', () => {

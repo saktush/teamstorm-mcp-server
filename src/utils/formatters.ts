@@ -173,10 +173,13 @@ export function formatDocumentMarkdown(doc: TeamStormDocument, includeContent = 
   }
 
   if (doc.parent) {
-    // `parent` резолвится в спеке к TreeNodeThumbModel {id, nodeType} — у него нет
-    // `name` (в отличие от `folder` у задач). Раньше здесь стояло `doc.parent.name`,
-    // которого никогда не было в ответе API, и строка печатала `undefined`.
-    lines.push(`- Родитель: ${doc.parent.nodeType} (\`${doc.parent.id}\`)`);
+    // `parent` резолвится в спеке к TreeNodeThumbModel {id, nodeType}, но `name`
+    // остаётся опциональным полем в клиентском типе (см. комментарий у
+    // TeamStormTreeNodeThumb) — старый, написанный по живому ответу тип нёс
+    // required `name` и optional `nodeType`. Предпочитаем `name`, если он есть,
+    // иначе — `nodeType`: жёсткое чтение только `.nodeType` печатало бы
+    // `undefined`, если сервер его не пришлёт.
+    lines.push(`- Родитель: ${doc.parent.name ?? doc.parent.nodeType} (\`${doc.parent.id}\`)`);
   }
 
   if (doc.labels && doc.labels.length > 0) {

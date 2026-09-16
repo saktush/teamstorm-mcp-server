@@ -187,4 +187,16 @@ describe('projectTask parent field', () => {
 
     expect(projected.parent).toBeNull();
   });
+
+  // Fix-round Important 1: `name` is optional on TeamStormTreeNodeThumb, not
+  // absent — emit it when the API sends it, so `fields:['parent']` still returns
+  // a human-readable label instead of forcing a second lookup by id.
+  it('includes name alongside nodeType when the API sends both', () => {
+    const task = buildTask(0);
+    task.parent = { id: 'parent-1', name: 'Meetings', nodeType: 'Folder' };
+
+    const projected = projectTask(task, new Set(['parent']), { descriptionMaxChars: 500 });
+
+    expect(projected.parent).toEqual({ id: 'parent-1', name: 'Meetings', nodeType: 'Folder' });
+  });
 });
