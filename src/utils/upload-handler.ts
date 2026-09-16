@@ -23,6 +23,36 @@ export interface ParsedUpload {
 
 type WriteFileFn = (path: string, data: string, opts: { mode: number }) => void;
 
+/** Best-effort removal of temp files formidable persisted into uploadDir. */
+function unlinkFiles(files: formidable.File[]): void {
+  for (const file of files) {
+    try {
+      fs.unlinkSync(file.filepath);
+    } catch {
+      // ignore — already gone, or never written
+    }
+  }
+}
+
+/**
+ * Discard files from a parse that never finished. Their write streams may still
+ * be in flight, so a plain unlink can lose the race and leave the file behind;
+ * formidable's own destroy() tears the stream down first and then unlinks, which
+ * is how the too-large path already cleans up after itself. Asynchronous by
+ * nature — callers get no completion signal.
+ */
+function destroyFiles(files: formidable.File[]): void {
+  for (const file of files) {
+    // destroy() is on PersistentFile, not the File interface the event emits
+    const destroyable = file as formidable.File & { destroy?: () => void };
+    try {
+      destroyable.destroy?.();
+    } catch {
+      // ignore — stream was never opened
+    }
+  }
+}
+
 export async function parseUpload(
   req: IncomingMessage,
   uploadDir: string,
@@ -39,10 +69,20 @@ export async function parseUpload(
     minFileSize: 1,
   });
 
+  // When form.parse rejects it gives us no file list, so track every file it
+  // opened. 'fileBegin' is the one that fires here — on an aborted parse the
+  // per-file 'file' event never arrives, and formidable destroys only the file
+  // it rejected, leaving any earlier ones on disk.
+  const persisted: formidable.File[] = [];
+  form.on('fileBegin', (_field, file) => {
+    persisted.push(file);
+  });
+
   let files: formidable.Files;
   try {
     [, files] = await form.parse(req);
   } catch (err: unknown) {
+    destroyFiles(persisted);
     // formidable error codes: 1016 = biggerThanMaxFileSize, 1009 = biggerThanTotalMaxFileSize
     if (
       err !== null &&
@@ -60,6 +100,9 @@ export async function parseUpload(
 
   const fileArray = (files as Record<string, formidable.File[]>)['file'];
   if (!fileArray || fileArray.length === 0) {
+    // formidable already persisted whatever it received into uploadDir; drop it
+    // all so a wrong field name can't accumulate orphans there.
+    unlinkFiles(persisted);
     throw new UploadError('No file provided. Send as multipart field "file".', 400);
   }
 

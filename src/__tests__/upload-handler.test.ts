@@ -88,6 +88,16 @@ function callParseUpload(
   });
 }
 
+async function waitForEmptyDir(dir: string, timeoutMs = 2000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  let remaining = fs.readdirSync(dir);
+  while (remaining.length > 0 && Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 10));
+    remaining = fs.readdirSync(dir);
+  }
+  expect(remaining).toHaveLength(0);
+}
+
 describe('parseUpload', () => {
   let tmpDir: string;
 
@@ -163,6 +173,46 @@ describe('parseUpload', () => {
     await expect(callParseUpload(boundary, body, tmpDir, 50 * 1024 * 1024)).rejects.toSatisfy(
       (err: unknown) => err instanceof UploadError && err.statusCode === 400
     );
+  });
+
+  it('TC4b: wrong field name leaves no orphaned temp file behind', async () => {
+    const content = Buffer.from('data');
+    const boundary = 'bound456b';
+    const body = buildMultipartBody({
+      boundary,
+      filename: 'file.txt',
+      content,
+      fieldName: 'attachment',
+    });
+
+    await expect(callParseUpload(boundary, body, tmpDir, 50 * 1024 * 1024)).rejects.toBeInstanceOf(
+      UploadError
+    );
+
+    // formidable already persisted the temp file before we rejected it
+    expect(fs.readdirSync(tmpDir)).toHaveLength(0);
+  });
+
+  it('TC4c: extra file parts beyond maxFiles leave no orphaned temp file', async () => {
+    const boundary = 'twoparts';
+    const body = Buffer.concat([
+      Buffer.from(`--${boundary}\r\n`),
+      Buffer.from(`Content-Disposition: form-data; name="file"; filename="a.txt"\r\n`),
+      Buffer.from(`Content-Type: text/plain\r\n\r\nAAA\r\n`),
+      Buffer.from(`--${boundary}\r\n`),
+      Buffer.from(`Content-Disposition: form-data; name="attachment"; filename="b.txt"\r\n`),
+      Buffer.from(`Content-Type: text/plain\r\n\r\nBBB\r\n--${boundary}--\r\n`),
+    ]);
+
+    // formidable rejects the whole parse with maxFilesExceeded before parseUpload
+    // sees any file, so the cleanup has to happen on the parse-failure path too
+    await expect(callParseUpload(boundary, body, tmpDir, 50 * 1024 * 1024)).rejects.toThrow(
+      /maxFiles/
+    );
+
+    // Cleanup here tears down in-flight write streams first, so it completes
+    // asynchronously — poll rather than encode a race into the assertion
+    await waitForEmptyDir(tmpDir);
   });
 
   it('TC5: meta write failure cleans up the data file leaving no orphan (D2 cleanup)', async () => {
