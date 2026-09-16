@@ -406,9 +406,11 @@ export interface TeamStormPermission {
   group?: { id: string; name: string };
 }
 
-export interface TeamStormPermissionListResponse {
-  items: TeamStormPermission[];
-}
+// GET /workspaces/{workspace}/workitems/{workitem}/sharing returns a bare array
+// (no `items` wrapper) — same bug class AGENTS.md's «Связи» section records for
+// GET .../links, just never applied here. Verified against the spec's `oneOf` array
+// response for ListSharedWorkitemPermissions.
+export type TeamStormPermissionListResponse = TeamStormPermission[];
 
 // Links (task relationships)
 // GET /workspaces/{workspace}/workitems/{workitem}/links returns a bare array

@@ -57,7 +57,7 @@ export async function getTaskPermissions(
 
     logResponse('teamstorm_task_permissions_get', true, duration);
 
-    if (response.items.length === 0) {
+    if (response.length === 0) {
       return {
         content: [
           {
@@ -74,7 +74,7 @@ export async function getTaskPermissions(
       Comment: '💬 Комментирование',
     };
 
-    const permissionsText = response.items
+    const permissionsText = response
       .map((perm: TeamStormPermission, index: number) => {
         let who: string;
         if (perm.type === 'User' && perm.user) {
@@ -97,10 +97,10 @@ export async function getTaskPermissions(
       content: [
         {
           type: 'text',
-          text: `🔐 Правила доступа к задаче ${args.taskId} (${response.items.length} шт.):\n\n${permissionsText}`,
+          text: `🔐 Правила доступа к задаче ${args.taskId} (${response.length} шт.):\n\n${permissionsText}`,
         },
       ],
-      structuredContent: response as unknown as Record<string, unknown>,
+      structuredContent: { items: response, count: response.length },
     };
   } catch (error) {
     logError(error as Error, { workspace, taskId: args.taskId });
