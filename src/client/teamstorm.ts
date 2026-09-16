@@ -1483,9 +1483,14 @@ export class TeamStormClient {
     this.requireBaseUrl();
     try {
       const ws = this.resolveWorkspace(workspace);
+      // RULING R7: CreateDocumentRequestBody requires `labels`, but the MCP tool
+      // param stays optional (don't tighten a previously-optional interface on a
+      // guess about server defaulting — see R2/R3). Default it here instead, so a
+      // spec-required field is always sent regardless of what the caller passed.
+      const body: TeamStormCreateDocumentRequest = { ...data, labels: data.labels ?? [] };
       const response = await this.client.post<TeamStormDocument>(
         `/workspaces/${ws}/documents`,
-        data
+        body
       );
       return response.data;
     } catch (error) {

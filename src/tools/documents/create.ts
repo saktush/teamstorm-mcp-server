@@ -15,8 +15,18 @@ export const createDocumentSchema = z
       ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     name: z.string().describe('Название документа'),
-    content: z.string().optional().describe('Содержимое документа (поддерживает HTML-разметку)'),
-    parentId: z.string().optional().describe('ID родительской папки или документа (UUID)'),
+    content: z
+      .string()
+      .optional()
+      .describe(
+        'Содержимое документа (поддерживает HTML-разметку). API TeamStorm требует это поле — запрос без него может завершиться ошибкой.'
+      ),
+    parentId: z
+      .string()
+      .optional()
+      .describe(
+        'ID родительской папки или документа (UUID). API TeamStorm требует это поле — запрос без него может завершиться ошибкой.'
+      ),
     labels: z.array(z.string()).optional().describe('Метки документа'),
   })
   .strict();
