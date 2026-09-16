@@ -59,6 +59,14 @@ function ref(value: NamedRef | undefined): { id: string; name: string } | null {
   return value ? { id: value.id ?? '', name: value.name ?? '' } : null;
 }
 
+// `parent` resolves to TreeNodeThumbModel {id, nodeType} — it has no `name` (unlike
+// `folder`, which is FolderThumbModel {id, name}). Reusing `ref()` here used to
+// silently emit `{id, name: ''}`, dropping the one piece of information (nodeType)
+// the API actually sends. See F2 in task-2a-brief.md.
+function treeNodeRef(value: TeamStormTask['parent']): { id: string; nodeType: string } | null {
+  return value ? { id: value.id, nodeType: value.nodeType } : null;
+}
+
 function userRef(
   value: TeamStormTask['assignee']
 ): { id: string; displayName: string; username: string } | null {
@@ -95,7 +103,7 @@ export function projectTask(
   if (want('author')) out.author = userRef(task.author);
   if (want('sprint')) out.sprint = ref(task.sprint);
   if (want('folder')) out.folder = ref(task.folder);
-  if (want('parent')) out.parent = ref(task.parent);
+  if (want('parent')) out.parent = treeNodeRef(task.parent);
   if (want('workspace')) out.workspace = task.workspace ? task.workspace.key : null;
 
   for (const dateField of [

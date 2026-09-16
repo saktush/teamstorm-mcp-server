@@ -59,10 +59,26 @@ export interface TeamStormCreateSprintRequest {
   team: Array<{ userId: string; daysOff?: number; hoursPerDay?: number }>;
 }
 
-export interface TeamStormFolder {
+/**
+ * Тип узла дерева (папка/задача/пространство/документ), к которому относится
+ * `TreeNodeThumbModel` (используется для `parent` у задач и документов).
+ *
+ * RULING R4: спека сузила бы это до `Folder|Task|Workspace|Document`, но мы не
+ * можем проверить, не отдаёт ли 4.2x всё ещё `"WorkItem"` для задач — юнион
+ * расширен, а не сужен: лишнее принятое значение безвредно, пропущенное — нет.
+ */
+export type TeamStormTreeNodeType = 'Folder' | 'Task' | 'WorkItem' | 'Workspace' | 'Document';
+
+/**
+ * `TreeNodeThumbModel { id, nodeType }` — без `name`. Раньше `folder` и `parent`
+ * у задачи делили один тип `TeamStormFolder { id, name, nodeType }`, хотя спека
+ * резолвит их в разные схемы: `folder` → `FolderThumbModel {id,name}` (см.
+ * `TeamStormFolderThumb` ниже), `parent` → вот этот тип. У `parent` никогда не
+ * было `name` — `doc.parent.name`/`task.parent` печатали `undefined`.
+ */
+export interface TeamStormTreeNodeThumb {
   id: string;
-  name: string;
-  nodeType: 'Folder' | 'WorkItem';
+  nodeType: TeamStormTreeNodeType;
 }
 
 /** Ссылка на справочное значение: так API отдаёт `UniSelect` и элементы `Tag`. */
@@ -212,13 +228,13 @@ export interface TeamStormTask {
   assignee?: TeamStormUser;
   author: TeamStormUser;
   sprint?: TeamStormSprint;
-  folder?: TeamStormFolder;
+  folder?: TeamStormFolderThumb;
   originalEstimate: number;
   timeSpent: number;
   remainingEstimate: number;
   storyPoints: number;
   changedBy: TeamStormUser;
-  parent?: TeamStormFolder;
+  parent?: TeamStormTreeNodeThumb;
   attributes: TeamStormAttribute[];
   portfolios: TeamStormPortfolio[];
   workspace: TeamStormWorkspace;
@@ -528,7 +544,7 @@ export interface TeamStormDocument {
   author: TeamStormUser;
   updatedAt: string;
   updatedBy?: TeamStormUser | null;
-  parent?: { id: string; name: string; nodeType?: string } | null;
+  parent?: TeamStormTreeNodeThumb | null;
   version: number;
   versionUrl: string;
   labels: string[];

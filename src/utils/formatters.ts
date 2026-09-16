@@ -173,7 +173,10 @@ export function formatDocumentMarkdown(doc: TeamStormDocument, includeContent = 
   }
 
   if (doc.parent) {
-    lines.push(`- Родитель: ${doc.parent.name} (\`${doc.parent.id}\`)`);
+    // `parent` резолвится в спеке к TreeNodeThumbModel {id, nodeType} — у него нет
+    // `name` (в отличие от `folder` у задач). Раньше здесь стояло `doc.parent.name`,
+    // которого никогда не было в ответе API, и строка печатала `undefined`.
+    lines.push(`- Родитель: ${doc.parent.nodeType} (\`${doc.parent.id}\`)`);
   }
 
   if (doc.labels && doc.labels.length > 0) {
