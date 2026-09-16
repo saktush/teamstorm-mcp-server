@@ -1075,9 +1075,14 @@ export class TeamStormClient {
         `/workspaces/${encodeURIComponent(ws)}/workitems/${encodeURIComponent(taskId)}/attachments`
       );
 
-      const matched = listResponse.data.items.find(
-        (a) => a.name === uploadFileName || a.fileId === attachmentId
-      );
+      // `attachmentId` here is the UUID WE generated and POSTed as the upload path's
+      // {attachmentId} — the server round-trips it back as the new record's own
+      // `attachmentId`. That's the correct correlator. `fileId` is a distinct,
+      // server-assigned storage id ("Идентификатор файла в хранилище") that never
+      // equals our locally generated UUID, so `a.fileId === attachmentId` was
+      // always false (dead code). Matching on `a.name` instead risked resolving to
+      // an unrelated PRE-EXISTING attachment with the same filename.
+      const matched = listResponse.data.items.find((a) => a.attachmentId === attachmentId);
 
       if (!matched) {
         throw new Error(
