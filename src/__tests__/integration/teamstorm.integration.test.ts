@@ -233,7 +233,7 @@ describe('TeamStormClient Integration Tests', () => {
         workspace,
       });
 
-      expect(result.status.name).toBe('In Progress');
+      expect(result.status?.name).toBe('In Progress');
     });
   });
 

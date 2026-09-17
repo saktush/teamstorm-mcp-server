@@ -87,10 +87,10 @@ export async function listTasksByParent(
           .map(
             (task, index) =>
               `**${index + 1}. ${task.key}: ${task.name}**\n` +
-              `   📊 Статус: ${task.status.name}\n` +
+              `   📊 Статус: ${task.status?.name || 'Без статуса'}\n` +
               `   👤 Исполнитель: ${task.assignee?.displayName || 'Не назначен'}\n` +
               `   📂 Папка: ${task.folder?.name || '—'}\n` +
-              `   🏷️ Тип: ${task.type.name}`
+              `   🏷️ Тип: ${task.type?.name || '—'}`
           )
           .join('\n\n');
         return `📋 Задачи в элементе ${args.parent} (${meta.returned} шт.):\n\n${tasksText}`;

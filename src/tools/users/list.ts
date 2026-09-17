@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
-import type { TeamStormUserListResponse } from '../../client/types.js';
+import type { TeamStormWorkspaceUserListResponse } from '../../client/types.js';
 import { logRequest, logResponse, logError, logger } from '../../utils/logger.js';
 
 const ListUsersSchema = z
@@ -15,6 +15,9 @@ const ListUsersSchema = z
       ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     search: z.string().optional().describe('Поиск по имени или email (вхождение подстроки)'),
+    displayName: z.string().optional().describe('Фильтр по отображаемому имени пользователя.'),
+    roleId: z.string().optional().describe('Фильтр по роли в пространстве.'),
+    fromToken: z.string().optional().describe('Токен для пагинации'),
     maxItemsCount: z
       .number()
       .optional()
@@ -23,7 +26,7 @@ const ListUsersSchema = z
   })
   .strict();
 
-export function formatUsersMarkdown(data: TeamStormUserListResponse): string {
+export function formatUsersMarkdown(data: TeamStormWorkspaceUserListResponse): string {
   const lines: string[] = [];
 
   lines.push(`# Список пользователей (${data.items.length})`);
@@ -62,7 +65,12 @@ export async function listUsers(
 
   try {
     logRequest('teamstorm_users_list', params);
-    const result = await client.listUsers(params.workspace);
+    const result = await client.listUsers(params.workspace, {
+      displayName: params.displayName,
+      roleId: params.roleId,
+      fromToken: params.fromToken,
+      maxItemsCount: params.maxItemsCount,
+    });
     const duration = Date.now() - startTime;
 
     logResponse('teamstorm_users_list', true, duration);
@@ -97,6 +105,9 @@ export async function listUsers(
         },
       ],
       structuredContent: {
+        fromToken: result.fromToken,
+        maxItemsCount: result.maxItemsCount,
+        nextToken: result.nextToken,
         users: limitedUsers,
         total: filteredUsers.length,
         displayed: limitedUsers.length,

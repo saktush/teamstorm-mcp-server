@@ -319,5 +319,41 @@ describe('TeamStormClient Attributes Integration Tests', () => {
       expect(result.isError).toBeUndefined();
       expect(result.content[0].text).toContain('Используется в типах задач: Bug, Task');
     });
+
+    // B20: `type` (typed enum, not a bare string) and `isFullNameMatching` were either
+    // unconstrained or entirely unreachable.
+    it('B20: sends type and isFullNameMatching as query params', async () => {
+      nock(baseUrl)
+        .get(`/workspaces/${workspace}/attributes`)
+        .query({ type: 'UniSelect', isFullNameMatching: 'true', name: 'Priority' })
+        .reply(200, { items: [mockAttributeModel] });
+
+      const result = await client.listAttributes({
+        workspace,
+        name: 'Priority',
+        type: 'UniSelect',
+        isFullNameMatching: true,
+      });
+
+      expect(result.items).toHaveLength(1);
+      expect(nock.isDone()).toBe(true);
+    });
+
+    it('B20: tool forwards isFullNameMatching to the client call', async () => {
+      nock(baseUrl)
+        .get(`/workspaces/${workspace}/attributes`)
+        .query({ type: 'Tag', isFullNameMatching: 'true', maxItemsCount: '50' })
+        .reply(200, { items: [mockAttributeModel] });
+
+      const result = await listAttributes(client, {
+        workspace,
+        type: 'Tag',
+        isFullNameMatching: true,
+        maxItemsCount: 50,
+      });
+
+      expect(result.isError).toBeUndefined();
+      expect(nock.isDone()).toBe(true);
+    });
   });
 });

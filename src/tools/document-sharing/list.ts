@@ -22,8 +22,8 @@ function formatPermission(p: TeamStormDocumentPermission): string[] {
   const lines: string[] = [];
   const subject =
     p.type === 'User'
-      ? `👤 ${p.user?.displayName ?? p.userId ?? 'пользователь'}`
-      : `👥 ${p.group?.name ?? p.groupId ?? 'группа'}`;
+      ? `👤 ${p.user?.displayName ?? 'пользователь'}`
+      : `👥 ${p.group?.name ?? 'группа'}`;
   lines.push(`**${subject}** — ${p.accessLevel}`);
   lines.push(`- ID разрешения: \`${p.permissionId}\``);
   lines.push('');

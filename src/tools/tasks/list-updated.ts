@@ -111,7 +111,7 @@ export async function listUpdatedTasks(
             const changed = task.changeDate ?? (task as { changedDate?: string }).changedDate;
             return (
               `**${index + 1}. ${task.key}: ${task.name}**\n` +
-              `   📊 Статус: ${task.status.name}\n` +
+              `   📊 Статус: ${task.status?.name || 'Без статуса'}\n` +
               `   🕐 Дата изменения: ${formatDateTime(changed)}`
             );
           })

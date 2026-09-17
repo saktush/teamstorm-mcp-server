@@ -11,6 +11,8 @@ import type {
   TeamStormUpdateTaskRequest,
   TeamStormUser,
   TeamStormUserListResponse,
+  TeamStormWorkspaceUserListResponse,
+  TeamStormAttributeType,
   TeamStormSprint,
   TeamStormSprintListResponse,
   TeamStormCreateSprintRequest,
@@ -431,11 +433,17 @@ export class TeamStormClient {
 
   // Phase B: Additional API methods
 
-  async listUsers(workspace?: string): Promise<TeamStormUserListResponse> {
+  async listUsers(
+    workspace?: string,
+    params?: { displayName?: string; roleId?: string; fromToken?: string; maxItemsCount?: number }
+  ): Promise<TeamStormWorkspaceUserListResponse> {
     this.requireBaseUrl();
     try {
       const ws = this.resolveWorkspace(workspace);
-      const response = await this.client.get<TeamStormUserListResponse>(`/workspaces/${ws}/users`);
+      const response = await this.client.get<TeamStormWorkspaceUserListResponse>(
+        `/workspaces/${ws}/users`,
+        { params }
+      );
       return response.data;
     } catch (error) {
       this.handleError(error as AxiosError);
@@ -457,7 +465,7 @@ export class TeamStormClient {
   }
 
   // Global user search — GET /users, instance-wide and server-side filtered (unlike listUsers(),
-  // which fetches one workspace's members and filters client-side).
+  // which also supports the workspace endpoint's own filters and pagination).
   async listAllUsers(params?: {
     displayName?: string;
     email?: string;
@@ -557,6 +565,8 @@ export class TeamStormClient {
   }
 
   async listWorkspaces(params?: {
+    key?: string;
+    name?: string;
     fromToken?: string;
     maxItemsCount?: number;
   }): Promise<TeamStormWorkspaceListResponse> {
@@ -581,12 +591,16 @@ export class TeamStormClient {
     }
   }
 
-  async listWorkflows(workspace?: string): Promise<TeamStormWorkflowListResponse> {
+  async listWorkflows(
+    workspace?: string,
+    params?: { name?: string }
+  ): Promise<TeamStormWorkflowListResponse> {
     this.requireBaseUrl();
     try {
       const ws = this.resolveWorkspace(workspace);
       const response = await this.client.get<TeamStormWorkflowListResponse>(
-        `/workspaces/${ws}/workflows`
+        `/workspaces/${ws}/workflows`,
+        { params }
       );
       return response.data;
     } catch (error) {
@@ -611,7 +625,8 @@ export class TeamStormClient {
   async listAttributes(params: {
     workspace?: string;
     name?: string;
-    type?: string;
+    type?: TeamStormAttributeType;
+    isFullNameMatching?: boolean;
     fromToken?: string;
     maxItemsCount?: number;
   }): Promise<TeamStormAttributeModelListResponse> {
@@ -959,7 +974,7 @@ export class TeamStormClient {
       const ws = this.resolveWorkspace(workspace);
       const response = await this.client.post<TeamStormLink>(
         `/workspaces/${ws}/workitems/${taskId}/links`,
-        data
+        { ...data, linkedWorkspace: data.linkedWorkspace ?? ws }
       );
       return response.data;
     } catch (error) {
@@ -1590,7 +1605,7 @@ export class TeamStormClient {
   async patchDocumentPermission(
     documentId: string,
     permissionId: string,
-    data: { accessLevel: 'Read' | 'Edit' | 'Comment' },
+    data: { accessLevel?: 'Read' | 'Edit' | 'Comment' | null },
     workspace?: string
   ): Promise<TeamStormDocumentPermission> {
     this.requireBaseUrl();

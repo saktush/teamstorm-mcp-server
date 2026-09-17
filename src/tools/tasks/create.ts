@@ -108,6 +108,7 @@ const CreateTaskSchema = z
     type: z.string().describe('Тип задачи (название или ID, например "Дефект" или "User Story")'),
     workflow: z.string().optional().describe('Название или ID процесса'),
     status: z.string().optional().describe('Начальный статус задачи (название или ID)'),
+    startDate: z.string().nullable().optional().describe('Дата начала работы над задачей'),
     assignee: z.string().optional().describe('Исполнитель (логин пользователя или ID)'),
     parentId: z.string().describe('Папка (название, например "разработка"). Обязательно.'),
     sprintId: z

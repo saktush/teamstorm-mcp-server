@@ -87,4 +87,28 @@ describe('createTask tool (workspace/folder resolution)', () => {
 
     expect(result.isError).toBeUndefined();
   });
+
+  // B15: CreateWorkitemRequestBody's optional `startDate` — the tool had no way to send it.
+  it('threads startDate through to the POST body when provided', async () => {
+    nock(baseUrl)
+      .post(`/workspaces/${workspaceKey}/workitems`, {
+        name: 'Test epic',
+        type: 'Эпик',
+        parentId: folderId,
+        startDate: '2026-09-20T00:00:00Z',
+      })
+      .reply(201, { ...mockTask, startDate: '2026-09-20T00:00:00Z' });
+
+    const result = await createTask(client, {
+      workspace: workspaceKey,
+      name: 'Test epic',
+      type: 'Эпик',
+      parentId: folderId,
+      startDate: '2026-09-20T00:00:00Z',
+    });
+
+    expect(result.isError).toBeUndefined();
+    expect(result.structuredContent?.startDate).toBe('2026-09-20T00:00:00Z');
+    expect(nock.isDone()).toBe(true);
+  });
 });

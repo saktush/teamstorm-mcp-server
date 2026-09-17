@@ -3,10 +3,8 @@ import nock from 'nock';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import { createTaskLink } from '../../tools/links/create.js';
 
-// F3 (task-2a-brief.md) + RULING R2: CreateWorkitemLinkRequestBody requires
-// `linkedWorkspace` per spec, but the client omitted it entirely and link
-// creation works today without it, so the server must default it. Added as an
-// OPTIONAL field — additive test only, no TDD red/green needed.
+// R10 amends R2: 4.2x newly requires linkedWorkspace on the wire. Keep the
+// input optional while sending the resolved source workspace by default.
 describe('TeamStormClient Links Integration Tests', () => {
   let client: TeamStormClient;
   const baseUrl = 'http://teamstorm.test';
@@ -55,23 +53,35 @@ describe('TeamStormClient Links Integration Tests', () => {
       expect(nock.isDone()).toBe(true);
     });
 
-    it('omits linkedWorkspace entirely when not provided (unchanged same-workspace behaviour)', async () => {
+    it('defaults linkedWorkspace to the explicitly resolved source workspace', async () => {
       nock(baseUrl)
-        .post(`/workspaces/${workspace}/workitems/${taskId}/links`, {
+        .post(`/workspaces/explicit-ws/workitems/${taskId}/links`, {
           type: 'lt-1',
           linkedWorkitem: 'TS-42',
+          linkedWorkspace: 'explicit-ws',
         })
         .reply(200, mockLink);
 
       const result = await client.createTaskLink(
         taskId,
         { type: 'lt-1', linkedWorkitem: 'TS-42' },
-        workspace
+        'explicit-ws'
       );
 
       expect(result.id).toBe('link-1');
       expect(nock.isDone()).toBe(true);
     });
+  });
+
+  it('defaults linkedWorkspace to the configured workspace when source input is omitted', async () => {
+    const data = { type: 'lt-1', linkedWorkitem: 'TS-42' };
+    nock(baseUrl).post(`/workspaces/${workspace}/workitems/${taskId}/links`, {
+      ...data, linkedWorkspace: workspace,
+    }).reply(200, mockLink);
+    const result = await client.createTaskLink(taskId, data);
+    expect(result.id).toBe('link-1');
+    expect(data).not.toHaveProperty('linkedWorkspace');
+    expect(nock.isDone()).toBe(true);
   });
 
   describe('teamstorm_task_links_create (tool)', () => {

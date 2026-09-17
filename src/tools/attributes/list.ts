@@ -19,9 +19,13 @@ export const listAttributesSchema = z
     workspace: z.string().describe('Ключ или идентификатор пространства'),
     name: z.string().optional().describe('Фильтр по названию (поиск по вхождению подстроки)'),
     type: z
-      .string()
+      .enum(['UniString', 'Number', 'Date', 'UniSelect', 'Tag', 'User', 'TimeDuration'])
       .optional()
-      .describe('Фильтр по типу: UniString, Number, Date, UniSelect, Tag, User, TimeDuration'),
+      .describe('Фильтр по типу атрибута.'),
+    isFullNameMatching: z
+      .boolean()
+      .optional()
+      .describe('Если true, название должно совпадать полностью.'),
     fromToken: z.string().optional().describe('Токен для пагинации'),
     maxItemsCount: z
       .number()
@@ -65,6 +69,7 @@ export async function listAttributes(
       workspace: args.workspace,
       name: args.name,
       type: args.type,
+      isFullNameMatching: args.isFullNameMatching,
       fromToken: args.fromToken,
       maxItemsCount: args.maxItemsCount,
     });
@@ -72,6 +77,7 @@ export async function listAttributes(
       workspace: args.workspace,
       name: args.name,
       type: args.type,
+      isFullNameMatching: args.isFullNameMatching,
       fromToken: args.fromToken,
       maxItemsCount: args.maxItemsCount,
     });

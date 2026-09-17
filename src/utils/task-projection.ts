@@ -55,7 +55,7 @@ interface NamedRef {
   name?: string;
 }
 
-function ref(value: NamedRef | undefined): { id: string; name: string } | null {
+function ref(value: NamedRef | null | undefined): { id: string; name: string } | null {
   return value ? { id: value.id ?? '', name: value.name ?? '' } : null;
 }
 

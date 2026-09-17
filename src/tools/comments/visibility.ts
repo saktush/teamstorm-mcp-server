@@ -76,7 +76,7 @@ export async function getCommentVisibility(
             (
               item: {
                 id: string;
-                type?: string;
+                type: string;
                 user?: TeamStormUser;
                 group?: { id: string; name: string };
               },

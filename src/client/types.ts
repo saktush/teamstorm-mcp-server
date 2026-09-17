@@ -17,16 +17,68 @@ export interface TeamStormStatus {
   };
 }
 
-export interface TeamStormType {
+export interface TeamStormTypeThumb {
   id: string;
   name: string;
-  icon?: string;
+}
+
+export type TeamStormTypeColor =
+  | 'Sky'
+  | 'Mint'
+  | 'Yellow'
+  | 'Amber'
+  | 'Slate'
+  | 'Tomato'
+  | 'Red'
+  | 'Crimson'
+  | 'Pink'
+  | 'Plum'
+  | 'Purple'
+  | 'Violet'
+  | 'Indigo'
+  | 'Blue'
+  | 'Cyan'
+  | 'Teal'
+  | 'Green'
+  | 'Grass'
+  | 'Orange'
+  | 'Brown'
+  | 'Gold'
+  | 'Bronze'
+  | 'Gray';
+
+export interface TeamStormType extends TeamStormTypeThumb {
+  color: TeamStormTypeColor;
+  // TypeIcon is a large API enum; retain string compatibility for icons.
+  icon: string;
+  workflow: TeamStormWorkflowThumb;
+  attributes: TeamStormAttributeModel[];
+  progressType?: 'ByStatus' | 'ByChildren' | 'ByMetric' | null;
+  estimatesInTime: boolean;
+  estimatesInStoryPoints: boolean;
+  showTimeTracking: boolean;
+}
+
+export interface TeamStormWorkflowStatus extends TeamStormStatus {
+  positionX: number;
+  positionY: number;
+}
+
+export interface TeamStormTransition {
+  transitionId: string;
+  fromStatus?: TeamStormStatus | null;
+  nextStatus: TeamStormStatus;
+  fromAllStatuses: boolean;
+  isInitial: boolean;
 }
 
 export interface TeamStormWorkflow {
   id: string;
   name: string;
-  description?: string;
+  type: 'Workitem' | 'Portfolio';
+  description?: string | null;
+  statuses: TeamStormWorkflowStatus[];
+  transitions: TeamStormTransition[];
 }
 
 export interface TeamStormSprintTeamMember {
@@ -211,38 +263,38 @@ export interface TeamStormWorkspace {
   id: string;
   key: string;
   name: string;
-  description: string;
-  author: TeamStormUser;
+  description?: string | null;
+  author?: TeamStormUser | null;
 }
 
 export interface TeamStormWorkspaceListResponse {
   fromToken?: string | null;
   maxItemsCount?: number | null;
   nextToken?: string | null;
-  items: Array<{ id: string; key: string; name: string }>;
+  items: TeamStormWorkspace[];
 }
 
 export interface TeamStormTask {
   id: string;
   key: string;
   name: string;
-  description: string;
-  type: TeamStormType;
-  workflow: TeamStormWorkflow;
-  status: TeamStormStatus;
+  description?: string | null;
+  type?: TeamStormTypeThumb | null;
+  workflow?: TeamStormWorkflowThumb | null;
+  status?: TeamStormStatus | null;
   startDate?: string;
   endDate?: string;
-  createdDate: string;
+  createdDate?: string | null;
   dueDate?: string;
   assignee?: TeamStormUser;
   author: TeamStormUser;
   sprint?: TeamStormSprint;
   folder?: TeamStormFolderThumb;
-  originalEstimate: number;
-  timeSpent: number;
-  remainingEstimate: number;
-  storyPoints: number;
-  changedBy: TeamStormUser;
+  originalEstimate?: number | null;
+  timeSpent?: number | null;
+  remainingEstimate?: number | null;
+  storyPoints?: number | null;
+  changedBy?: TeamStormUser | null;
   parent?: TeamStormTreeNodeThumb;
   attributes: TeamStormAttribute[];
   portfolios: TeamStormPortfolio[];
@@ -251,9 +303,9 @@ export interface TeamStormTask {
 
 // Paginated list responses
 export interface TeamStormTaskListResponse {
-  fromToken: string;
-  maxItemsCount: number;
-  nextToken: string;
+  fromToken?: string | null;
+  maxItemsCount?: number | null;
+  nextToken?: string | null;
   items: TeamStormTask[];
 }
 
@@ -267,11 +319,11 @@ export interface TeamStormCreateTaskRequest {
   type: string;
   workflow?: string;
   status?: string;
+  startDate?: string | null;
   dueDate?: string;
   assignee?: string;
   sprintId?: string;
   originalEstimate?: number;
-  storyPoints?: number;
   parentId?: string;
   attributes?: Array<{
     type: string;
@@ -319,7 +371,7 @@ export interface TeamStormCommentVisibility {
   visibilityType: 'All' | 'Workspace' | 'OnlySelected' | 'ExceptSelected';
   accessList: Array<{
     id: string;
-    type?: 'User' | 'Group';
+    type: 'User' | 'Group';
     user?: TeamStormUser;
     group?: { id: string; name: string };
   }>;
@@ -330,9 +382,6 @@ export interface TeamStormCommentVisibility {
 export type TeamStormAttributeValue = TeamStormAttribute;
 
 export interface TeamStormAttributeListResponse {
-  fromToken: string;
-  maxItemsCount: number;
-  nextToken: string;
   items: TeamStormAttributeValue[];
 }
 
@@ -380,7 +429,7 @@ export interface TeamStormCreateAttributeRequest {
 export interface TeamStormPatchAttributeRequest {
   name?: string;
   description?: string;
-  options?: Array<{ id?: string; name: string }>;
+  options?: Array<{ id?: string | null; name: string }>;
 }
 
 export interface TeamStormCreateAttributeOptionRequest {
@@ -436,7 +485,7 @@ export interface TeamStormDownloadedFile {
 
 // Sharing / Access Control
 export interface TeamStormPermission {
-  type?: 'User' | 'Group';
+  type: 'User' | 'Group';
   permissionId: string;
   workspaceId: string;
   workitemId: string;
@@ -458,7 +507,7 @@ export type TeamStormPermissionListResponse = TeamStormPermission[];
 export interface TeamStormLinkType {
   id: string;
   name: string;
-  key: string | null;
+  key?: string;
 }
 
 export interface TeamStormLink {
@@ -507,13 +556,13 @@ export interface TeamStormWorkspaceStatusListResponse {
  * печатал `Invalid Date` для каждой строки отчёта.
  */
 export interface TeamStormUpdatedTask extends TeamStormTask {
-  changeDate: string;
+  changeDate?: string | null;
 }
 
 export interface TeamStormUpdatedTaskListResponse {
-  fromToken: string;
-  maxItemsCount: number;
-  nextToken: string;
+  fromToken?: string | null;
+  maxItemsCount?: number | null;
+  nextToken?: string | null;
   items: TeamStormUpdatedTask[];
 }
 
@@ -549,6 +598,14 @@ export interface TeamStormUserListResponse {
   items: TeamStormUser[];
 }
 
+/** UserModelList is workspace-scoped; global UsersModelList has only items. */
+export interface TeamStormWorkspaceUserListResponse {
+  fromToken?: string | null;
+  maxItemsCount?: number | null;
+  nextToken?: string | null;
+  items: TeamStormUser[];
+}
+
 // Documents
 export interface TeamStormDocumentStatus {
   id: string;
@@ -556,9 +613,6 @@ export interface TeamStormDocumentStatus {
 }
 
 export interface TeamStormDocumentStatusListResponse {
-  fromToken?: string | null;
-  maxItemsCount?: number | null;
-  nextToken?: string | null;
   items: TeamStormDocumentStatus[];
 }
 
@@ -601,9 +655,7 @@ export interface TeamStormDocumentPermission {
   workspaceId: string;
   documentId: string;
   accessLevel: 'Read' | 'Edit' | 'Comment';
-  userId?: string;
   user?: TeamStormUser;
-  groupId?: string;
   group?: { id: string; name: string };
 }
 

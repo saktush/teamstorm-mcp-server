@@ -14,6 +14,7 @@ const ListWorkflowsSchema = z
         'URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'
       ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
+    name: z.string().optional().describe('Фильтр по названию рабочего процесса.'),
   })
   .strict();
 
@@ -60,7 +61,7 @@ export async function listWorkflows(
 
   try {
     logRequest('teamstorm_workflows_list', params);
-    const result = await client.listWorkflows(params.workspace);
+    const result = await client.listWorkflows(params.workspace, { name: params.name });
     const duration = Date.now() - startTime;
 
     logResponse('teamstorm_workflows_list', true, duration);

@@ -45,7 +45,7 @@ export function formatTaskListMarkdown(data: TeamStormTaskListResponse): string 
       lines.push(`**Срок**: ${formatDate(task.dueDate)}`);
     }
 
-    if (task.storyPoints > 0) {
+    if (task.storyPoints != null && task.storyPoints > 0) {
       lines.push(`**Story Points**: ${task.storyPoints}`);
     }
 
@@ -129,7 +129,7 @@ export function formatTaskMarkdown(task: TeamStormTask): string {
   lines.push(`**Затрачено**: ${task.timeSpent} сек`);
   lines.push(`**Осталось**: ${task.remainingEstimate} сек`);
 
-  if (task.storyPoints > 0) {
+  if (task.storyPoints != null && task.storyPoints > 0) {
     lines.push(`**Story Points**: ${task.storyPoints}`);
   }
 
