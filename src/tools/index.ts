@@ -37,6 +37,9 @@ export {
   registerCreateTimeEntryTool,
   listTimeEntries,
   registerListTimeEntriesTool,
+  listTimeEntriesByPeriod,
+  registerListTimeEntriesByPeriodTool,
+  listTimeEntriesByPeriodSchema,
 } from './time-tracking/index.js';
 
 // Tasks

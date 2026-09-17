@@ -24,17 +24,28 @@ const baseListUpdatedTasksSchema = z
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     changedFromDate: z
       .string()
-      .describe('Начальная дата в формате ISO 8601 (например, "2025-01-01")'),
+      .describe(
+        'Начальная дата диапазона изменений задач в формате ISO 8601 (например, "2025-01-01")'
+      ),
     changedToDate: z
       .string()
       .optional()
-      .describe('Конечная дата в формате ISO 8601 (например, "2025-12-31T23:59:59")'),
-    fromToken: z.string().optional().describe('Токен для пагинации'),
+      .describe(
+        'Конечная дата диапазона изменений задач в формате ISO 8601 (например, "2025-12-31T23:59:59")'
+      ),
+    fromToken: z
+      .string()
+      .optional()
+      .describe(
+        'Курсор страницы API: передайте nextToken предыдущего ответа для получения следующей страницы'
+      ),
     maxItemsCount: z
       .number()
       .optional()
       .default(50)
-      .describe('Максимальное количество задач на странице (по умолчанию: 50)'),
+      .describe(
+        'Максимальное количество задач на странице (по умолчанию: 50; API допускает от 1 до 1000)'
+      ),
   })
   .strict();
 
@@ -46,7 +57,7 @@ export function registerListUpdatedTasksTool(server: McpServer, client: TeamStor
     {
       title: 'Получить изменённые задачи',
       description:
-        'Получить список задач, изменённых за указанный период. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить список задач, изменённых за указанный период. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: listUpdatedTasksSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
@@ -111,7 +122,7 @@ export async function listUpdatedTasks(
             const changed = task.changeDate ?? (task as { changedDate?: string }).changedDate;
             return (
               `**${index + 1}. ${task.key}: ${task.name}**\n` +
-              `   📊 Статус: ${task.status.name}\n` +
+              `   📊 Статус: ${task.status?.name || 'Без статуса'}\n` +
               `   🕐 Дата изменения: ${formatDateTime(changed)}`
             );
           })

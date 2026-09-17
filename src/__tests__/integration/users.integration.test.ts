@@ -3,6 +3,7 @@ import nock from 'nock';
 import { TeamStormClient } from '../../client/teamstorm.js';
 import { getUser } from '../../tools/users/get.js';
 import { listAllUsers } from '../../tools/users/list-all.js';
+import { listUsers } from '../../tools/users/list.js';
 
 const mockUser = {
   id: 'u0000000-0000-0000-0000-000000000001',
@@ -128,6 +129,79 @@ describe('TeamStormClient Global Users Integration Tests', () => {
 
       expect(result.isError).toBe(true);
       expect(result.content[0].text).toContain('Forbidden');
+    });
+  });
+});
+
+// B16/B17: GetWorkspaceUsers (workspace-scoped `teamstorm_users_list`) is a DIFFERENT
+// endpoint/schema from the global `/users` tests above — it returns UserModelList (which
+// carries a pagination triple the global UsersModelList doesn't) and accepts its own
+// displayName/roleId/fromToken/maxItemsCount query params, none of which were reachable
+// before this fix.
+describe('TeamStormClient Workspace Users Integration Tests', () => {
+  let client: TeamStormClient;
+  const baseUrl = 'http://teamstorm.test';
+  const workspace = 'test-workspace';
+  const token = 'test-token';
+
+  beforeEach(() => {
+    nock.cleanAll();
+    client = new TeamStormClient(token, baseUrl, workspace);
+  });
+
+  afterEach(() => {
+    nock.cleanAll();
+  });
+
+  describe('listUsers (client)', () => {
+    it('B17: sends displayName/roleId/fromToken/maxItemsCount as query params', async () => {
+      nock(baseUrl)
+        .get(`/workspaces/${workspace}/users`)
+        .query({ displayName: 'Jane', roleId: 'role-1', fromToken: 'tok-1', maxItemsCount: '25' })
+        .reply(200, { items: [mockUser], nextToken: 'tok-2' });
+
+      const result = await client.listUsers(workspace, {
+        displayName: 'Jane',
+        roleId: 'role-1',
+        fromToken: 'tok-1',
+        maxItemsCount: 25,
+      });
+
+      expect(result.items).toEqual([mockUser]);
+      expect(nock.isDone()).toBe(true);
+    });
+
+    it('B16: resolves nextToken/fromToken/maxItemsCount from UserModelList (not silently dropped)', async () => {
+      nock(baseUrl)
+        .get(`/workspaces/${workspace}/users`)
+        .query(true)
+        .reply(200, { items: [mockUser], fromToken: null, maxItemsCount: 50, nextToken: 'more' });
+
+      const result = await client.listUsers(workspace);
+
+      expect(result.nextToken).toBe('more');
+      expect(result.maxItemsCount).toBe(50);
+    });
+  });
+
+  describe('teamstorm_users_list tool', () => {
+    it('forwards displayName/roleId/fromToken to the client call', async () => {
+      nock(baseUrl)
+        .get(`/workspaces/${workspace}/users`)
+        .query({ displayName: 'Jane', roleId: 'role-1', fromToken: 'tok-1', maxItemsCount: '100' })
+        .reply(200, { items: [mockUser], nextToken: "tok-2", fromToken: "tok-1", maxItemsCount: 100 });
+
+      const result = await listUsers(client, {
+        workspace,
+        displayName: 'Jane',
+        roleId: 'role-1',
+        fromToken: 'tok-1',
+        maxItemsCount: 100,
+      });
+
+      expect(result.isError).toBeUndefined();
+      expect(result.structuredContent?.nextToken).toBe("tok-2");
+      expect(nock.isDone()).toBe(true);
     });
   });
 });

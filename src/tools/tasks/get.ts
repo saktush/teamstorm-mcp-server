@@ -101,7 +101,7 @@ export function registerGetTaskTool(server: McpServer, client: TeamStormClient) 
     {
       title: 'Получить задачу по ID',
       description:
-        'Получить полную информацию о конкретной задаче по её ID. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить полную информацию о конкретной задаче по её ключу или ID. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: GetTaskSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

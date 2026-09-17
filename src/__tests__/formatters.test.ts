@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { formatTaskMarkdown } from '../utils/formatters.js';
-import type { TeamStormTask } from '../client/types.js';
+import { formatTaskMarkdown, formatDocumentMarkdown } from '../utils/formatters.js';
+import type { TeamStormTask, TeamStormDocument } from '../client/types.js';
 
 function buildTask(overrides: Partial<TeamStormTask> = {}): TeamStormTask {
   const user = { id: 'u1', displayName: 'Jane Doe', username: 'jane', email: 'jane@test.com' };
@@ -134,5 +134,63 @@ describe('formatTaskMarkdown', () => {
     expect(markdown).toContain('- **Желаемый срок**: 08.07.2026');
     expect(markdown).toContain('- **Затрачено**: 1ч 30м');
     expect(markdown).toContain('- **Клиент**: Не заполнено');
+  });
+});
+
+function buildDocument(overrides: Partial<TeamStormDocument> = {}): TeamStormDocument {
+  const user = { id: 'u1', displayName: 'Jane Doe', username: 'jane', email: 'jane@test.com' };
+
+  return {
+    workspaceId: 'ws1',
+    id: 'd1',
+    key: 'DOC-1',
+    name: 'Test document',
+    documentUrl: 'https://x/documents/d1',
+    createdAt: '2024-01-01T00:00:00Z',
+    author: user,
+    updatedAt: '2024-01-01T00:00:00Z',
+    version: 1,
+    versionUrl: 'https://x/documents/d1/versions/1',
+    labels: [],
+    isBlocked: false,
+    ...overrides,
+  };
+}
+
+describe('formatDocumentMarkdown', () => {
+  // Regression for F2 (task-2a-brief.md): `parent` resolves to TreeNodeThumbModel
+  // {id, nodeType}. `name` is kept optional on TeamStormTreeNodeThumb as a hedge
+  // (see the type's own comment) — falls back to `nodeType` when the API omits it.
+  it('falls back to nodeType when parent has no name, never the literal word "undefined"', () => {
+    const doc = buildDocument({
+      parent: { id: 'p1', nodeType: 'Folder' },
+    });
+
+    const markdown = formatDocumentMarkdown(doc);
+
+    expect(markdown).not.toContain('undefined');
+    expect(markdown).toContain('- Родитель: Folder (`p1`)');
+  });
+
+  // Fix-round Important 1: the old (pre-F2) document-parent type had `name`
+  // REQUIRED — evidence the live API can and does send it. Reading only
+  // `.nodeType` would print "undefined" for exactly this shape.
+  it('prefers name over nodeType when parent carries both', () => {
+    const doc = buildDocument({
+      parent: { id: 'p1', name: 'Meetings', nodeType: 'Folder' },
+    });
+
+    const markdown = formatDocumentMarkdown(doc);
+
+    expect(markdown).not.toContain('undefined');
+    expect(markdown).toContain('- Родитель: Meetings (`p1`)');
+  });
+
+  it('omits the parent line entirely when there is no parent', () => {
+    const doc = buildDocument({ parent: null });
+
+    const markdown = formatDocumentMarkdown(doc);
+
+    expect(markdown).not.toContain('Родитель');
   });
 });

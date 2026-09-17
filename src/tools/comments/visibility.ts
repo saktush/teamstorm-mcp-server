@@ -15,7 +15,7 @@ export const getCommentVisibilitySchema = z
       ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     taskId: z.string().describe('Ключ или идентификатор задачи (например, "TS-671" или UUID)'),
-    commentId: z.string().describe('Идентификатор комментария'),
+    commentId: z.string().describe('Идентификатор комментария (UUID)'),
   })
   .strict();
 
@@ -25,7 +25,7 @@ export function registerGetCommentVisibilityTool(server: McpServer, client: Team
     {
       title: 'Получить видимость комментария',
       description:
-        'Получить информацию о видимости комментария (кто может его видеть). Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить настройки видимости комментария задачи: тип видимости и список доступа (пользователи или группы). Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: getCommentVisibilitySchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
@@ -76,7 +76,7 @@ export async function getCommentVisibility(
             (
               item: {
                 id: string;
-                type?: string;
+                type: string;
                 user?: TeamStormUser;
                 group?: { id: string; name: string };
               },

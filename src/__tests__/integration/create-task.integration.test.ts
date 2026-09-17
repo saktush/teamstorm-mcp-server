@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import nock from 'nock';
 import { TeamStormClient } from '../../client/teamstorm.js';
-import { createTask } from '../../tools/tasks/create.js';
+import { createTask, createTaskSchema } from '../../tools/tasks/create.js';
+import { updateTaskSchema } from '../../tools/tasks/update.js';
 
 const workspaceKey = 'TS';
 const folderId = '1a675f44-07f0-4319-b89a-35608c37fa68';
@@ -38,6 +39,24 @@ describe('createTask tool (workspace/folder resolution)', () => {
   afterEach(() => {
     nock.cleanAll();
     expect(nock.isDone()).toBe(true);
+  });
+
+  it('accepts ordinary creation and startDate but reserves storyPoints for updates', () => {
+    const input = {
+      workspace: workspaceKey,
+      name: 'Test epic',
+      type: 'Эпик',
+      parentId: folderId,
+    };
+    const startDate = '2026-09-20T00:00:00Z';
+
+    expect(createTaskSchema.parse(input)).toEqual(input);
+    expect(createTaskSchema.parse({ ...input, startDate }).startDate).toBe(startDate);
+    expect(() => createTaskSchema.parse({ ...input, storyPoints: 5 })).toThrow(/storyPoints/);
+    expect(
+      updateTaskSchema.parse({ workspace: workspaceKey, taskId: 'TS-1', storyPoints: 5 })
+        .storyPoints
+    ).toBe(5);
   });
 
   it('creates a task without ever calling GET /workspaces, using a real folder GUID as-is', async () => {
@@ -86,5 +105,29 @@ describe('createTask tool (workspace/folder resolution)', () => {
     });
 
     expect(result.isError).toBeUndefined();
+  });
+
+  // B15: CreateWorkitemRequestBody's optional `startDate` — the tool had no way to send it.
+  it('threads startDate through to the POST body when provided', async () => {
+    nock(baseUrl)
+      .post(`/workspaces/${workspaceKey}/workitems`, {
+        name: 'Test epic',
+        type: 'Эпик',
+        parentId: folderId,
+        startDate: '2026-09-20T00:00:00Z',
+      })
+      .reply(201, { ...mockTask, startDate: '2026-09-20T00:00:00Z' });
+
+    const result = await createTask(client, {
+      workspace: workspaceKey,
+      name: 'Test epic',
+      type: 'Эпик',
+      parentId: folderId,
+      startDate: '2026-09-20T00:00:00Z',
+    });
+
+    expect(result.isError).toBeUndefined();
+    expect(result.structuredContent?.startDate).toBe('2026-09-20T00:00:00Z');
+    expect(nock.isDone()).toBe(true);
   });
 });

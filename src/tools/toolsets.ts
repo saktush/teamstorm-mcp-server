@@ -36,6 +36,7 @@ import {
   // Time Tracking
   registerCreateTimeEntryTool,
   registerListTimeEntriesTool,
+  registerListTimeEntriesByPeriodTool,
   // Permissions (task sharing)
   registerGetTaskPermissionsTool,
   // Documents
@@ -130,11 +131,11 @@ export const DEFAULT_SET: ToolsetName[] = ['tasks', 'structure', 'reference'];
 
 /**
  * Keyed registry mapping each toolset to its tool registrars.
- * Grouping mirrors the domain folders under `src/tools/`; sums to 80 tools.
+ * Grouping mirrors the domain folders under `src/tools/`; sums to 81 tools.
  * A partition test guards that every registrar appears here exactly once.
  */
 export const TOOLSETS: Record<ToolsetName, ToolRegistrar[]> = {
-  // 27 — everything that hangs off a work item
+  // 28 — everything that hangs off a work item
   tasks: [
     // tasks (7)
     registerListTasksTool,
@@ -165,9 +166,10 @@ export const TOOLSETS: Record<ToolsetName, ToolRegistrar[]> = {
     // links (2)
     registerGetTaskLinksTool,
     registerCreateTaskLinkTool,
-    // time-tracking (2)
+    // time-tracking (3)
     registerCreateTimeEntryTool,
     registerListTimeEntriesTool,
+    registerListTimeEntriesByPeriodTool,
     // permissions (1)
     registerGetTaskPermissionsTool,
   ],
@@ -265,7 +267,7 @@ const ALL_TOOLSETS = Object.keys(TOOLSETS) as ToolsetName[];
 /**
  * Resolve a raw toolset selection string into the concrete set of enabled toolsets.
  *
- * - Undefined/blank input → all toolsets (backward compatible: no config = all 80 tools).
+ * - Undefined/blank input → all toolsets (backward compatible: no config = all 81 tools).
  * - Comma-separated list; keywords `all` (every toolset) and `default` (DEFAULT_SET) expand.
  * - Unknown names are dropped with a warning — never throws, so a typo can't 500 a session.
  * - `ALWAYS_ON` (reference) is always unioned in.

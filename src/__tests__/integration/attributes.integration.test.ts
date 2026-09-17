@@ -5,6 +5,7 @@ import { createAttribute } from '../../tools/attributes/create.js';
 import { updateAttribute } from '../../tools/attributes/update.js';
 import { addAttributeOption } from '../../tools/attributes/add-option.js';
 import { updateAttributeOption } from '../../tools/attributes/update-option.js';
+import { listAttributes } from '../../tools/attributes/list.js';
 
 const attributeId = 'a0000000-0000-0000-0000-000000000001';
 const optionId = 'b0000000-0000-0000-0000-000000000009';
@@ -266,6 +267,93 @@ describe('TeamStormClient Attributes Integration Tests', () => {
 
       expect(result.isError).toBe(true);
       expect(result.content[0].text).toContain('Ошибка при обновлении опции');
+    });
+  });
+
+  // F4 (task-2a-brief.md): ListAttributes returns AttributesModelList{items:
+  // AttributeModel[]} — {id,name,type,workitemTypes,options?}, NO `value` field.
+  // listAttributes() used to be typed as TeamStormAttributeListResponse (the task
+  // attribute VALUE shape — has `value`, no `workitemTypes`), forcing an unsafe
+  // cast in the tool just to read `workitemTypes`. Retyped to
+  // TeamStormAttributeModelListResponse / TeamStormAttributeModel; the cast is gone.
+  //
+  // A real API response never had `value` on this endpoint, so this doesn't change
+  // observable behaviour for well-formed data — what it removes is the unsafe cast
+  // that let the wrong type compile silently. Pinned here at both layers: the
+  // client's resolved shape, and the tool's rendered text (which now reads
+  // `attr.workitemTypes` directly, no `as … & {workitemTypes?}` needed).
+  describe('listAttributes', () => {
+    const mockAttributeModel = {
+      id: attributeId,
+      name: 'Priority',
+      description: 'Task priority',
+      type: 'UniSelect' as const,
+      options: [{ id: optionId, name: 'High' }],
+      workitemTypes: [
+        { id: 't0000000-0000-0000-0000-000000000001', name: 'Bug' },
+        { id: 't0000000-0000-0000-0000-000000000002', name: 'Task' },
+      ],
+    };
+
+    it('resolves items shaped as AttributeModel (workitemTypes present, no value field)', async () => {
+      nock(baseUrl)
+        .get(`/workspaces/${workspace}/attributes`)
+        .query(true)
+        .reply(200, { items: [mockAttributeModel] });
+
+      const result = await client.listAttributes({ workspace });
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].workitemTypes.map((t) => t.name)).toEqual(['Bug', 'Task']);
+      expect(result.items[0]).not.toHaveProperty('value');
+    });
+
+    it('tool renders workitemTypes without an unsafe cast', async () => {
+      nock(baseUrl)
+        .get(`/workspaces/${workspace}/attributes`)
+        .query(true)
+        .reply(200, { items: [mockAttributeModel] });
+
+      const result = await listAttributes(client, { workspace, maxItemsCount: 50 });
+
+      expect(result.isError).toBeUndefined();
+      expect(result.content[0].text).toContain('Используется в типах задач: Bug, Task');
+    });
+
+    // B20: `type` (typed enum, not a bare string) and `isFullNameMatching` were either
+    // unconstrained or entirely unreachable.
+    it('B20: sends type and isFullNameMatching as query params', async () => {
+      nock(baseUrl)
+        .get(`/workspaces/${workspace}/attributes`)
+        .query({ type: 'UniSelect', isFullNameMatching: 'true', name: 'Priority' })
+        .reply(200, { items: [mockAttributeModel] });
+
+      const result = await client.listAttributes({
+        workspace,
+        name: 'Priority',
+        type: 'UniSelect',
+        isFullNameMatching: true,
+      });
+
+      expect(result.items).toHaveLength(1);
+      expect(nock.isDone()).toBe(true);
+    });
+
+    it('B20: tool forwards isFullNameMatching to the client call', async () => {
+      nock(baseUrl)
+        .get(`/workspaces/${workspace}/attributes`)
+        .query({ type: 'Tag', isFullNameMatching: 'true', maxItemsCount: '50' })
+        .reply(200, { items: [mockAttributeModel] });
+
+      const result = await listAttributes(client, {
+        workspace,
+        type: 'Tag',
+        isFullNameMatching: true,
+        maxItemsCount: 50,
+      });
+
+      expect(result.isError).toBeUndefined();
+      expect(nock.isDone()).toBe(true);
     });
   });
 });

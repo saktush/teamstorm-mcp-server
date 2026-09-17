@@ -22,8 +22,8 @@ function formatPermission(p: TeamStormDocumentPermission): string[] {
   const lines: string[] = [];
   const subject =
     p.type === 'User'
-      ? `👤 ${p.user?.displayName ?? p.userId ?? 'пользователь'}`
-      : `👥 ${p.group?.name ?? p.groupId ?? 'группа'}`;
+      ? `👤 ${p.user?.displayName ?? 'пользователь'}`
+      : `👥 ${p.group?.name ?? 'группа'}`;
   lines.push(`**${subject}** — ${p.accessLevel}`);
   lines.push(`- ID разрешения: \`${p.permissionId}\``);
   lines.push('');
@@ -88,7 +88,7 @@ export function registerListDocumentPermissionsTool(server: McpServer, client: T
     {
       title: 'Разрешения на документ',
       description:
-        'Получить список разрешений (доступов пользователей и групп) на документ TeamStorm.',
+        'Получить список разрешений общего доступа пользователей и групп к документу (странице) TeamStorm: permissionId, получатель и уровень доступа — Read (просмотр), Edit (редактирование) или Comment (комментирование). Используйте permissionId для teamstorm_document_permissions_update. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: listDocumentPermissionsSchema,
       annotations: { readOnlyHint: true, openWorldHint: false },
     },

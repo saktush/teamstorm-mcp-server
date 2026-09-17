@@ -15,19 +15,25 @@ const UpdateTaskSchema = z
       ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     taskId: z.string().describe('Ключ или ID задачи (например, TS-13 или UUID)'),
-    name: z.string().optional().describe('Новое название задачи'),
-    description: z.string().optional().describe('Новое описание задачи'),
+    name: z.string().optional().describe('Новое название задачи (до 255 символов)'),
+    description: z.string().optional().describe('Новое описание задачи (до 650000 символов)'),
     type: z.string().optional().describe('Тип задачи (название или ID)'),
-    workflowId: z.string().optional().describe('ID процесса'),
+    workflowId: z
+      .string()
+      .optional()
+      .describe('UUID нового рабочего процесса (см. teamstorm_workflows_list)'),
     status: z.string().optional().describe('Новый статус задачи (название или ID)'),
     startDate: z.string().optional().describe('Новая дата начала в формате ISO 8601'),
-    dueDate: z.string().optional().describe('Новая дата выполнения в формате ISO 8601'),
+    dueDate: z.string().optional().describe('Новый срок выполнения задачи в формате ISO 8601'),
     assignee: z.string().optional().describe('Новый исполнитель (логин или ID)'),
-    sprintId: z.string().optional().describe('ID спринта'),
+    sprintId: z.string().optional().describe('UUID нового спринта'),
     originalEstimate: z.number().optional().describe('Новая оценка в секундах'),
     storyPoints: z.number().optional().describe('Новая оценка в Story Points'),
     parentId: z.string().optional().describe('ID родительской задачи или папки'),
-    portfolioElementIds: z.array(z.string()).optional().describe('Список ID элементов портфеля'),
+    portfolioElementIds: z
+      .array(z.string())
+      .optional()
+      .describe('Обновлённый список UUID элементов портфеля'),
   })
   .strict();
 
@@ -86,7 +92,7 @@ export function registerUpdateTaskTool(server: McpServer, client: TeamStormClien
     {
       title: 'Обновить задачу',
       description:
-        'Обновить параметры существующей задачи. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Обновить параметры существующей задачи. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: UpdateTaskSchema,
       annotations: {
         readOnlyHint: false,

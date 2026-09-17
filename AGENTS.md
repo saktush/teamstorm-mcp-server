@@ -2,12 +2,17 @@
 
 ## Project
 
-TeamStorm MCP Server — MCP-сервер для интеграции Claude Code с TeamStorm API. Предоставляет 80 инструментов + 4 промпта + 3 ресурса для работы с задачами, папками, документами, комментариями, атрибутами, вложениями (включая скачивание), правами доступа, связями, пользователями (workspace и глобально), спринтами, Agile-бордами, workflow, портфелями, списанием времени и справочными данными (типы связей, статусы, категории статусов).
+TeamStorm MCP Server — MCP-сервер для интеграции Claude Code с TeamStorm API. Предоставляет 81 инструмент + 4 промпта + 3 ресурса для работы с задачами, папками, документами, комментариями, атрибутами, вложениями (включая скачивание), правами доступа, связями, пользователями (workspace и глобально), спринтами, Agile-бордами, workflow, портфелями, списанием времени и справочными данными (типы связей, статусы, категории статусов).
 
 ## Источники
 
-- **Публичная OpenAPI-спецификация**: `https://work.teamstorm.io/cwm/public/swagger/v1/swagger.json` — источник истины при планировании новых инструментов (пути, схемы запросов/ответов, operationId). Учти: описания полей в спеке почти всегда пустые ("Has not description."), поэтому реальную форму ответа стоит проверять живым запросом, а не только по спеке (см. пример расхождения в разделе «Связи» ниже).
-- **`openAPI-coverage-report.md`** (корень репозитория) — таблица покрытия: какие эндпоинты спеки уже реализованы как MCP-инструменты, а какие нет. Обновляется при каждом добавлении инструментов.
+- **Закреплённая публичная OpenAPI-спецификация API v1 (4.2x)**: [`api-v1-4.2x.yaml`](api-v1-4.2x.yaml) в корне — источник контрактов при этой синхронизации: 104 пути, 170 операций, 190 схем, 38 тегов. В ней есть содержательные русские `summary`/`description`; прежнее замечание о повсеместном «Has not description.» больше не актуально. Восемь операций портфелей не имеют `operationId` — адресуйте их по методу и пути, не придумывайте ID. Удалённый `swagger.json` восстановлен контроллером из `a650d7d` (2026-06-26) в рабочие материалы аудита для структурного сравнения; это июньский снимок, не гарантированно предыдущий релиз. URL публикации `https://work.teamstorm.io/cwm/public/swagger/v1/swagger.json` служит для будущих обновлений, но не заменяет закреплённый файл в текущей работе.
+- **Граница доказательств**: расхождение спецификации и типов доказывает различие текстов, а не runtime-баг API. Исторические наблюдения и совместимость не подтверждают поведение живого 4.2x; гипотезы о defaulting/nullable-полях проверяйте живым запросом перед ужесточением интерфейса. Решения о совместимости и полный аудит отражены в [`docs/api-4.2x-change-report.md`](docs/api-4.2x-change-report.md).
+- **`openAPI-coverage-report.md`** (корень репозитория) — таблица покрытия: какие эндпоинты спеки уже реализованы как MCP-инструменты, а какие нет. Обновляется при каждом добавлении инструментов. Считает публичные операции, достижимые из MCP-инструментов (включая составные вызовы), а не наличие клиентского метода; покрытие схем — транзитивные request/response-ссылки этих операций.
+
+**API 4.2x (2026-09-17):** закреплена спецификация из 170 операций; через MCP покрыты 75 (44.1%). Доступен публичный `teamstorm_time_entries_list_by_period`. Новые метрики времени, шаблоны и рабочие календари — 11 методов **coming soon**. Полный аудит и предложения инструментов: [отчёт изменений](docs/api-4.2x-change-report.md), [отчёт покрытия](openAPI-coverage-report.md).
+
+**Политика удаления:** инструменты удаления сущностей не добавляются. Существующий DELETE для `teamstorm_portfolio_links_remove` — реализованное исключение для удаления закрепления; учитывайте его в покрытии. `deleteTask()` существует только в клиенте и не делает `DeleteWorkitem` доступным через MCP.
 
 ## Commands
 
@@ -124,14 +129,14 @@ Accessors: `getApiToken()`, `getApiUrl()`, `getWorkspace()`, `getToolsets()`, `g
 
 ### Наборы инструментов (toolsets)
 
-26 доменных папок сгруппированы в 6 наборов в `src/tools/toolsets.ts` — единственном месте, где живёт группировка (реестр `TOOLSETS: Record<ToolsetName, ToolRegistrar[]>`, сумма — 80 инструментов):
+26 доменных папок сгруппированы в 6 наборов в `src/tools/toolsets.ts` — единственном месте, где живёт группировка (реестр `TOOLSETS: Record<ToolsetName, ToolRegistrar[]>`, сумма — 81 инструмент):
 
-- `tasks` (27), `documents` (18), `portfolios` (11), `planning` (7), `structure` (8), `reference` (9).
+- `tasks` (28), `documents` (18), `portfolios` (11), `planning` (7), `structure` (8), `reference` (9).
 - `reference` — `ALWAYS_ON` (справочники для разрешения имён → ID, отключить нельзя); `DEFAULT_SET` = `tasks` + `structure` + `reference`.
 - `resolveToolsets(raw?)` разбирает выбор: `undefined`/пусто → все наборы (обратная совместимость), ключевые слова `all`/`default`, список через запятую; неизвестные имена отбрасываются с `logger.warn` (не бросает); полностью некорректный ввод → `DEFAULT_SET`.
 - `registerToolsets(server, client, enabled)` регистрирует инструменты только включённых наборов; `registerAllTools` остался тонкой обёрткой над `resolveToolsets('all')`.
 - Выбор читается в блоке создания сессии `mcpHandler` (`src/index.ts`), приоритет: query `?toolsets=` > заголовок `X-TeamStorm-Toolsets` > env `TEAMSTORM_TOOLSETS` > `all`. Фильтрация естественно скоупится на сессию, т.к. инструменты регистрируются в собственный `McpServer` каждой сессии — транспорт/сессии/auth не меняются.
-- Партиционный тест (`src/__tests__/toolsets.test.ts`) гарантирует, что все 80 регистраторов присутствуют в `TOOLSETS` ровно один раз — ловит новый инструмент, забытый в карте.
+- Партиционный тест (`src/__tests__/toolsets.test.ts`) гарантирует, что все 81 регистратор присутствуют в `TOOLSETS` ровно один раз — ловит новый инструмент, забытый в карте.
 
 ## Загрузка и скачивание файлов (Out-of-Band)
 
@@ -185,8 +190,10 @@ DELETE-эндпоинт папок намеренно не реализован.
 
 - `teamstorm_attributes_create` — `POST /attributes` — `name`, `type` (UniString/Number/Date/UniSelect/Tag/User/TimeDuration) обязательны; `description`, `options` (только для UniSelect/Tag).
 - `teamstorm_attributes_update` — `PATCH /attributes/{id}` — `name`, `description`, полный список `options` (без `id` — создать, с `id` — обновить, отсутствующие — удалить).
-- `teamstorm_attributes_add_option` — `POST /attributes/{id}/options` — добавить одну опцию (`name`; `id` опционален, генерируется сервером). Возвращает весь `AttributeModel`.
+- `teamstorm_attributes_add_option` — `POST /attributes/{id}/options` — добавить одну опцию (`name`; `id` опционален в MCP для совместимости по R5: required-список схемы противоречит описанию «необязательный»; генерация ID при пропуске требует живой проверки). Возвращает весь `AttributeModel`.
 - `teamstorm_attributes_update_option` — `PATCH /attributes/{id}/options` — переименовать опцию по `id`. Возвращает весь `AttributeModel`.
+
+`PatchAttributeOptionModel.id` в схеме — обязательный nullable-ключ; клиент сохраняет `id?: string | null` по R8. Пропуск для новых опций допускается интерфейсом для совместимости, но не подтверждён живой проверкой 4.2x.
 
 Все три write-эндпоинта возвращают `AttributeModel` (200). Клиентские методы: `createAttribute()`, `patchAttribute()`, `addAttributeOption()`, `patchAttributeOption()`. Типы: `TeamStormAttributeModel`, `TeamStormAttributeOption`, `TeamStormAttributeType`, `TeamStormCreateAttributeRequest`, `TeamStormPatchAttributeRequest`, `TeamStormCreateAttributeOptionRequest`, `TeamStormPatchAttributeOptionRequest`.
 
@@ -195,11 +202,11 @@ DELETE-эндпоинт папок намеренно не реализован.
 Два независимых API-тега с разным охватом:
 
 - **Глобальные `Users`** (`GET /users`, `GET /users/{user}` — без `{workspace}` в пути): видят пользователей по всему инстансу, независимо от членства в конкретном пространстве. Реализованы как `teamstorm_users_list_all` (поиск по `displayName`/`email`/`username`/`providerId`, фильтрация на стороне сервера, без пагинации — `UsersModelList` не имеет `fromToken`) и `teamstorm_users_get` (профиль по ID/username — удобно резолвить голый UUID из чужого поля вроде `createdBy`, не зная в каком пространстве состоит пользователь).
-- **`WorkspaceUsers`** (`GET /workspaces/{workspace}/users`): только участники конкретного пространства — уже реализовано как `teamstorm_users_list` (клиентская фильтрация по подстроке).
+- **`WorkspaceUsers`** (`GET /workspaces/{workspace}/users`): только участники конкретного пространства — уже реализовано как `teamstorm_users_list`: серверные `displayName`/`roleId`/`fromToken`/`maxItemsCount`; `search` дополнительно фильтрует только полученную страницу по displayName/username/email. Ответ сохраняет `nextToken` для продолжения, а локальные `total`/`displayed` не являются общим количеством пользователей инстанса.
 - **`BlockUser`/`UnblockUser`, `AddWorkspaceUser`/`RemoveWorkspaceUser`, управление ролями** — административные/деструктивные операции, намеренно не реализованы (не запрашивались).
 - **`get_current_user` невозможен на уровне API** — в спеке нет ни одного эндпоинта `/me`/`current` в любом теге, аутентификация — непрозрачный `PrivateToken` (не JWT, не декодируется), ни один ответ не содержит идентифицирующего пользователя заголовка. Инструмент не реализован (не заглушка, а осознанное отсутствие) — резолвить личность вызывающего через публичный API нельзя.
 
-Клиентские методы: `getUser()`, `listAllUsers()` (в дополнение к существующему `listUsers()`). Типы: `TeamStormUser` (расширен опциональным `providerId`), `TeamStormUserListResponse`.
+Клиентские методы: `getUser()`, `listAllUsers()` (в дополнение к существующему `listUsers()`). Типы: `TeamStormUser` (расширен опциональным `providerId`), `TeamStormUserListResponse` (глобальный `{ items }`), `TeamStormWorkspaceUserListResponse` (пространство: optional nullable pagination + `items`).
 
 ## Портфели
 
@@ -220,9 +227,11 @@ DELETE-эндпоинт папок намеренно не реализован.
 
 Инструменты в `src/tools/links/`: `get` (связи задачи), `create` (создать связь). Инструменты в `src/tools/link-types/`: `list`. Инструменты в `src/tools/status-categories/`: `list` (глобальный, без workspace). Инструменты в `src/tools/statuses/`: `list`, `get` (статусы задач — не путать с `document-statuses/`, это разные сущности с разными эндпоинтами).
 
-- **`GET /workspaces/{ws}/workitems/{id}/links` возвращает "широкий" ответ** — `WorkitemLinkModel[]` (голый массив, без обёртки `items`), каждый элемент — `{id, type: LinkTypeModel, linkedWorkitem: WorkitemModel}`, где `linkedWorkitem` — это **полная** модель связанной задачи (статус, исполнитель, папка, спринт, атрибуты и т.д.), а не облегчённый thumb. До 2026-07-17 клиентский тип `TeamStormLink`/`TeamStormLinkListResponse` не соответствовал этой форме (ожидал `{items: [{id, linkType, source, target}]}` с урезанными source/target) — расхождение обнаружено сверкой с реальным ответом API (спека даёт только "Has not description.", не проверяй по ней вслепую) и исправлено; `teamstorm_task_links_list` теперь и есть "широкий" инструмент получения связанных задач — отдельного `get_linked_workitems` не заводили.
-- `teamstorm_task_links_create` — `POST /workspaces/{ws}/workitems/{id}/links` — принимает `linkedWorkitem` (ключ/ID второй задачи) и тип связи либо напрямую (`linkTypeId`, UUID), либо по названию/ключу (`linkTypeName`, например «Связана»/«Relates» — резолвится через `listLinkTypes()`, ошибка со списком кандидатов при неоднозначности/отсутствии). Не идемпотентно: повторный вызов создаёт вторую связь (см. `409 Conflict` в спеке для дублей, которые бэкенд всё же отклоняет).
-- **`DeleteWorkitemLink` намеренно не реализован** — как и все DELETE-эндпоинты в этом проекте (см. `TODO.log`, раздел «Deletes»).
+- **`GET /workspaces/{ws}/workitems/{id}/links` возвращает "широкий" ответ** — `WorkitemLinkModel[]` (голый массив, без обёртки `items`), каждый элемент — `{id, type: LinkTypeModel, linkedWorkitem: WorkitemModel}`, где `linkedWorkitem` — это **полная** модель связанной задачи (статус, исполнитель, папка, спринт, атрибуты и т.д.), а не облегчённый thumb. До 2026-07-17 клиентский тип `TeamStormLink`/`TeamStormLinkListResponse` не соответствовал этой форме (ожидал `{items: [{id, linkType, source, target}]}` с урезанными source/target) — расхождение обнаружено сверкой с реальным ответом API (нынешняя 4.2x-спецификация содержит русские описания; историческая живая проверка не заменяет проверку нового инстанса) и исправлено; `teamstorm_task_links_list` теперь и есть "широкий" инструмент получения связанных задач — отдельного `get_linked_workitems` не заводили.
+- `teamstorm_task_links_create` — `POST /workspaces/{ws}/workitems/{id}/links` — принимает `linkedWorkitem` (ключ/ID второй задачи) и тип связи либо напрямую (`linkTypeId`, UUID), либо по названию/ключу (`linkTypeName`, например «Связана»/«Relates» — резолвится через `listLinkTypes()`, ошибка со списком кандидатов при неоднозначности/отсутствии). Опциональный MCP-параметр `linkedWorkspace` задаёт пространство второй задачи. В закреплённой схеме это новое обязательное поле относительно июньского снимка: клиент отправляет `data.linkedWorkspace ?? ws`, где `ws` — разрешённое исходное пространство. Гипотеза об успешном пропуске поля сервером не подтверждена живым 4.2x-запросом. Не идемпотентно: повторный вызов создаёт вторую связь (см. `409 Conflict` в спеке для дублей, которые бэкенд всё же отклоняет).
+- **`LinkTypeModel.key` — optional nullable**: поле содержит `nullable: true` в закреплённой схеме; правильный тип `key?: string | null`. Тип и compile-time фикстуры принимают пропуск поля, строку и null.
+- **`GET /workspaces/{ws}/workitems/{id}/sharing` по закреплённой спецификации возвращает голый массив** разрешений, а не `{ items }`. Клиент возвращает массив; MCP-инструмент формирует собственную обёртку items/count. Поддержка обёрнутых ответов API не реализована. Это подтверждено чтением контракта и mock-тестами; живая форма ответа 4.2x в этой синхронизации не проверялась. Не называйте это новым runtime-дефектом спецификации/API.
+- **`DeleteWorkitemLink` намеренно не реализован** — удаление этой связи сейчас не предоставляется через MCP; существующее открепление задачи от портфеля — отдельное реализованное исключение (см. `TODO.log`, раздел «Deletes»).
 - `teamstorm_status_categories_list` — единственный по-настоящему глобальный справочник в клиенте: `GET /status-categories` не имеет `{workspace}` в пути и не принимает `workspace` в схеме инструмента — не добавляй `resolveWorkspace()` в `listStatusCategories()`.
 
 Клиентские методы: `getTaskLinks()`, `createTaskLink()`, `listLinkTypes()`, `listStatusCategories()`, `listWorkspaceStatuses()`, `getWorkspaceStatus()`. Типы: `TeamStormLink`, `TeamStormLinkListResponse`, `TeamStormLinkType`, `TeamStormLinkTypeListResponse`, `TeamStormCreateTaskLinkRequest`, `TeamStormStatusCategory`, `TeamStormStatusCategoryListResponse`, `TeamStormWorkspaceStatusListResponse` (переиспользует существующий `TeamStormStatus`).
@@ -240,6 +249,16 @@ DELETE-эндпоинт папок намеренно не реализован.
 - **`GetWorkspace`, вероятно, подвержен той же нестабильности**, что и bare `GET /workspaces` (см. ниже про `UserNotFoundException`) — оба возвращают `author: UserModel`. Не проверено вживую на момент реализации (нет токена в `.env` этого окружения) — проверьте на реальном workspace перед тем, как полагаться на `teamstorm_workspaces_get` в проде.
 
 Клиентские методы: `listSprints()`, `getSprint()`, `createSprint()`, `listAgile()`, `getAgile()`, `createAgile()`, `getWorkspace()`. Типы: `TeamStormSprint` (расширен: `isBacklog`, `state`, `workdays`, `team`), `TeamStormSprintTeamMember`, `TeamStormCreateSprintRequest`, `TeamStormAgile`, `TeamStormCreateAgileRequest`, `TeamStormAgileListResponse`.
+
+## Время: публичный период и приватные списания
+
+`teamstorm_time_entries_list` и `teamstorm_time_entries_create` требуют `workspace` и сохраняют приватные GET/POST `/tasks/api/v1/workitems/{id}/time-tracking-entries`: в публичной спецификации нет POST записей и фильтра по задаче.
+
+`teamstorm_time_entries_list_by_period` оборачивает существующий публичный `GetTimeTrackingEntries` (`GET /workspaces/time-tracking-entries`). Обязателен `startDate`; опциональны `endDate`, `users` (логины через запятую), `fromToken`, `maxItemsCount` (1–1000, по умолчанию 50), `apiUrl`. Метод инстансный в пределах доступа токена: **не добавляйте `workspace`, `resolveWorkspace()` или выдуманный фильтр `workitem`**. Ответ содержит полную задачу каждой записи; используйте ограничение размера и проекцию. Единица публичного `spentTime` не описана и требует живой проверки. `GetTimeTrackingEntriesUpdates` остаётся непокрытым: значение его временного диапазона (дата списания или изменения) требует уточнения.
+
+## Roadmap: 11 новых методов (coming soon)
+
+Запланированы девять `WorkitemTimeMetrics` (list/get/update settings/enable/disable/start/pause/resume/stop), один `GetWorkitemTimeMetricTemplates` и один глобальный `GetWorkCalendars`; MCP-инструментов для них пока нет. Это SLA/OLA/Custom-часы по рабочим календарям, не создание `TimeTrackingEntry`. В `WorkitemTimeMetricModel` ключи `approachAt`/`breachAt` обязательны, но их значения nullable. Эндпоинты и предлагаемые имена: [`docs/api-4.2x-change-report.md`](docs/api-4.2x-change-report.md). Новый публичный инструмент периода не входит в эти 11: его эндпоинт уже был в июньской спецификации.
 
 ## Особенности TeamStorm API
 

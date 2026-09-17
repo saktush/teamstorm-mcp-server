@@ -101,7 +101,7 @@ export function registerListTaskTypesTool(server: McpServer, client: TeamStormCl
     {
       title: 'Получить список типов задач',
       description:
-        'Получить список типов задач в пространстве TeamStorm. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить список типов задач в пространстве TeamStorm. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: ListTaskTypesSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

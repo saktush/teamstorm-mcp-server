@@ -138,7 +138,7 @@ export function registerListSprintsTool(server: McpServer, client: TeamStormClie
     {
       title: 'Получить список спринтов',
       description:
-        'Получить список спринтов в пространстве TeamStorm. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить список спринтов в пространстве TeamStorm. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: ListSprintsSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

@@ -71,7 +71,7 @@ export function registerGetTaskCountTool(server: McpServer, client: TeamStormCli
     {
       title: 'Получить количество задач',
       description:
-        'Получить общее количество задач в пространстве TeamStorm. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить общее количество задач в пространстве TeamStorm. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: GetTaskCountSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

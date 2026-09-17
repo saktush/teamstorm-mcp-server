@@ -92,7 +92,7 @@ export function registerListDocumentAttachmentsTool(server: McpServer, client: T
     {
       title: 'Получить вложения документа',
       description:
-        'Получить список вложений документа (страницы). Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить список вложений документа (страницы). Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: listDocumentAttachmentsSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

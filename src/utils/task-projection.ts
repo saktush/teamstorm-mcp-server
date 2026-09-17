@@ -55,8 +55,24 @@ interface NamedRef {
   name?: string;
 }
 
-function ref(value: NamedRef | undefined): { id: string; name: string } | null {
+function ref(value: NamedRef | null | undefined): { id: string; name: string } | null {
   return value ? { id: value.id ?? '', name: value.name ?? '' } : null;
+}
+
+// `parent` resolves to TreeNodeThumbModel {id, nodeType}; `name` is optional on
+// TeamStormTreeNodeThumb (see the type's own comment — kept as a hedge, since the
+// old hand-written document-parent type carried a required `name`). Reusing the
+// generic `ref()` here used to silently emit `{id, name: ''}` whenever `parent`
+// had no `name`, dropping `nodeType` — the one field the type guarantees. Emit
+// `name` when the API actually sends it, and always emit `nodeType` alongside it,
+// rather than picking one or the other. See F2 in task-2a-brief.md.
+function treeNodeRef(
+  value: TeamStormTask['parent']
+): { id: string; name?: string; nodeType: string } | null {
+  if (!value) return null;
+  return value.name
+    ? { id: value.id, name: value.name, nodeType: value.nodeType }
+    : { id: value.id, nodeType: value.nodeType };
 }
 
 function userRef(
@@ -95,7 +111,7 @@ export function projectTask(
   if (want('author')) out.author = userRef(task.author);
   if (want('sprint')) out.sprint = ref(task.sprint);
   if (want('folder')) out.folder = ref(task.folder);
-  if (want('parent')) out.parent = ref(task.parent);
+  if (want('parent')) out.parent = treeNodeRef(task.parent);
   if (want('workspace')) out.workspace = task.workspace ? task.workspace.key : null;
 
   for (const dateField of [

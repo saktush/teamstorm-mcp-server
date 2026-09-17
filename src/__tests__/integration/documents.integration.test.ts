@@ -109,14 +109,30 @@ describe('TeamStormClient Documents Integration Tests', () => {
     });
 
     it('tool must not leak apiUrl/workspace into the request body', async () => {
-      // nock body matcher: exact match fails if extra keys are present
+      // nock body matcher: exact match fails if extra keys are present.
+      // `labels` shows up defaulted to [] per RULING R7 (see F6, task-2a-brief.md):
+      // CreateDocumentRequestBody requires it, so the client always sends it even
+      // when the caller (and the tool schema, which stays optional) omits it.
       nock(baseUrl)
-        .post(`/workspaces/${workspace}/documents`, { name: 'Clean body' })
+        .post(`/workspaces/${workspace}/documents`, { name: 'Clean body', labels: [] })
         .reply(200, mockDocument);
 
       const result = await createDocument(client, { workspace, name: 'Clean body' });
 
       expect(result.isError).toBeUndefined();
+      expect(nock.isDone()).toBe(true);
+    });
+
+    // F6 (task-2a-brief.md) + RULING R7: labels defaults to [] at the CLIENT layer
+    // when the caller omits it — a spec-required field is now always sent.
+    it('defaults labels to [] when the caller omits it', async () => {
+      nock(baseUrl)
+        .post(`/workspaces/${workspace}/documents`, { name: 'No labels', labels: [] })
+        .reply(200, mockDocument);
+
+      const result = await client.createDocument({ name: 'No labels' }, workspace);
+
+      expect(result.key).toBe('DOC-1');
       expect(nock.isDone()).toBe(true);
     });
   });

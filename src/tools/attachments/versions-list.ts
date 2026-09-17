@@ -28,7 +28,7 @@ export function registerListAttachmentVersionsTool(server: McpServer, client: Te
     {
       title: 'Получить версии вложений',
       description:
-        'Получить список всех версий вложений задачи. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить все вложения задачи вместе с историей их версий. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: listAttachmentVersionsSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

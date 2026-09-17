@@ -14,7 +14,7 @@ export const createFolderSchema = z
       ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     name: z.string().max(255).describe('Название папки (до 255 символов)'),
-    description: z.string().optional().describe('Описание папки'),
+    description: z.string().optional().describe('Описание папки (до 65000 символов)'),
     parentId: z
       .string()
       .optional()

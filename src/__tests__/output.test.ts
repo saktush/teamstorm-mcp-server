@@ -27,7 +27,8 @@ function buildTask(i: number, descriptionBytes = 0): TeamStormTask {
     assignee: user,
     author: user,
     changedBy: user,
-    folder: { id: 'f1', name: 'Встречи', nodeType: 'Folder' },
+    // FolderThumbModel is {id, name} only — no `nodeType` (see F2, task-2a-brief.md).
+    folder: { id: 'f1', name: 'Встречи' },
     originalEstimate: 0,
     timeSpent: 0,
     remainingEstimate: 0,
@@ -162,5 +163,40 @@ describe('buildListResult', () => {
       expect(bytes).toBeLessThan(MAX_PAYLOAD_BYTES);
       expect((result.structuredContent as { hasMore: boolean }).hasMore).toBe(true);
     }
+  });
+});
+
+describe('projectTask parent field', () => {
+  // Regression for F2 (task-2a-brief.md): `task.parent` resolves to
+  // TreeNodeThumbModel {id, nodeType} — it has no `name`, unlike `task.folder`
+  // (FolderThumbModel {id, name}). Reusing the generic name-ref helper for both
+  // silently produced `{id, name: ''}` for parent, dropping the real nodeType.
+  it('projects id + nodeType, not a blank name', () => {
+    const task = buildTask(0);
+    task.parent = { id: 'parent-1', nodeType: 'Folder' };
+
+    const projected = projectTask(task, new Set(['parent']), { descriptionMaxChars: 500 });
+
+    expect(projected.parent).toEqual({ id: 'parent-1', nodeType: 'Folder' });
+  });
+
+  it('projects null when there is no parent', () => {
+    const task = buildTask(0);
+
+    const projected = projectTask(task, new Set(['parent']), { descriptionMaxChars: 500 });
+
+    expect(projected.parent).toBeNull();
+  });
+
+  // Fix-round Important 1: `name` is optional on TeamStormTreeNodeThumb, not
+  // absent — emit it when the API sends it, so `fields:['parent']` still returns
+  // a human-readable label instead of forcing a second lookup by id.
+  it('includes name alongside nodeType when the API sends both', () => {
+    const task = buildTask(0);
+    task.parent = { id: 'parent-1', name: 'Meetings', nodeType: 'Folder' };
+
+    const projected = projectTask(task, new Set(['parent']), { descriptionMaxChars: 500 });
+
+    expect(projected.parent).toEqual({ id: 'parent-1', name: 'Meetings', nodeType: 'Folder' });
   });
 });

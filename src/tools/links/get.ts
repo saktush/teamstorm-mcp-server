@@ -46,7 +46,7 @@ export function registerGetTaskLinksTool(server: McpServer, client: TeamStormCli
     {
       title: 'Получить связанные задачи',
       description:
-        'Получить связи задачи вместе с полной информацией о каждой связанной задаче (статус, исполнитель, папка, спринт и т.д.). Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить связи задачи вместе с полной информацией о каждой связанной задаче (статус, исполнитель, папка, спринт и т.д.). Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: getTaskLinksSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

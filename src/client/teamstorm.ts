@@ -11,6 +11,8 @@ import type {
   TeamStormUpdateTaskRequest,
   TeamStormUser,
   TeamStormUserListResponse,
+  TeamStormWorkspaceUserListResponse,
+  TeamStormAttributeType,
   TeamStormSprint,
   TeamStormSprintListResponse,
   TeamStormCreateSprintRequest,
@@ -24,6 +26,7 @@ import type {
   TeamStormCommentVisibility,
   TeamStormAttributeListResponse,
   TeamStormAttributeModel,
+  TeamStormAttributeModelListResponse,
   TeamStormCreateAttributeRequest,
   TeamStormPatchAttributeRequest,
   TeamStormCreateAttributeOptionRequest,
@@ -62,6 +65,8 @@ import type {
   TeamStormDocumentStatusListResponse,
   TeamStormDocumentPermission,
   TeamStormDownloadedFile,
+  TeamStormListTimeEntriesByPeriodParams,
+  TeamStormPublicTimeEntryListResponse,
 } from './types.js';
 
 // Mirrors the existing upload cap; single source of truth reused by the OOB download route in index.ts.
@@ -430,11 +435,17 @@ export class TeamStormClient {
 
   // Phase B: Additional API methods
 
-  async listUsers(workspace?: string): Promise<TeamStormUserListResponse> {
+  async listUsers(
+    workspace?: string,
+    params?: { displayName?: string; roleId?: string; fromToken?: string; maxItemsCount?: number }
+  ): Promise<TeamStormWorkspaceUserListResponse> {
     this.requireBaseUrl();
     try {
       const ws = this.resolveWorkspace(workspace);
-      const response = await this.client.get<TeamStormUserListResponse>(`/workspaces/${ws}/users`);
+      const response = await this.client.get<TeamStormWorkspaceUserListResponse>(
+        `/workspaces/${ws}/users`,
+        { params }
+      );
       return response.data;
     } catch (error) {
       this.handleError(error as AxiosError);
@@ -456,7 +467,7 @@ export class TeamStormClient {
   }
 
   // Global user search — GET /users, instance-wide and server-side filtered (unlike listUsers(),
-  // which fetches one workspace's members and filters client-side).
+  // which also supports the workspace endpoint's own filters and pagination).
   async listAllUsers(params?: {
     displayName?: string;
     email?: string;
@@ -556,6 +567,8 @@ export class TeamStormClient {
   }
 
   async listWorkspaces(params?: {
+    key?: string;
+    name?: string;
     fromToken?: string;
     maxItemsCount?: number;
   }): Promise<TeamStormWorkspaceListResponse> {
@@ -580,12 +593,16 @@ export class TeamStormClient {
     }
   }
 
-  async listWorkflows(workspace?: string): Promise<TeamStormWorkflowListResponse> {
+  async listWorkflows(
+    workspace?: string,
+    params?: { name?: string }
+  ): Promise<TeamStormWorkflowListResponse> {
     this.requireBaseUrl();
     try {
       const ws = this.resolveWorkspace(workspace);
       const response = await this.client.get<TeamStormWorkflowListResponse>(
-        `/workspaces/${ws}/workflows`
+        `/workspaces/${ws}/workflows`,
+        { params }
       );
       return response.data;
     } catch (error) {
@@ -604,18 +621,21 @@ export class TeamStormClient {
     }
   }
 
-  // Space attributes
+  // Space attributes (attribute DEFINITIONS — AttributeModel, has `workitemTypes`,
+  // no `value`. Not to be confused with getTaskAttributes() below, which returns
+  // attribute VALUES on a specific task and correctly uses TeamStormAttributeListResponse.)
   async listAttributes(params: {
     workspace?: string;
     name?: string;
-    type?: string;
+    type?: TeamStormAttributeType;
+    isFullNameMatching?: boolean;
     fromToken?: string;
     maxItemsCount?: number;
-  }): Promise<TeamStormAttributeListResponse> {
+  }): Promise<TeamStormAttributeModelListResponse> {
     this.requireBaseUrl();
     try {
       const ws = this.resolveWorkspace(params.workspace);
-      const response = await this.client.get<TeamStormAttributeListResponse>(
+      const response = await this.client.get<TeamStormAttributeModelListResponse>(
         `/workspaces/${ws}/attributes`,
         { params: { ...params, workspace: undefined } }
       );
@@ -956,7 +976,7 @@ export class TeamStormClient {
       const ws = this.resolveWorkspace(workspace);
       const response = await this.client.post<TeamStormLink>(
         `/workspaces/${ws}/workitems/${taskId}/links`,
-        data
+        { ...data, linkedWorkspace: data.linkedWorkspace ?? ws }
       );
       return response.data;
     } catch (error) {
@@ -1072,9 +1092,19 @@ export class TeamStormClient {
         `/workspaces/${encodeURIComponent(ws)}/workitems/${encodeURIComponent(taskId)}/attachments`
       );
 
-      const matched = listResponse.data.items.find(
-        (a) => a.name === uploadFileName || a.fileId === attachmentId
-      );
+      // `attachmentId` here is the UUID WE generated and POSTed as the upload path's
+      // {attachmentId}. IF the server round-trips it back as the new record's own
+      // `attachmentId`, that's the strongest possible correlator — it can't
+      // collide with a pre-existing same-name attachment the way `a.name` can.
+      // But nothing in this repo actually confirms the server does that (the old
+      // `a.fileId === attachmentId` branch shows a previous author guessing the
+      // same thing under a different field name, and being wrong — `fileId` is a
+      // distinct, server-assigned storage id that never equals our UUID). So this
+      // is preferred, not assumed: fall back to the name match that has
+      // demonstrably been carrying uploads until now if no attachmentId matches.
+      const matched =
+        listResponse.data.items.find((a) => a.attachmentId === attachmentId) ??
+        listResponse.data.items.find((a) => a.name === uploadFileName);
 
       if (!matched) {
         throw new Error(
@@ -1099,6 +1129,27 @@ export class TeamStormClient {
   }
 
   // Time Tracking
+  /** Instance-wide public feed: no workspace resolution or workitem filter. */
+  async listTimeEntriesByPeriod(
+    params: TeamStormListTimeEntriesByPeriodParams
+  ): Promise<TeamStormPublicTimeEntryListResponse> {
+    this.requireBaseUrl();
+    try {
+      const { startDate, endDate, users, fromToken, maxItemsCount } = params;
+      const response = await this.client.get<TeamStormPublicTimeEntryListResponse>(
+        '/workspaces/time-tracking-entries',
+        {
+          params: { startDate, endDate, users, fromToken, maxItemsCount },
+          // Per-request auth overrides axios's original method-level header after setToken.
+          headers: { Authorization: `PrivateToken ${this.apiToken}` },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
   async createTimeEntry(params: {
     taskId: string;
     duration: number;
@@ -1475,9 +1526,14 @@ export class TeamStormClient {
     this.requireBaseUrl();
     try {
       const ws = this.resolveWorkspace(workspace);
+      // RULING R7: CreateDocumentRequestBody requires `labels`, but the MCP tool
+      // param stays optional (don't tighten a previously-optional interface on a
+      // guess about server defaulting — see R2/R3). Default it here instead, so a
+      // spec-required field is always sent regardless of what the caller passed.
+      const body: TeamStormCreateDocumentRequest = { ...data, labels: data.labels ?? [] };
       const response = await this.client.post<TeamStormDocument>(
         `/workspaces/${ws}/documents`,
-        data
+        body
       );
       return response.data;
     } catch (error) {
@@ -1572,7 +1628,7 @@ export class TeamStormClient {
   async patchDocumentPermission(
     documentId: string,
     permissionId: string,
-    data: { accessLevel: 'Read' | 'Edit' | 'Comment' },
+    data: { accessLevel?: 'Read' | 'Edit' | 'Comment' | null },
     workspace?: string
   ): Promise<TeamStormDocumentPermission> {
     this.requireBaseUrl();

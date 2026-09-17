@@ -3,12 +3,12 @@ node_modules/
 
 # Build output
 dist/
+coverage/
 
 # Environment variables
 .env
 .env.*
 !.env.example
-swagger.json
 
 # Local per-server Docker override (see docker-compose.override.yml.example)
 docker-compose.override.yml
@@ -37,6 +37,3 @@ npm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
-
-# local data
-swagger.json

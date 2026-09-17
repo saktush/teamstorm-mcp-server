@@ -28,7 +28,7 @@ export function registerGetTaskAttributesTool(server: McpServer, client: TeamSto
     {
       title: 'Получить атрибуты задачи',
       description:
-        'Получить значения атрибутов задачи. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить значения пользовательских атрибутов конкретной задачи. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: getTaskAttributesSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

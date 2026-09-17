@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { TeamStormClient } from '../../client/teamstorm.js';
+import type { TeamStormWorkspace } from '../../client/types.js';
 import { logRequest, logResponse, logError, logger } from '../../utils/logger.js';
 
 export const listWorkspacesSchema = z
@@ -12,6 +13,8 @@ export const listWorkspacesSchema = z
       .describe(
         'URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'
       ),
+    key: z.string().optional().describe('Ключ пространства для поиска на стороне TeamStorm.'),
+    name: z.string().optional().describe('Фильтр по названию пространства на стороне TeamStorm.'),
   })
   .strict();
 
@@ -21,7 +24,7 @@ export function registerListWorkspacesTool(server: McpServer, client: TeamStormC
     {
       title: 'Получить список пространств',
       description:
-        'Получить список всех доступных пространств (workspaces) TeamStorm. Используйте, чтобы узнать правильные ключи workspace для других инструментов.',
+        'Получить список всех доступных пространств (workspaces) TeamStorm с фильтрами key/name на стороне TeamStorm. Инструмент автоматически обходит все страницы API. Используйте, чтобы узнать правильные ключи workspace для других инструментов.',
       inputSchema: listWorkspacesSchema,
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
@@ -37,7 +40,7 @@ export async function listWorkspaces(
   structuredContent?: Record<string, unknown>;
   isError?: boolean;
 }> {
-  const { apiUrl } = params;
+  const { apiUrl, key, name } = params;
 
   if (apiUrl) {
     client.setBaseUrlRaw(apiUrl);
@@ -46,13 +49,15 @@ export async function listWorkspaces(
   const startTime = Date.now();
 
   try {
-    logRequest('teamstorm_workspaces_list', {});
+    logRequest('teamstorm_workspaces_list', { key, name });
 
-    const allWorkspaces: Array<{ id: string; key: string; name: string }> = [];
+    const allWorkspaces: TeamStormWorkspace[] = [];
     let nextToken: string | null | undefined = undefined;
 
     do {
       const page = await client.listWorkspaces({
+        key,
+        name,
         maxItemsCount: 1000,
         fromToken: nextToken ?? undefined,
       });

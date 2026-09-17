@@ -63,7 +63,7 @@ export function registerGetDocumentTool(server: McpServer, client: TeamStormClie
     {
       title: 'Получить документ',
       description:
-        'Получить документ TeamStorm по идентификатору, включая содержимое, статус, метки и информацию об авторе.',
+        'Получить документ TeamStorm по ключу или идентификатору, включая содержимое, статус, метки и информацию об авторе.',
       inputSchema: getDocumentSchema,
       annotations: { readOnlyHint: true, openWorldHint: false },
     },

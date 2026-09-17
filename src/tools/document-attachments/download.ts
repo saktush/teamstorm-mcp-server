@@ -86,7 +86,7 @@ export function registerGetDocumentAttachmentFileTool(server: McpServer, client:
     {
       title: 'Скачать файл вложения документа',
       description:
-        'Скачать содержимое вложения документа (страницы). Файл сохраняется на сервере MCP и становится доступен по временной ссылке GET /download/:id (см. текст ответа для точной команды). Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Скачать содержимое вложения документа (страницы). Файл сохраняется на сервере MCP и становится доступен по временной ссылке GET /download/:id (см. текст ответа для точной команды). Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: getDocumentAttachmentFileSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

@@ -23,19 +23,27 @@ const BaseListTasksSchema = z
       ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     type: z.string().optional().describe('Фильтр по типу задачи (название или ID)'),
-    parent: z.string().optional().describe('Фильтр по родительскому элементу'),
+    parent: z.string().optional().describe('Фильтр по родительской задаче или папке (ключ или ID)'),
     sprintId: z.string().optional().describe('Фильтр по ID спринта'),
     name: z.string().optional().describe('Поиск по названию (вхождение подстроки)'),
     assignee: z.string().optional().describe('Фильтр по исполнителю (логин или ID)'),
     author: z.string().optional().describe('Фильтр по автору (логин или ID)'),
     status: z.string().optional().describe('Фильтр по статусу (название или ID)'),
-    statusCategory: z.string().optional().describe('Фильтр по категории статуса'),
-    fromToken: z.string().optional().describe('Токен для пагинации'),
+    statusCategory: z
+      .string()
+      .optional()
+      .describe('Фильтр по категории статуса (см. teamstorm_status_categories_list)'),
+    fromToken: z
+      .string()
+      .optional()
+      .describe('Токен пагинации из nextToken предыдущего ответа для получения следующей страницы'),
     maxItemsCount: z
       .number()
       .optional()
       .default(50)
-      .describe('Максимальное количество задач на странице (по умолчанию: 50)'),
+      .describe(
+        'Максимальное количество задач на странице (по умолчанию: 50; API допускает от 1 до 1000)'
+      ),
   })
   .strict();
 
@@ -110,7 +118,7 @@ export function registerListTasksTool(server: McpServer, client: TeamStormClient
     {
       title: 'Получить список задач',
       description:
-        'Получить список задач в пространстве TeamStorm с фильтрацией и пагинацией. Если workspace не указан, используется workspace по умолчанию из TEAMSTORM_WORKSPACE.',
+        'Получить список задач в пространстве TeamStorm с фильтрацией и пагинацией. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: ListTasksSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

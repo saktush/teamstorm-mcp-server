@@ -15,8 +15,16 @@ export const updatePortfolioElementSchema = z
       ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     portfolioElementId: z.string().describe('UUID элемента портфеля'),
-    name: z.string().max(255).optional().describe('Новое название элемента портфеля'),
-    description: z.string().max(65000).optional().describe('Новое описание элемента портфеля'),
+    name: z
+      .string()
+      .max(255)
+      .optional()
+      .describe('Новое название элемента портфеля (до 255 символов)'),
+    description: z
+      .string()
+      .max(65000)
+      .optional()
+      .describe('Новое описание элемента портфеля (до 65000 символов)'),
     startDate: z.string().optional().describe('Новая дата начала в формате ISO 8601'),
     endDate: z.string().optional().describe('Новая дата окончания в формате ISO 8601'),
     status: z.string().optional().describe('Новый статус элемента портфеля (название или ID)'),

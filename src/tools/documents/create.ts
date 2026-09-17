@@ -15,9 +15,22 @@ export const createDocumentSchema = z
       ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     name: z.string().describe('Название документа'),
-    content: z.string().optional().describe('Содержимое документа (поддерживает HTML-разметку)'),
-    parentId: z.string().optional().describe('ID родительской папки или документа (UUID)'),
-    labels: z.array(z.string()).optional().describe('Метки документа'),
+    content: z
+      .string()
+      .optional()
+      .describe(
+        'Содержимое документа (поддерживает HTML-разметку). API TeamStorm требует это поле — запрос без него может завершиться ошибкой.'
+      ),
+    parentId: z
+      .string()
+      .optional()
+      .describe(
+        'ID родительской папки или документа (UUID). API TeamStorm требует это поле — запрос без него может завершиться ошибкой.'
+      ),
+    labels: z
+      .array(z.string())
+      .optional()
+      .describe('Метки (теги) документа; если не указаны, клиент отправляет пустой список []'),
   })
   .strict();
 
@@ -68,7 +81,7 @@ export function registerCreateDocumentTool(server: McpServer, client: TeamStormC
     {
       title: 'Создать документ',
       description:
-        'Создать новый документ в пространстве TeamStorm. Можно указать содержимое, родительскую папку и метки.',
+        'Создать новый документ (страницу) в пространстве TeamStorm. API требует содержимое и ID родительской папки или документа; метки (теги) по умолчанию отправляются пустым списком.',
       inputSchema: createDocumentSchema,
       annotations: {
         readOnlyHint: false,
