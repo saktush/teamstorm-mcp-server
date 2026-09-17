@@ -1,6 +1,6 @@
 # TeamStorm API 4.2x synchronization — change report
 
-Updated: **2026-09-17**. The synchronization is implemented, with 81 registered MCP tools and 75 public operations covered. The 11 newly added metric/calendar endpoints remain coming soon. Verification: typecheck, lint and build pass; 329 tests pass in 33 files. No live TeamStorm calls were used to establish server defaulting or response optionality.
+Updated: **2026-09-17**. The synchronization is implemented, with 81 registered MCP tools and 75 public operations covered. The 11 newly added metric/calendar endpoints remain coming soon. Verification: typecheck, lint and build pass; 333 tests pass in 33 files. No live TeamStorm calls were used to establish server defaulting or response optionality.
 
 ## Evidence and historical comparison
 
@@ -234,6 +234,6 @@ These are client compatibility choices, not assertions about live server default
 
 Runtime registration of all six TOOLSETS confirms **81 unique tools**: tasks 28, documents 18, portfolios 11, planning 7, structure 8, reference 9. Prompts/resources remain four/three and are not counted as tools.
 
-Test execution coverage: statements/lines 67.41%, branches 72.68%, functions 72.22%; see [test coverage report](test-coverage-report.md). Generated V8 HTML/JSON were refreshed locally.
+Test execution coverage: statements/lines 67.42%, branches 72.70%, functions 72.29%; see [test coverage report](test-coverage-report.md). Generated V8 HTML/JSON were refreshed locally.
 
-Final checks: npm run typecheck, npm run lint, npm run build and npm run test:run all pass; **329 tests in 33 files**. Tests use mocked TeamStorm responses, including real MCP transport calls for the new period tool. The upload-handler tests require local-port permission; sandbox listen EPERM is an execution restriction rather than a code defect. Endpoint and schema inventories were independently checked against the spec and MCP call graph. Live compatibility questions above remain open.
+Final checks: npm run typecheck, npm run lint, npm run build and npm run test:run all pass; **333 tests in 33 files**. Tests use mocked TeamStorm responses, including real MCP transport calls for the new period tool. The upload-handler tests require local-port permission; sandbox listen EPERM is an execution restriction rather than a code defect. Endpoint and schema inventories were independently checked against the spec and MCP call graph. Live compatibility questions above remain open.

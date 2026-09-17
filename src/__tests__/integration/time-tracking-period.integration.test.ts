@@ -264,6 +264,10 @@ describe('Task 3 public period time entries through MCP', () => {
     { startDate, maxItemsCount: 0 },
     { startDate, maxItemsCount: 1001 },
     { startDate, maxItemsCount: 1.5 },
+    { startDate: '2026-09-01T00:00:00+99:00' },
+    { startDate: '2026-09-01T00:00:00+03:99' },
+    { startDate: entry.date, endDate: '2026-09-01T00:00:00-99:00' },
+    { startDate: entry.date, endDate: '2026-09-01T00:00:00-03:99' },
   ])('rejects unsupported scope or invalid required/date/page inputs: %j', async (args) => {
     const request = vi.spyOn(api, 'listTimeEntriesByPeriod').mockResolvedValue({ items: [] });
     expect((await call(args)).isError).toBe(true);

@@ -11,10 +11,12 @@ import {
   TIME_ENTRY_IDENTITY_FIELDS,
 } from '../../utils/time-entry-projection.js';
 
-const dateTime = z.string().datetime({
-  offset: true,
-  message: 'Укажите корректную дату и время ISO 8601 с часовым поясом, например 2026-09-01T00:00:00Z',
-});
+const dateTimeMessage =
+  'Укажите корректную дату и время ISO 8601 с часовым поясом, например 2026-09-01T00:00:00Z';
+const dateTime = z
+  .string()
+  .datetime({ offset: true, message: dateTimeMessage })
+  .refine((value) => Number.isFinite(Date.parse(value)), { message: dateTimeMessage });
 
 export const listTimeEntriesByPeriodSchema = z
   .object({
