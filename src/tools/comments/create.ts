@@ -15,7 +15,7 @@ export const createTaskCommentSchema = z
       ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     taskId: z.string().describe('Ключ или идентификатор задачи (например, "TS-671" или UUID)'),
-    text: z.string().describe('Текст комментария (поддерживает HTML-разметку)'),
+    text: z.string().describe('Текст комментария (поддерживает HTML-разметку, до 65000 символов)'),
   })
   .strict();
 
@@ -25,7 +25,7 @@ export function registerCreateTaskCommentTool(server: McpServer, client: TeamSto
     {
       title: 'Добавить комментарий к задаче',
       description:
-        'Добавить новый комментарий к задаче. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Добавить новый комментарий к задаче. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: createTaskCommentSchema,
       annotations: {
         readOnlyHint: false,

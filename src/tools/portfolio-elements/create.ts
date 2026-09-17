@@ -16,7 +16,11 @@ export const createPortfolioElementSchema = z
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     portfolioId: z.string().describe('UUID портфеля, в котором создаётся элемент'),
     name: z.string().max(255).describe('Название элемента портфеля (до 255 символов)'),
-    description: z.string().max(65000).optional().describe('Описание элемента портфеля'),
+    description: z
+      .string()
+      .max(65000)
+      .optional()
+      .describe('Описание элемента портфеля (до 65000 символов)'),
     startDate: z.string().optional().describe('Дата начала в формате ISO 8601'),
     endDate: z.string().optional().describe('Дата окончания в формате ISO 8601'),
     responsibles: z

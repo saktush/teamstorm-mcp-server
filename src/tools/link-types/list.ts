@@ -89,7 +89,7 @@ export function registerListLinkTypesTool(server: McpServer, client: TeamStormCl
     {
       title: 'Получить список типов связей',
       description:
-        'Получить список типов связей между задачами (например, «Связана», «Блокирует») в пространстве TeamStorm. Используется для определения linkTypeId при создании связи через teamstorm_task_links_create. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить список типов связей между задачами (например, «Связана», «Блокирует») в пространстве TeamStorm. Используется для определения linkTypeId при создании связи через teamstorm_task_links_create. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: listLinkTypesSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

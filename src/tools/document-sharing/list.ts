@@ -88,7 +88,7 @@ export function registerListDocumentPermissionsTool(server: McpServer, client: T
     {
       title: 'Разрешения на документ',
       description:
-        'Получить список разрешений (доступов пользователей и групп) на документ TeamStorm.',
+        'Получить список разрешений общего доступа пользователей и групп к документу (странице) TeamStorm: permissionId, получатель и уровень доступа — Read (просмотр), Edit (редактирование) или Comment (комментирование). Используйте permissionId для teamstorm_document_permissions_update. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: listDocumentPermissionsSchema,
       annotations: { readOnlyHint: true, openWorldHint: false },
     },

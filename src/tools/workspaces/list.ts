@@ -13,8 +13,8 @@ export const listWorkspacesSchema = z
       .describe(
         'URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'
       ),
-    key: z.string().optional().describe('Ключ пространства для поиска.'),
-    name: z.string().optional().describe('Фильтр по названию пространства.'),
+    key: z.string().optional().describe('Ключ пространства для поиска на стороне TeamStorm.'),
+    name: z.string().optional().describe('Фильтр по названию пространства на стороне TeamStorm.'),
   })
   .strict();
 
@@ -24,7 +24,7 @@ export function registerListWorkspacesTool(server: McpServer, client: TeamStormC
     {
       title: 'Получить список пространств',
       description:
-        'Получить список всех доступных пространств (workspaces) TeamStorm. Используйте, чтобы узнать правильные ключи workspace для других инструментов.',
+        'Получить список всех доступных пространств (workspaces) TeamStorm с фильтрами key/name на стороне TeamStorm. Инструмент автоматически обходит все страницы API. Используйте, чтобы узнать правильные ключи workspace для других инструментов.',
       inputSchema: listWorkspacesSchema,
       annotations: { readOnlyHint: true, openWorldHint: false },
     },

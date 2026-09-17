@@ -27,7 +27,7 @@ export function registerGetAttachmentVersionTool(server: McpServer, client: Team
     {
       title: 'Получить версию вложения',
       description:
-        'Получить метаданные конкретной версии вложения. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить метаданные конкретной версии вложения. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: getAttachmentVersionSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

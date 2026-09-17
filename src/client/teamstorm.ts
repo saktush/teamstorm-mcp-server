@@ -65,6 +65,8 @@ import type {
   TeamStormDocumentStatusListResponse,
   TeamStormDocumentPermission,
   TeamStormDownloadedFile,
+  TeamStormListTimeEntriesByPeriodParams,
+  TeamStormPublicTimeEntryListResponse,
 } from './types.js';
 
 // Mirrors the existing upload cap; single source of truth reused by the OOB download route in index.ts.
@@ -1127,6 +1129,27 @@ export class TeamStormClient {
   }
 
   // Time Tracking
+  /** Instance-wide public feed: no workspace resolution or workitem filter. */
+  async listTimeEntriesByPeriod(
+    params: TeamStormListTimeEntriesByPeriodParams
+  ): Promise<TeamStormPublicTimeEntryListResponse> {
+    this.requireBaseUrl();
+    try {
+      const { startDate, endDate, users, fromToken, maxItemsCount } = params;
+      const response = await this.client.get<TeamStormPublicTimeEntryListResponse>(
+        '/workspaces/time-tracking-entries',
+        {
+          params: { startDate, endDate, users, fromToken, maxItemsCount },
+          // Per-request auth overrides axios's original method-level header after setToken.
+          headers: { Authorization: `PrivateToken ${this.apiToken}` },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
   async createTimeEntry(params: {
     taskId: string;
     duration: number;

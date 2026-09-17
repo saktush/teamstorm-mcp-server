@@ -12,7 +12,7 @@ import {
 import { logger } from '../utils/logger.js';
 
 const EXPECTED_COUNTS: Record<ToolsetName, number> = {
-  tasks: 27,
+  tasks: 28,
   documents: 18,
   portfolios: 11,
   planning: 7,
@@ -44,10 +44,10 @@ afterEach(() => {
 });
 
 describe('TOOLSETS partition', () => {
-  it('maps exactly 80 registrars with no duplicates', () => {
+  it('maps exactly 81 registrars with no duplicates', () => {
     const all = Object.values(TOOLSETS).flat();
-    expect(all).toHaveLength(80);
-    expect(new Set(all).size).toBe(80);
+    expect(all).toHaveLength(81);
+    expect(new Set(all).size).toBe(81);
   });
 
   it('has the expected per-group counts', () => {
@@ -105,16 +105,16 @@ describe('resolveToolsets', () => {
 });
 
 describe('registerToolsets', () => {
-  it('registers only tasks (27) + always-on reference (9) = 36 for ?toolsets=tasks', () => {
+  it('registers only tasks (28) + always-on reference (9) = 37 for ?toolsets=tasks', () => {
     const names = captureRegisteredNames(resolveToolsets('tasks'));
-    expect(names).toHaveLength(36);
-    expect(new Set(names).size).toBe(36);
+    expect(names).toHaveLength(37);
+    expect(new Set(names).size).toBe(37);
   });
 
-  it('registers all 80 tools for "all"', () => {
+  it('registers all 81 tools for "all"', () => {
     const names = captureRegisteredNames(resolveToolsets('all'));
-    expect(names).toHaveLength(80);
-    expect(new Set(names).size).toBe(80);
+    expect(names).toHaveLength(81);
+    expect(new Set(names).size).toBe(81);
   });
 
   it('registers documents (18) + reference (9) = 27 for ?toolsets=documents', () => {

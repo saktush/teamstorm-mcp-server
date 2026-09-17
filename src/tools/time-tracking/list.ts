@@ -24,7 +24,7 @@ export function registerListTimeEntriesTool(server: McpServer, client: TeamStorm
     {
       title: 'Получить списания времени задачи',
       description:
-        'Получить список записей списания времени (трудозатрат) для задачи. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить список записей списания времени (трудозатрат) для задачи. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: listTimeEntriesSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

@@ -22,7 +22,7 @@ export const createTimeEntrySchema = z
       .describe('Затраченное время в секундах (например, 3600 = 1 час)'),
     startDate: z
       .string()
-      .describe('Дата и время списания в ISO 8601 (например, "2026-06-06T12:00:00Z")'),
+      .describe('Обязательная дата и время списания в ISO 8601 (например, "2026-06-06T12:00:00Z")'),
     description: z.string().optional().describe('Комментарий к списанию (опционально)'),
     entryTypeId: z
       .string()
@@ -37,7 +37,7 @@ export function registerCreateTimeEntryTool(server: McpServer, client: TeamStorm
     {
       title: 'Добавить списание времени',
       description:
-        'Добавить списание времени (трудозатраты) к задаче. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Добавить списание времени (трудозатраты) к задаче. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: createTimeEntrySchema,
       annotations: {
         readOnlyHint: false,

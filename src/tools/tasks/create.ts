@@ -104,11 +104,20 @@ const CreateTaskSchema = z
       ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     name: z.string().min(1).max(255).describe('Название задачи (обязательно, до 255 символов)'),
-    description: z.string().optional().describe('Описание задачи в формате HTML'),
+    description: z
+      .string()
+      .optional()
+      .describe('Описание задачи в формате HTML (до 650000 символов)'),
     type: z.string().describe('Тип задачи (название или ID, например "Дефект" или "User Story")'),
     workflow: z.string().optional().describe('Название или ID процесса'),
     status: z.string().optional().describe('Начальный статус задачи (название или ID)'),
-    startDate: z.string().nullable().optional().describe('Дата начала работы над задачей'),
+    startDate: z
+      .string()
+      .nullable()
+      .optional()
+      .describe(
+        'Дата и время начала работы над задачей в формате ISO 8601 (например, "2026-09-17T09:00:00Z"); поле необязательно и допускает null'
+      ),
     assignee: z.string().optional().describe('Исполнитель (логин пользователя или ID)'),
     parentId: z.string().describe('Папка (название, например "разработка"). Обязательно.'),
     sprintId: z
@@ -118,7 +127,6 @@ const CreateTaskSchema = z
         'Спринт (название, например "Спринт 26-10", или "текущий"/"активный" для последнего активного спринта). Если не указан — задача создаётся без спринта'
       ),
     originalEstimate: z.number().optional().describe('Оценка задачи в секундах'),
-    storyPoints: z.number().optional().describe('Оценка задачи в Story Points'),
     attributes: z
       .array(
         z.object({
@@ -128,8 +136,13 @@ const CreateTaskSchema = z
         } as const)
       )
       .optional()
-      .describe('Атрибуты задачи'),
-    portfolioElementIds: z.array(z.string()).optional().describe('Список ID элементов портфеля'),
+      .describe(
+        'Значения пользовательских атрибутов задачи (type — тип значения, id — UUID атрибута, value — значение)'
+      ),
+    portfolioElementIds: z
+      .array(z.string())
+      .optional()
+      .describe('Список UUID элементов портфеля, к которым будет прикреплена задача'),
   })
   .strict();
 
@@ -246,7 +259,7 @@ export function registerCreateTaskTool(server: McpServer, client: TeamStormClien
     {
       title: 'Создать новую задачу',
       description:
-        'Создать новую задачу в TeamStorm. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Создать новую задачу в TeamStorm. Параметр workspace обязателен: передайте ключ или ID пространства. Оценку в Story Points задавайте после создания через teamstorm_tasks_update с параметром storyPoints.',
       inputSchema: CreateTaskSchema,
       annotations: {
         readOnlyHint: false,

@@ -301,6 +301,40 @@ export interface TeamStormTask {
   workspace: TeamStormWorkspace;
 }
 
+// Public period feed; distinct from the private per-workitem time-entry shape.
+export interface TeamStormListTimeEntriesByPeriodParams {
+  startDate: string;
+  endDate?: string;
+  users?: string;
+  fromToken?: string;
+  maxItemsCount?: number;
+}
+
+export type TeamStormTimeEntryUser = Omit<TeamStormUser, 'email'> & { email: string | null };
+
+export interface TeamStormPublicTimeEntry {
+  id: string;
+  date: string;
+  /** Raw API value: the public specification does not state a unit. */
+  spentTime: number;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  deleteUserId: string | null;
+  deleteUser: TeamStormTimeEntryUser | null;
+  workitem: TeamStormTask;
+  author: TeamStormTimeEntryUser;
+  type?: { id: string; name: string } | null;
+}
+
+export interface TeamStormPublicTimeEntryListResponse {
+  fromToken?: string | null;
+  maxItemsCount?: number | null;
+  nextToken?: string | null;
+  items: TeamStormPublicTimeEntry[];
+}
+
 // Paginated list responses
 export interface TeamStormTaskListResponse {
   fromToken?: string | null;
@@ -507,7 +541,7 @@ export type TeamStormPermissionListResponse = TeamStormPermission[];
 export interface TeamStormLinkType {
   id: string;
   name: string;
-  key?: string;
+  key?: string | null;
 }
 
 export interface TeamStormLink {
@@ -525,11 +559,9 @@ export interface TeamStormLinkTypeListResponse {
 export interface TeamStormCreateTaskLinkRequest {
   type: string;
   linkedWorkitem: string;
-  // RULING R2: spec requires this (CreateWorkitemLinkRequestBody), but link creation
-  // demonstrably works today without it, so the server defaults it to the current
-  // workspace. Added as OPTIONAL rather than required — a capability gain
-  // (cross-workspace links become expressible) with no risk of breaking existing
-  // same-workspace callers.
+  // R10: required on the public wire (CreateWorkitemLinkRequestBody). Optional
+  // as client input for compatibility: createTaskLink supplies the resolved
+  // source workspace when omitted. Server-side defaulting is not established.
   linkedWorkspace?: string;
 }
 

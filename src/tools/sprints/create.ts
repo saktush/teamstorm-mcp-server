@@ -38,8 +38,16 @@ export const createSprintSchema = z
       .array(
         z.object({
           userId: z.string().describe('UUID пользователя'),
-          daysOff: z.number().int().optional().describe('Дни отсутствия участника в спринте'),
-          hoursPerDay: z.number().int().optional().describe('Часов в день у участника'),
+          daysOff: z
+            .number()
+            .int()
+            .optional()
+            .describe('Количество дней отсутствия участника в спринте (отпуск, выходные)'),
+          hoursPerDay: z
+            .number()
+            .int()
+            .optional()
+            .describe('Количество рабочих часов в день у участника'),
         })
       )
       .describe('Команда спринта (может быть пустым массивом [])'),

@@ -17,21 +17,35 @@ export const listAttributesSchema = z
         'URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'
       ),
     workspace: z.string().describe('Ключ или идентификатор пространства'),
-    name: z.string().optional().describe('Фильтр по названию (поиск по вхождению подстроки)'),
+    name: z
+      .string()
+      .optional()
+      .describe(
+        'Фильтр по названию на стороне TeamStorm (поиск по вхождению подстроки; при isFullNameMatching=true — полное совпадение)'
+      ),
     type: z
       .enum(['UniString', 'Number', 'Date', 'UniSelect', 'Tag', 'User', 'TimeDuration'])
       .optional()
-      .describe('Фильтр по типу атрибута.'),
+      .describe('Фильтр по типу пользовательского атрибута на стороне TeamStorm.'),
     isFullNameMatching: z
       .boolean()
       .optional()
-      .describe('Если true, название должно совпадать полностью.'),
-    fromToken: z.string().optional().describe('Токен для пагинации'),
+      .describe(
+        'Если true, название атрибута должно полностью совпадать с name; фильтр применяется на стороне TeamStorm.'
+      ),
+    fromToken: z
+      .string()
+      .optional()
+      .describe(
+        'Курсор страницы API: передайте nextToken предыдущего ответа для получения следующей страницы'
+      ),
     maxItemsCount: z
       .number()
       .optional()
       .default(50)
-      .describe('Максимальное количество (по умолчанию: 50)'),
+      .describe(
+        'Максимальное количество атрибутов на странице (по умолчанию: 50; API допускает от 1 до 1000)'
+      ),
   })
   .strict();
 
@@ -41,7 +55,7 @@ export function registerListAttributesTool(server: McpServer, client: TeamStormC
     {
       title: 'Получить список атрибутов пространства',
       description:
-        'Получить список пользовательских атрибутов пространства TeamStorm. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить список определений пользовательских атрибутов пространства TeamStorm с фильтрацией и пагинацией. Значения атрибутов конкретной задачи доступны через teamstorm_attributes_get. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: listAttributesSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

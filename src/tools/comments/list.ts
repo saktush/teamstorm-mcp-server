@@ -61,7 +61,7 @@ export function registerListTaskCommentsTool(server: McpServer, client: TeamStor
     {
       title: 'Получить комментарии задачи',
       description:
-        'Получить все комментарии к задаче. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить все комментарии к задаче. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: listTaskCommentsSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

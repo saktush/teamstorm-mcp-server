@@ -15,7 +15,7 @@ export const updateFolderSchema = z
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     folderId: z.string().describe('UUID папки'),
     name: z.string().max(255).optional().describe('Новое название папки (до 255 символов)'),
-    description: z.string().optional().describe('Новое описание папки'),
+    description: z.string().optional().describe('Новое описание папки (до 65000 символов)'),
     parentId: z
       .string()
       .optional()

@@ -13,7 +13,7 @@ export const getWorkspaceStatusSchema = z
         'URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL.'
       ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
-    statusId: z.string().describe('Идентификатор статуса задачи (UUID)'),
+    statusId: z.string().describe('Название или идентификатор статуса задачи (UUID)'),
   })
   .strict();
 
@@ -67,7 +67,7 @@ export function registerGetWorkspaceStatusTool(server: McpServer, client: TeamSt
     'teamstorm_workspace_statuses_get',
     {
       title: 'Получить статус задачи',
-      description: 'Получить статус задачи (workitem) TeamStorm по идентификатору.',
+      description: 'Получить статус задачи (workitem) TeamStorm по названию или идентификатору.',
       inputSchema: getWorkspaceStatusSchema,
       annotations: { readOnlyHint: true, openWorldHint: false },
     },

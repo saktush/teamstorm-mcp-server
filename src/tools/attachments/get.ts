@@ -26,7 +26,7 @@ export function registerGetTaskAttachmentTool(server: McpServer, client: TeamSto
     {
       title: 'Получить информацию о вложении',
       description:
-        'Получить метаданные конкретного вложения. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить метаданные конкретного вложения задачи: имя файла, MIME-тип, размер, автор и дата загрузки. В структурированном ответе size указан в байтах. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: getTaskAttachmentSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

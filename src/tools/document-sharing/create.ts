@@ -14,10 +14,14 @@ export const shareDocumentSchema = z
       ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
     documentId: z.string().describe('Ключ или идентификатор документа (UUID)'),
-    type: z.enum(['User', 'Group']).describe('Тип субъекта доступа: User или Group'),
+    type: z
+      .enum(['User', 'Group'])
+      .describe('Тип получателя доступа: User (пользователь) или Group (группа)'),
     accessLevel: z
       .enum(['Read', 'Edit', 'Comment'])
-      .describe('Уровень доступа: Read, Edit или Comment'),
+      .describe(
+        'Уровень доступа: Read (просмотр), Edit (редактирование) или Comment (комментирование)'
+      ),
     userId: z.string().optional().describe('UUID пользователя (обязателен при type=User)'),
     groupId: z.string().optional().describe('UUID группы (обязателен при type=Group)'),
   })

@@ -13,7 +13,7 @@ export const getDocumentStatusSchema = z
         'URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL.'
       ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
-    statusId: z.string().describe('Идентификатор статуса документа (UUID)'),
+    statusId: z.string().describe('Название или идентификатор статуса документа (страницы; UUID)'),
   })
   .strict();
 
@@ -63,7 +63,7 @@ export function registerGetDocumentStatusTool(server: McpServer, client: TeamSto
     'teamstorm_document_statuses_get',
     {
       title: 'Получить статус документа',
-      description: 'Получить статус документа TeamStorm по идентификатору.',
+      description: 'Получить статус документа (страницы) TeamStorm по названию или идентификатору.',
       inputSchema: getDocumentStatusSchema,
       annotations: { readOnlyHint: true, openWorldHint: false },
     },

@@ -24,7 +24,7 @@ export function registerGetTaskPermissionsTool(server: McpServer, client: TeamSt
     {
       title: 'Получить правила доступа к задаче',
       description:
-        'Получить список правил доступа к задаче. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить список разрешений общего доступа к задаче. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: getTaskPermissionsSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

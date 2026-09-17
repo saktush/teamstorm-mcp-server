@@ -25,7 +25,7 @@ export function registerListTaskAttachmentsTool(server: McpServer, client: TeamS
     {
       title: 'Получить вложения задачи',
       description:
-        'Получить список вложений задачи. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить список вложений задачи. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: ListTaskAttachmentsSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

@@ -14,15 +14,35 @@ const ListUsersSchema = z
         'URL TeamStorm API в формате http://<host>/cwm/public/api/v1. Оставьте пустым, если URL предконфигурирован на сервере через TEAMSTORM_API_URL. Передавайте только если сервер не имеет собственного URL или нужно подключиться к другому инстансу.'
       ),
     workspace: z.string().describe('Ключ или ID пространства (workspace)'),
-    search: z.string().optional().describe('Поиск по имени или email (вхождение подстроки)'),
-    displayName: z.string().optional().describe('Фильтр по отображаемому имени пользователя.'),
-    roleId: z.string().optional().describe('Фильтр по роли в пространстве.'),
-    fromToken: z.string().optional().describe('Токен для пагинации'),
+    search: z
+      .string()
+      .optional()
+      .describe(
+        'Поиск по отображаемому имени, логину или email без учёта регистра (вхождение подстроки). Применяется на стороне MCP только к текущей странице после фильтров displayName/roleId; остальные страницы не просматриваются автоматически'
+      ),
+    displayName: z
+      .string()
+      .optional()
+      .describe('Фильтр по отображаемому имени пользователя на стороне TeamStorm до пагинации.'),
+    roleId: z
+      .string()
+      .optional()
+      .describe(
+        'Фильтр по UUID роли пользователя в пространстве на стороне TeamStorm до пагинации.'
+      ),
+    fromToken: z
+      .string()
+      .optional()
+      .describe(
+        'Курсор страницы API: передайте nextToken предыдущего ответа для получения следующей страницы'
+      ),
     maxItemsCount: z
       .number()
       .optional()
       .default(100)
-      .describe('Максимальное количество пользователей (по умолчанию: 100)'),
+      .describe(
+        'Максимальное количество пользователей на странице API и предел вывода после локального search (по умолчанию в инструменте: 100; API допускает от 1 до 1000)'
+      ),
   })
   .strict();
 
@@ -135,7 +155,7 @@ export function registerListUsersTool(server: McpServer, client: TeamStormClient
     {
       title: 'Получить список пользователей',
       description:
-        'Получить список пользователей в пространстве TeamStorm. Если workspace не указан, используется TEAMSTORM_WORKSPACE.',
+        'Получить одну страницу участников пространства TeamStorm. displayName и roleId фильтруют на стороне TeamStorm; search ищет только среди пользователей полученной страницы. Для следующей страницы передайте nextToken как fromToken, даже если локальный search не нашёл совпадений. Параметр workspace обязателен: передайте ключ или ID пространства.',
       inputSchema: ListUsersSchema,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

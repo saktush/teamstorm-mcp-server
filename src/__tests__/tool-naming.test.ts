@@ -32,9 +32,9 @@ const SHAPE = /^teamstorm_[a-z0-9]+(_[a-z0-9]+)+$/;
 describe('resource-first tool naming (Feature D)', () => {
   const names = allRegisteredNames();
 
-  it('registers exactly 80 uniquely-named tools', () => {
-    expect(names).toHaveLength(80);
-    expect(new Set(names).size).toBe(80);
+  it('registers exactly 81 uniquely-named tools', () => {
+    expect(names).toHaveLength(81);
+    expect(new Set(names).size).toBe(81);
   });
 
   it('every name is lowercase snake_case under the teamstorm_ prefix', () => {

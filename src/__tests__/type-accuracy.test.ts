@@ -164,12 +164,13 @@ describe('Part 2 — optionality fixed to match the spec (B5-B12)', () => {
     expectTypeOf<TeamStormWorkspaceListResponse['items']>().toEqualTypeOf<TeamStormWorkspace[]>();
   });
 
-  it('B9: TeamStormLinkType.key is optional and NOT nullable', () => {
+  it('B9: TeamStormLinkType.key accepts omission, string and null', () => {
+    expectTypeOf<TeamStormLinkType['key']>().toEqualTypeOf<string | null | undefined>();
     assertType<TeamStormLinkType>({ id: 'l1', name: 'Relates' });
+    assertType<TeamStormLinkType>({ id: 'l1', name: 'Relates', key: 'relates' });
     assertType<TeamStormLinkType>({
       id: 'l1',
       name: 'Relates',
-      // @ts-expect-error — spec does not mark `key` nullable, unlike most optional strings here
       key: null,
     });
   });

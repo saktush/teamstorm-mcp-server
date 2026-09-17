@@ -19,7 +19,9 @@ export const updateDocumentPermissionSchema = z
       .describe('ID разрешения (см. teamstorm_document_permissions_list)'),
     accessLevel: z
       .enum(['Read', 'Edit', 'Comment'])
-      .describe('Новый уровень доступа: Read, Edit или Comment'),
+      .describe(
+        'Новый уровень доступа: Read (просмотр), Edit (редактирование) или Comment (комментирование)'
+      ),
   })
   .strict();
 

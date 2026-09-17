@@ -26,7 +26,9 @@ const baseListTasksByParentSchema = z
       .boolean()
       .optional()
       .default(false)
-      .describe('Включить подзадачи (по умолчанию: false)'),
+      .describe(
+        'Включить все уровни вложенных подзадач (по умолчанию: false — только непосредственные дочерние задачи)'
+      ),
   })
   .strict();
 
@@ -116,7 +118,7 @@ export function registerListTasksByParentTool(server: McpServer, client: TeamSto
     {
       title: 'Получить задачи по родительскому элементу',
       description:
-        'Получить список задач по родительскому элементу (папке или задаче). Если workspace не указан, используется TEAMSTORM_WORKSPACE. ' +
+        'Получить список задач по родительскому элементу (папке или задаче). Параметр workspace обязателен: передайте ключ или ID пространства. ' +
         'ВАЖНО: API не поддерживает постраничность для этого метода — он всегда отдаёт весь список, поэтому ограничение применяется на стороне MCP-сервера. ' +
         'Если в ответе hasMore=true, сузьте выборку (другой parent) или запросите format="json" с нужными fields.',
       inputSchema: listTasksByParentSchema,
